@@ -15,6 +15,17 @@
 **Follow-ups (not done, out of scope):** <suggestions deferred to later phases>
 -->
 
+## Phase 03: End-to-End Smoke Tests (tag: phase-03-complete, PR #3)
+**What exists now:** The app is unchanged; `npm run e2e` builds and previews it, then drives it in Chromium against the real backend: the catalogue, the gateway-unreachable error state, and every screen at 360/480/768/1024/1280 px in light and dark.
+**Key code:** `playwright.config.ts`; `e2e/global-setup.ts` (gateway check, prints the backend tag from `BACKEND_TAG` or the clone); `e2e/fixtures.ts` (**import `test`/`expect` from here**: console guard, `allowedConsoleErrors` option); `e2e/screens.ts` (**add every new screen/state here**: `name`, `path`, `prepare`, `ready`, `allowedConsoleErrors`; also `gatewayUnreachable`, `abortedRequestError`); `e2e/catalog.spec.ts`; `e2e/layout.spec.ts`; `e2e/report.spec.ts` (`@report`).
+**Config & infrastructure:** @playwright/test 1.63.0 (Chromium build 1243). Projects `chromium` (smoke, excludes `@report`) and `report`. Scripts: `e2e` (`--project=chromium`), `e2e:ui`, `e2e:report` (screenshots → `docs/test-reports/phase-XX/`, phase from the branch or `REPORT_PHASE`). `tsconfig.e2e.json` joins `tsc -b`. `webServer` never reuses a running 4173. Retries 0 locally, 2 on CI (traces on first retry).
+**Tests:** 22 E2E (2 catalogue + 20 layout matrix) + 8 report screenshots; 6 component tests unchanged.
+**Backend tested against:** `ki-001-fixed`
+**Gotchas:** Aborting a request makes Chrome log "Failed to load resource: net::ERR_FAILED": declare it in `allowedConsoleErrors`. React dev warnings never show in the preview build, so keep the dev-server console check. The catalogue has 22 rows but only ids 1–10 are seeded: assert names, never counts. "Dark" screenshots equal light until Phase 9 adds `color-scheme`. `pkill -f <pattern>` inside `bash -c` also matches its own shell.
+**Owner TODOs open:** none
+**Backend asks:** none
+**Follow-ups (not done, out of scope):** run `e2e` in CI with the backend (Phase 5); the "Try again" button on the error state (carried; the E2E suite should then click it); `npx playwright install --with-deps` for CI runners (Phase 5).
+
 ## Phase 02: Automated Testing (tag: phase-02-complete, PR #2)
 **What exists now:** The app is unchanged; it now has unit/component tests (Vitest in jsdom, Testing Library, MSW faking the network) that run inside `npm run verify`.
 **Key code:** `src/test/setup.ts` (jest-dom matchers, MSW server with `onUnhandledFrame: 'error'`, `cleanup()`), `src/test/render.tsx` (`renderWithProviders`, an empty wrapper: add the router/query client/session here), `src/test/msw/handlers.ts` (`handlers` = happy paths; `productHandlers.{success,empty,serverError}`; `productFixtures`, typed with `http.get<never, never, Body>`), `src/features/catalog/ProductListPage.test.tsx`.
@@ -25,14 +36,3 @@
 **Owner TODOs open:** none
 **Backend asks:** none
 **Follow-ups (not done, out of scope):** tests for the defensive branches (non-`ApiError` error body, abort, no `crypto.randomUUID`) would raise the branch floor; run `test:coverage` in CI (Phase 5); "Try again" button on the error state (carried from Phase 1).
-
-## Phase 01: Baseline App (tag: phase-01-complete, PR #1)
-**What exists now:** A Vite + React 19 + strict TypeScript app with one page that lists the whole catalogue from `GET /api/products` (name, ₹ price, category), with loading, empty and error states. No routing, tests, lint or styling.
-**Key code:** `src/main.tsx` renders `ProductListPage` directly. `src/features/catalog/ProductListPage.tsx` (useEffect + AbortController; a `LoadState` union). `src/features/catalog/products.ts`: hand-written `ProductResponse` and `ApiError` (replaced in Phase 7), `fetchProducts()`, `ProductsRequestError { status, correlationId }`.
-**Config & infrastructure:** Node 24.21.0 (`.nvmrc`, `engines ^24.21.0`, `.npmrc` engine-strict + save-exact). Scripts: `dev` (5173), `build`, `preview` (4173), `typecheck` (`tsc -b`), `verify` (typecheck && build). `vite.config.ts`: one `/api` proxy for server and preview, target `API_TARGET` via `loadEnv` (shell or `.env`), default `http://localhost:8080`; `strictPort`; alias `@` → `src`.
-**Tests:** none yet (Phase 2). Checked by hand-scripted curl + headless Chrome: 10 products via dev and preview; error state with the backend down.
-**Backend tested against:** `ki-001-fixed`
-**Gotchas:** A non-interactive WSL shell finds the Windows npm first: `. ~/.nvm/nvm.sh && nvm use`. TypeScript is 7.0.2 (native; no JS compiler API): if a Phase 2–4 tool needs `typescript`'s JS API, fall back to 6.0.3 and log it. With the gateway down the Vite proxy returns 502 with an empty body (not an `ApiError`). The page sends its own `X-Correlation-Id` (UUID); the gateway keeps it. Seed data has no `null` category and is never empty.
-**Owner TODOs open:** none
-**Backend asks:** none
-**Follow-ups (not done, out of scope):** a "Try again" button on the error state (the guide recommends one for backend down; E2E expects it later); tests for the "Other" category, empty and loading states (Phase 2); `docs/modules/catalog.md` (Phase 8, per `docs/modules/README.md`).

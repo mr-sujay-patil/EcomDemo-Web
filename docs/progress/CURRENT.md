@@ -34,7 +34,7 @@ Phase 2 (PR #2, merge commit `e276d34`, parents `f262f43` + `8012dc3`): PASS on 
 - [x] npm scripts `e2e` and `e2e:ui`
 - [x] Manual step: not needed (browser + libs already present; launch proven)
 - [x] Done when: `npm run e2e` 22/22 exit 0; temporary `@media (max-width:400px) h2 {width:120px; overflow:hidden}` → exit 1, only the two 360 px tests failed; reverted → 22/22
-- [ ] Testing protocol → `docs/test-reports/phase-03.md`; docs (README, `decisions.md`, `RECENT.md`, tracker 🔵) → PR
+- [x] Testing protocol → `docs/test-reports/phase-03.md`; docs (README, `decisions.md`, `RECENT.md`, tracker 🔵) → PR
 
 ## Next action
 Run the testing protocol (npm ci && verify, dev + preview console check), write `docs/test-reports/phase-03.md`, update README/decisions/RECENT/tracker 🔵, push, raise the PR, stop.
