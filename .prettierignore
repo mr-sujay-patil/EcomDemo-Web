@@ -1,0 +1,12 @@
+# Prettier formats code and config. Markdown is hand-aligned documentation, not code: it stays as written.
+*.md
+
+# The supplied component library, kept as delivered (Phase 9 decides how the app uses it)
+design-system/
+
+# Generated or tool-owned
+package-lock.json
+dist/
+coverage/
+playwright-report/
+test-results/
