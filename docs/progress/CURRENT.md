@@ -5,11 +5,11 @@
 - **Updated:** 2026-09-30
 - **Phase:** 2 — Automated Testing
 - **Branch:** `feature/phase-02-testing`
-- **Step:** TESTING
+- **Step:** PR_OPEN
   (NOT_STARTED | PREFLIGHT | BRANCHED | PLANNING | IMPLEMENTING | TESTING | PR_OPEN | VERIFYING | WAITING_FOR_USER)
-- **PR:** none yet
+- **PR:** #2 https://github.com/mr-sujay-patil/EcomDemo-Web/pull/2
 - **Backend pinned at:** `ki-001-fixed` (read-only clone `../ecomdemo-backend-readonly`)
-- **Waiting for user:** NO
+- **Waiting for user:** YES: review and merge PR #2 (merge commit), then `merged, continue`
 
 ## Merge verification before this phase
 Phase 1 (PR #1, merge commit `f262f43`, parents `d6b0d66` + `ba1cb44`): PASS on 2026-09-30. PR state MERGED; branch tip is an ancestor of `origin/main`; `git log main..branch` and `git diff --stat` empty; branch exists locally and on GitHub; deliverables present on `main`; `npm ci && npm run verify` green on `main` (no `npm run e2e` before Phase 3). Tag `phase-01-complete` pushed.
@@ -32,14 +32,14 @@ Phase 1 (PR #1, merge commit `f262f43`, parents `d6b0d66` + `ba1cb44`): PASS on 
 - [x] Testing protocol → `docs/test-reports/phase-02.md`; docs (README, `decisions.md`, `RECENT.md`, tracker 🔵) → PR
 
 ## Next action
-Testing protocol: backend check (`docker ps`), `npm run dev` + `npm run preview` against the backend (console clean), then `docs/test-reports/phase-02.md`, docs (README, `decisions.md` `[Phase 02]`, `RECENT.md`, tracker 🔵), PR.
+Stopped: PR #2 awaits review. On `merged, continue` (or `approved, merge it` → `gh pr merge 2 --merge`, never `--delete-branch`): merge verification per `git-workflow.md` step 5 on `main` (`npm ci && npm run verify`; no `npm run e2e` before Phase 3), tag `phase-02-complete`, then start Phase 3 (`docs/phases/phase-03-playwright.md`).
 
 ## ⚠️ Environment notes (this machine)
 - One backend stack at a time: if `ecomdemo-gateway-service` is running, use it.
 - The repo folder is `~/projects/ecomdemo-web` (lowercase), not `~/projects/EcomDemo-Web` as the docs say; relative paths still work.
 - Node v24.21.0 via nvm in WSL, loaded only by interactive shells (`~/.bashrc`). Non-interactive commands must `. ~/.nvm/nvm.sh` first, or `npm` resolves to the Windows install under `/mnt/c`.
 - Root `ecomdemo-frontend-integration-guide.md` is an untracked duplicate of `docs/backend/integration-guide.md` (owner's choice); leave it.
-- Claude Code runs on Windows: run git/gh/npm through `wsl.exe -d Ubuntu -- bash -lc '...'` (Git Bash on the UNC path hits git's "dubious ownership" check, and `gh` isn't installed there).
+- Claude Code runs on Windows: run git/gh/npm in WSL. `wsl.exe -- bash -lc "…"` expands `$vars` in the outer shell first, so put multi-step commands in a script file and run `MSYS_NO_PATHCONV=1 wsl.exe -d Ubuntu -- bash /mnt/c/…/script.sh` (Git Bash on the UNC path hits "dubious ownership"; `gh` is only in WSL). The Chrome extension blocks localhost: use headless Chrome (`--dump-dom`, `--enable-logging=stderr`).
 
 ## ⚠️ Carried, not fixed (oldest first)
 - 
