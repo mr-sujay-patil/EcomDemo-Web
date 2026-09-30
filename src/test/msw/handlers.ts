@@ -4,7 +4,14 @@ import type { ApiError, ProductResponse } from '@/features/catalog/products'
 // Test data only: prices chosen to show Indian digit grouping, one product without a category.
 export const productFixtures: ProductResponse[] = [
   { id: 1, name: 'Test Kettle', description: 'Fixture product', price: 1299, stockQuantity: 5, category: 'Kitchen' },
-  { id: 2, name: 'Test Sofa', description: 'Fixture product', price: 125000.5, stockQuantity: 1, category: 'Furniture' },
+  {
+    id: 2,
+    name: 'Test Sofa',
+    description: 'Fixture product',
+    price: 125000.5,
+    stockQuantity: 1,
+    category: 'Furniture',
+  },
   { id: 3, name: 'Test Gift Card', description: 'Fixture product', price: 500, stockQuantity: 10, category: null },
 ]
 

@@ -16,7 +16,9 @@ async function clippedTextElements(page: Page): Promise<string[]> {
       const cutX = clips(style.overflowX) && element.scrollWidth - element.clientWidth > tolerance
       const cutY = clips(style.overflowY) && element.scrollHeight - element.clientHeight > tolerance
       if (cutX || cutY) {
-        offenders.push(`<${element.tagName.toLowerCase()}> "${text.slice(0, 40)}" (${element.scrollWidth}×${element.scrollHeight} in ${element.clientWidth}×${element.clientHeight})`)
+        offenders.push(
+          `<${element.tagName.toLowerCase()}> "${text.slice(0, 40)}" (${element.scrollWidth}×${element.scrollHeight} in ${element.clientWidth}×${element.clientHeight})`,
+        )
       }
     }
     return offenders

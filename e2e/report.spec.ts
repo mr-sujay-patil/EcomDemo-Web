@@ -9,7 +9,8 @@ function reportDirectory(): string {
     const branch = execFileSync('git', ['branch', '--show-current'], { encoding: 'utf8' }).trim()
     phase = /^feature\/(phase-\d{2})-/.exec(branch)?.[1]
   }
-  if (!phase) throw new Error('Not on a feature/phase-XX-* branch: set REPORT_PHASE=phase-XX to say where the screenshots go.')
+  if (!phase)
+    throw new Error('Not on a feature/phase-XX-* branch: set REPORT_PHASE=phase-XX to say where the screenshots go.')
   return `docs/test-reports/${phase}`
 }
 
@@ -30,7 +31,10 @@ test.describe('@report screenshots', () => {
             await page.goto(screen.path)
             await screen.ready(page)
             // Resolved here, not at load time: every project loads this file, even on branches with no report.
-            await page.screenshot({ path: `${reportDirectory()}/${screen.name}-${width}-${colorScheme}.png`, fullPage: true })
+            await page.screenshot({
+              path: `${reportDirectory()}/${screen.name}-${width}-${colorScheme}.png`,
+              fullPage: true,
+            })
           })
         })
       }
