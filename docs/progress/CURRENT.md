@@ -2,14 +2,14 @@
 
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
-- **Updated:** 2026-09-30
+- **Updated:** 2026-10-01
 - **Phase:** 4 — Code Quality
 - **Branch:** `feature/phase-04-code-quality`
-- **Step:** IMPLEMENTING
+- **Step:** PR_OPEN
   (NOT_STARTED | PREFLIGHT | BRANCHED | PLANNING | IMPLEMENTING | TESTING | PR_OPEN | VERIFYING | WAITING_FOR_USER)
-- **PR:** none yet
+- **PR:** #4 (see Next action)
 - **Backend pinned at:** `ki-001-fixed` (read-only clone `../ecomdemo-backend-readonly`)
-- **Waiting for user:** no
+- **Waiting for user:** YES: review and merge PR #4 (merge commit), then `merged, continue`
 
 ## Merge verification before this phase
 Phase 3 (PR #3, merge commit `d0f0fad`): PASS on 2026-09-30. PR state MERGED; branch tip `6a26391` is an ancestor of `origin/main`; `git log main..branch` and `git diff --stat` empty; branch exists locally and on GitHub; deliverables present on `main`; `npm ci && npm run verify` green (6/6) and `npm run e2e` 22/22 against `ki-001-fixed`. Tag `phase-03-complete` pushed.
@@ -25,13 +25,13 @@ Phase 3 (PR #3, merge commit `d0f0fad`): PASS on 2026-09-30. PR state MERGED; br
 - [x] Rules: `no-floating-promises`, `exhaustive-deps`, `no-explicit-any` as error, `no-console` except in tests (explained in the PR)
 - [x] Scripts `lint`, `format`, `format:check`; `verify` = `typecheck && lint && format:check && test && build`
 - [x] `.editorconfig`; no pre-commit hook
-- [ ] Fix what the rules find, in commits separate from the configuration
-- [ ] Done when: `npm run verify` fails on a deliberately unformatted file (shown, then reverted)
-- [ ] E2E: suite still passes (no new checks)
-- [ ] Testing protocol → `docs/test-reports/phase-04.md`; docs (README, `decisions.md`, `RECENT.md`, tracker 🔵) → PR
+- [x] Fix what the rules find, in commits separate from the configuration (`style:` commit, 4 files; lint found only `expect-expect`, fixed in config)
+- [x] Done when: unformatted `src/unformatted.ts` → `verify` exit 1 at `format:check`; deleted → exit 0
+- [x] E2E: 22/22 against `ki-001-fixed`
+- [x] Testing protocol → `docs/test-reports/phase-04.md`; docs (README, `decisions.md`, `RECENT.md` rotated, tracker 🔵) → PR
 
 ## Next action
-Config committed. Next: `npm run format` on the 4 flagged files as a separate `style:` commit (lint already finds nothing in existing code), then the "Done when" demo and the testing protocol.
+Stopped: PR #4 awaits review. On `merged, continue` (or `approved, merge it` → `gh pr merge 4 --merge`, never `--delete-branch`): merge verification per `git-workflow.md` step 5 on `main` (`npm ci && npm run verify && npm run e2e`, backend at `ki-001-fixed`), tag `phase-04-complete`, then start Phase 5 (`docs/phases/phase-05-github-actions.md`).
 
 ## ⚠️ Environment notes (this machine)
 - One backend stack at a time: if `ecomdemo-gateway-service` is running, use it.

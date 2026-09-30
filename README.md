@@ -46,10 +46,15 @@ npm run dev             # http://localhost:5173
 | `npm run typecheck` | `tsc -b`: strict type check of the app, the Vite and Playwright configs, and `e2e/` |
 | `npm test` | Unit and component tests once (Vitest, network faked with MSW; no backend needed) |
 | `npm run test:coverage` | The tests with a V8 coverage report; fails below the thresholds in `vite.config.ts` |
-| `npm run verify` | Everything a PR must pass: type check, tests, then build |
+| `npm run lint` | ESLint over the app, tests, `e2e/` and configs (type-aware rules, React Hooks, accessibility, Playwright); any warning fails it |
+| `npm run format` | Prettier rewrites every code and config file in place (Markdown and `design-system/` are left as written) |
+| `npm run format:check` | Prettier lists the files it would change, and fails if there are any |
+| `npm run verify` | Everything a PR must pass: type check, lint, format check, tests, then build |
 | `npm run e2e` | End-to-end smoke tests: builds and previews the app on 4173, then drives it in Chromium against the real backend (it must be running). Every screen is also checked at 360–1280 px in light and dark |
 | `npm run e2e:ui` | The same tests in Playwright's UI mode, to watch and debug them step by step |
 | `npm run e2e:report` | Saves screenshots at 360 and 1280 px into `docs/test-reports/phase-XX/` (the phase comes from the branch, or `REPORT_PHASE=phase-XX`) |
+
+If `format:check` fails, run `npm run format` and commit the result. Editors pick up `.editorconfig`; with the ESLint and Prettier extensions installed they show lint errors as you type and can format on save. There is no pre-commit hook: CI enforces both from Phase 5.
 
 While writing tests, `npx vitest` re-runs them on every save. How tests are written: [testing guide](docs/process/testing-guide.md).
 
