@@ -5,11 +5,11 @@
 - **Updated:** 2026-09-30
 - **Phase:** 3 — End-to-End Smoke Tests
 - **Branch:** `feature/phase-03-playwright`
-- **Step:** TESTING
+- **Step:** PR_OPEN
   (NOT_STARTED | PREFLIGHT | BRANCHED | PLANNING | IMPLEMENTING | TESTING | PR_OPEN | VERIFYING | WAITING_FOR_USER)
-- **PR:** none yet
+- **PR:** #3 https://github.com/mr-sujay-patil/EcomDemo-Web/pull/3
 - **Backend pinned at:** `ki-001-fixed` (read-only clone `../ecomdemo-backend-readonly`)
-- **Waiting for user:** NO
+- **Waiting for user:** YES: review and merge PR #3 (merge commit), then `merged, continue`
 
 ## Merge verification before this phase
 Phase 2 (PR #2, merge commit `e276d34`, parents `f262f43` + `8012dc3`): PASS on 2026-09-30. PR state MERGED; branch tip is an ancestor of `origin/main`; `git log main..branch` and `git diff --stat` empty; branch exists locally and on GitHub; deliverables present on `main`; `npm ci && npm run verify` green on `main` (6/6 tests; no `npm run e2e` before Phase 3). Tag `phase-02-complete` pushed.
@@ -37,7 +37,7 @@ Phase 2 (PR #2, merge commit `e276d34`, parents `f262f43` + `8012dc3`): PASS on 
 - [x] Testing protocol → `docs/test-reports/phase-03.md`; docs (README, `decisions.md`, `RECENT.md`, tracker 🔵) → PR
 
 ## Next action
-Run the testing protocol (npm ci && verify, dev + preview console check), write `docs/test-reports/phase-03.md`, update README/decisions/RECENT/tracker 🔵, push, raise the PR, stop.
+Stopped: PR #3 awaits review. On `merged, continue` (or `approved, merge it` → `gh pr merge 3 --merge`, never `--delete-branch`): merge verification per `git-workflow.md` step 5 on `main` (`npm ci && npm run verify && npm run e2e`, backend at `ki-001-fixed`; do NOT run `e2e:report` on `main`), tag `phase-03-complete`, then start Phase 4 (`docs/phases/phase-04-code-quality.md`).
 
 ## ⚠️ Environment notes (this machine)
 - One backend stack at a time: if `ecomdemo-gateway-service` is running, use it (it was running at Phase 3 start).
