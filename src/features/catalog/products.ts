@@ -64,9 +64,7 @@ export async function fetchProducts(signal?: AbortSignal): Promise<ProductRespon
 
   const correlationId = response.headers.get(CORRELATION_HEADER) ?? sentId
   const body: unknown = await response.json().catch(() => null)
-  const message = isApiError(body)
-    ? body.message
-    : `The server could not load the products (HTTP ${response.status}).`
+  const message = isApiError(body) ? body.message : `The server could not load the products (HTTP ${response.status}).`
   // The id helps support find a server-side failure; for a 4xx the message says enough.
   const shownId = response.status >= 500 ? correlationId : null
   throw new ProductsRequestError(message, response.status, shownId)
