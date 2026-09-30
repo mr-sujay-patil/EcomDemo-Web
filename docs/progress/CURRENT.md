@@ -25,14 +25,14 @@ Phase 4 (PR #4, merge commit `194e7e7`): PASS on 2026-10-01. PR state MERGED; br
 - [ ] `.github/workflows/ci.yml` on every PR and push to `main`
 - [ ] **verify** job: Node from `.nvmrc` + npm cache, `npm ci`, `npm run verify`, coverage uploaded as an artifact
 - [ ] **e2e** job: backend checked out at `BACKEND_TAG` (default `ki-001-fixed`), compose stack up (GHCR where available; built from source today), generated `JWT_SECRET`, wait for health, `npm run e2e`; Playwright report + traces uploaded on failure; stack fit measured
-- [ ] Dependabot: npm (minor + patch grouped, weekly) and GitHub Actions
-- [ ] Actions pinned by commit SHA; minimal `permissions:` per job
-- [ ] Web KI row for the missing per-service GHCR images
+- [x] Dependabot: npm (minor + patch grouped, weekly) and GitHub Actions; ignores TS minor/major and ESLint major (Phase 4 hold-backs)
+- [x] Actions pinned by commit SHA; minimal `permissions:` per job (actionlint + shellcheck clean)
+- [x] Web KI row for the missing per-service GHCR images → **KI-015**
 - [ ] Done when: a failing unit test and a failing E2E test each turn the PR red (throwaway commits, reverted)
 - [ ] Testing protocol → `docs/test-reports/phase-05.md` (CI run links); docs (README, `decisions.md`, `RECENT.md` rotated, tracker 🔵) → PR ready
 
 ## Next action
-Write `.github/workflows/ci.yml` and `.github/dependabot.yml`, then run `npm ci && npm run verify` locally and raise the draft PR.
+`ci.yml` and `dependabot.yml` are committed (local verify green). Raise the **draft** PR, watch both CI jobs (`gh pr checks`), fix until green, then the Done-when throwaway commits.
 
 ## ⚠️ Environment notes (this machine)
 - One backend stack at a time: if `ecomdemo-gateway-service` is running, use it.

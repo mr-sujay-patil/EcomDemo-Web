@@ -42,6 +42,7 @@ Adding an issue: take the next free ID, add a row, and add a detail section only
 | KI-009 | No currency field; one implicit currency | backend: not tracked | Accepted | The UI shows ₹ with `en-IN` formatting (`docs/decisions.md`) | Open |
 | KI-010 | No push for order status | backend KI-022 | Backend | Poll `GET /api/orders/{id}/status` every 1-2 s (Phase 13) | Open |
 | KI-011 | The assistant and inventory OpenAPI documents carry no security markers, so generated clients can't tell which calls need a token | backend: not tracked (cosmetic) | Backend | The API client attaches the token to every call when signed in; access rules come from the guide's tables (Phase 7) | Open |
+| KI-015 | The backend publishes one GHCR image (`ghcr.io/mr-sujay-patil/ecomdemo`, the default `MODULE=ecomdemo-app`, only on merges to `main`), not the eight per-service images its compose stack runs, and none for release tags (`ki-001-fixed` has no image) | backend: not tracked (asked through the user, Phase 5) | Backend | The CI e2e job builds the stack from source at `BACKEND_TAG` (`.github/workflows/ci.yml`), which is slower. Switch that step to `docker compose pull` when per-service images tagged by release exist | Open |
 
 ## Covered by an approved phase
 
