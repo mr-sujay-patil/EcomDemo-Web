@@ -5,7 +5,7 @@
 - **Updated:** 2026-09-30
 - **Phase:** 2 — Automated Testing
 - **Branch:** `feature/phase-02-testing`
-- **Step:** IMPLEMENTING
+- **Step:** TESTING
   (NOT_STARTED | PREFLIGHT | BRANCHED | PLANNING | IMPLEMENTING | TESTING | PR_OPEN | VERIFYING | WAITING_FOR_USER)
 - **PR:** none yet
 - **Backend pinned at:** `ki-001-fixed` (read-only clone `../ecomdemo-backend-readonly`)
@@ -29,7 +29,7 @@ Phase 1 (PR #1, merge commit `f262f43`, parents `d6b0d66` + `ba1cb44`): PASS on 
 - [x] `docs/process/testing-guide.md` (short): query priority, `userEvent` over `fireEvent`, one behaviour per test, no markup snapshots, typed MSW handlers
 - [x] `verify` = typecheck && test (`vitest run`) && build
 - [x] Done when: a deliberately broken assertion fails `verify` (shown, then reverted)
-- [ ] Testing protocol → `docs/test-reports/phase-02.md`; docs (README, `decisions.md`, `RECENT.md`, tracker 🔵) → PR
+- [x] Testing protocol → `docs/test-reports/phase-02.md`; docs (README, `decisions.md`, `RECENT.md`, tracker 🔵) → PR
 
 ## Next action
 Testing protocol: backend check (`docker ps`), `npm run dev` + `npm run preview` against the backend (console clean), then `docs/test-reports/phase-02.md`, docs (README, `decisions.md` `[Phase 02]`, `RECENT.md`, tracker 🔵), PR.
