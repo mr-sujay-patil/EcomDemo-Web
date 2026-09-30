@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Build output and caches
+dist/
+.vite/
+
+# Test output
+coverage/
+playwright-report/
+test-results/
+
+# Environment: real values stay local; .env.example is the committed template
+.env
+.env.*
+!.env.example
+
+# Editors
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.swp
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+*:Zone.Identifier
