@@ -26,12 +26,12 @@ Phase 0 (no PR by design; bootstrap commit `d6b0d66` on `main`): PASS on 2026-09
 - [x] Demo content removed; `src/features/catalog/ProductListPage.tsx`: name, INR price, category (`null` → "Other"); loading, empty, error (`ApiError.message` / `X-Correlation-Id`)
 - [x] Hand-written `ProductResponse` marked `// replaced by generated types in Phase 7`
 - [x] Scripts `dev`, `build`, `preview`, `typecheck`, `verify` = `typecheck && build`
-- [ ] README: prerequisites, `nvm use`, `npm ci`, backend from the read-only clone, `npm run dev`
+- [x] README: prerequisites, `nvm use`, `npm ci`, backend from the read-only clone, `npm run dev`
 - [ ] Testing protocol (dev + preview against the backend; backend-down error state; console clean) → `docs/test-reports/phase-01.md`
 - [ ] Docs: README, `decisions.md`, `docs/modules/catalog.md`, `RECENT.md`, tracker 🔵 → PR
 
 ## Next action
-Write and commit the README (prerequisites, `nvm use`, `npm ci`, backend from the read-only clone, `npm run dev`), then the testing protocol. Run everything through `. ~/.nvm/nvm.sh && nvm use` first.
+Run the testing protocol: `npm ci && npm run verify`; backend up from the read-only clone (if not running); check the page via `npm run dev` and `npm run preview` in Chrome (products listed, console clean); stop the backend and check the error state; write `docs/test-reports/phase-01.md`. Run everything through `. ~/.nvm/nvm.sh && nvm use` first.
 
 ## ⚠️ Environment notes (this machine)
 - One backend stack at a time: if `ecomdemo-gateway-service` is running, use it.
