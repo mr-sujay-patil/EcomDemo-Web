@@ -61,7 +61,7 @@ Status: ⬜ Not started · 🟡 In progress · 🔵 PR open · ✅ Done (verifie
 | 0 | [Repository Bootstrap](phases/phase-00-repo-bootstrap.md) | Git + GitHub + GitHub CLI | `main` | Foundation | none | ✅ |
 | 1 | [Baseline App](phases/phase-01-baseline-app.md) | Vite + React + TypeScript (strict) | `feature/phase-01-baseline-app` | Foundation | product list from `GET /api/products` via the dev proxy | ✅ |
 | 2 | [Automated Testing](phases/phase-02-testing.md) | Vitest + Testing Library + MSW | `feature/phase-02-testing` | Foundation | none (the API is mocked) | ✅ |
-| 3 | [End-to-End Smoke Tests](phases/phase-03-playwright.md) | Playwright | `feature/phase-03-playwright` | Foundation | backend compose stack at the pinned tag | 🔵 |
+| 3 | [End-to-End Smoke Tests](phases/phase-03-playwright.md) | Playwright | `feature/phase-03-playwright` | Foundation | backend compose stack at the pinned tag | ✅ |
 | 4 | [Code Quality](phases/phase-04-code-quality.md) | ESLint + Prettier | `feature/phase-04-code-quality` | Foundation | none | ⬜ |
 | 5 | [Continuous Integration](phases/phase-05-github-actions.md) | GitHub Actions | `feature/phase-05-github-actions` | Foundation | backend images for the E2E job (GHCR) | ⬜ |
 | 6 | [Routing](phases/phase-06-routing.md) | React Router | `feature/phase-06-routing` | Application shell | none | ⬜ |
