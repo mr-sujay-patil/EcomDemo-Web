@@ -1,0 +1,151 @@
+# Continuous integration: every pull request, and every push to main (which only ever happens
+# through a merged PR), must pass both jobs. From Phase 5 on, nothing is merged red.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# The GITHUB_TOKEN gets nothing by default; each job asks for the least it needs.
+permissions: {}
+
+# A newer push to the same PR makes the running check stale, so cancel it. Runs on main always finish.
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  verify:
+    name: verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      # Actions are pinned by commit SHA: a tag can be moved to other code, a SHA cannot.
+      - name: Check out the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Node from .nvmrc
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install exact dependencies
+        run: npm ci
+
+      # The same gate as on a laptop: typecheck, lint, format check, unit tests, build.
+      - name: Verify
+        run: npm run verify
+
+      - name: Measure coverage
+        run: npm run test:coverage
+
+      - name: Upload the coverage report
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 14
+
+  e2e:
+    name: e2e
+    runs-on: ubuntu-latest
+    # Building eight backend images from source is most of this; see docs/test-reports/phase-05.md.
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    env:
+      # The backend this app is tested against. Override with a repository variable when the pin moves.
+      BACKEND_TAG: ${{ vars.BACKEND_TAG || 'ki-001-fixed' }}
+    steps:
+      # The same side-by-side layout as a laptop, so e2e/global-setup.ts finds ../ecomdemo-backend-readonly.
+      - name: Check out the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          path: web
+          persist-credentials: false
+
+      - name: Check out the backend at ${{ env.BACKEND_TAG }} (read only)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: mr-sujay-patil/ecomdemo
+          ref: ${{ env.BACKEND_TAG }}
+          path: ecomdemo-backend-readonly
+          persist-credentials: false
+
+      # A throwaway signing key for this run only: nothing secret comes from this repository.
+      - name: Write the backend's .env
+        working-directory: ecomdemo-backend-readonly
+        run: |
+          secret="$(openssl rand -hex 32)"
+          echo "::add-mask::$secret"
+          cp .env.example .env
+          sed -i "s|^JWT_SECRET=.*|JWT_SECRET=$secret|" .env
+
+      # The backend publishes no per-service images to GHCR yet (web KI-015), so they are built here.
+      # When they exist, this step becomes `docker compose pull` followed by `up --wait`.
+      - name: Build and start the backend stack
+        working-directory: ecomdemo-backend-readonly
+        run: docker compose up --build --wait --wait-timeout 600
+
+      - name: Record the stack's footprint
+        if: ${{ !cancelled() }}
+        run: |
+          {
+            echo "### Backend stack on the runner ($BACKEND_TAG)"
+            echo '```'
+            nproc | sed 's/^/vCPUs: /'
+            free -m
+            docker stats --no-stream --format 'table {{.Name}}\t{{.MemUsage}}\t{{.CPUPerc}}'
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Set up Node from .nvmrc
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: web/.nvmrc
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install exact dependencies
+        working-directory: web
+        run: npm ci
+
+      - name: Install Chromium for Playwright
+        working-directory: web
+        run: npx playwright install --with-deps chromium
+
+      - name: Run the end-to-end suite
+        working-directory: web
+        run: npm run e2e
+
+      # Traces are recorded on the first retry (playwright.config.ts), so a failure always has one.
+      - name: Upload the Playwright report and traces
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-report
+          path: |
+            web/playwright-report/
+            web/test-results/
+          retention-days: 14
+
+      - name: Save the backend logs
+        if: ${{ failure() }}
+        working-directory: ecomdemo-backend-readonly
+        run: |
+          docker compose ps --all > ../backend-logs.txt
+          docker compose logs --no-color --timestamps >> ../backend-logs.txt
+
+      - name: Upload the backend logs
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: backend-logs
+          path: backend-logs.txt
+          retention-days: 14
