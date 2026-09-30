@@ -5,7 +5,7 @@
 - **Updated:** 2026-09-30
 - **Phase:** 1 — Baseline App
 - **Branch:** `feature/phase-01-baseline-app`
-- **Step:** IMPLEMENTING
+- **Step:** TESTING
   (NOT_STARTED | PREFLIGHT | BRANCHED | PLANNING | IMPLEMENTING | TESTING | PR_OPEN | VERIFYING | WAITING_FOR_USER)
 - **PR:** —
 - **Backend pinned at:** `ki-001-fixed` (read-only clone `../ecomdemo-backend-readonly`)
@@ -27,11 +27,11 @@ Phase 0 (no PR by design; bootstrap commit `d6b0d66` on `main`): PASS on 2026-09
 - [x] Hand-written `ProductResponse` marked `// replaced by generated types in Phase 7`
 - [x] Scripts `dev`, `build`, `preview`, `typecheck`, `verify` = `typecheck && build`
 - [x] README: prerequisites, `nvm use`, `npm ci`, backend from the read-only clone, `npm run dev`
-- [ ] Testing protocol (dev + preview against the backend; backend-down error state; console clean) → `docs/test-reports/phase-01.md`
-- [ ] Docs: README, `decisions.md`, `docs/modules/catalog.md`, `RECENT.md`, tracker 🔵 → PR
+- [x] Testing protocol (dev + preview against the backend; backend-down error state; console clean) → `docs/test-reports/phase-01.md` (all green; 360 px overflow of the support id found and fixed in `648b517`)
+- [x] Docs: README, `decisions.md`, `RECENT.md`, tracker 🔵 (`docs/modules/catalog.md` is Phase 8's, per `docs/modules/README.md`) → PR
 
 ## Next action
-Run the testing protocol: `npm ci && npm run verify`; backend up from the read-only clone (if not running); check the page via `npm run dev` and `npm run preview` in Chrome (products listed, console clean); stop the backend and check the error state; write `docs/test-reports/phase-01.md`. Run everything through `. ~/.nvm/nvm.sh && nvm use` first.
+Push the branch and open the PR `Phase 01: Baseline App` with the template filled in; add the PR number here (step PR_OPEN), commit, push, and stop with the Phase Review Report.
 
 ## ⚠️ Environment notes (this machine)
 - One backend stack at a time: if `ecomdemo-gateway-service` is running, use it.
