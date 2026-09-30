@@ -62,6 +62,21 @@ The first `npm run e2e` on a machine needs Playwright's Chromium: `npx playwrigh
 
 When you are done with the backend, stop it from the clone with `docker compose --profile tools down` (never `-v`, which deletes its data).
 
+## Continuous integration
+
+Every pull request, and every push to `main`, runs [`.github/workflows/ci.yml`](.github/workflows/ci.yml) on GitHub Actions. **A PR is merged only when both checks are green.**
+
+| Job | What it does |
+|---|---|
+| `verify` | `npm ci`, `npm run verify` and `npm run test:coverage` on the Node version in `.nvmrc`; the coverage report is saved as the run's `coverage` artifact |
+| `e2e` | Checks out the backend at `BACKEND_TAG` (default `ki-001-fixed`), builds and starts its compose stack with a throwaway `JWT_SECRET`, then runs `npm run e2e`. On failure it saves the Playwright report and traces (`playwright-report`) and the backend's logs (`backend-logs`) |
+
+The job builds the backend from source because its per-service images are not published yet ([web KI-015](docs/KNOWN_ISSUES.md)), so it takes a while. The runner's memory and each container's use are printed on the run's summary page. To test against a newer backend, set the repository variable `BACKEND_TAG` (Settings → Secrets and variables → Actions → Variables). Nothing secret is stored in this repository.
+
+A failed check links to its log from the PR. To open a failed E2E run's trace, download the `playwright-report` artifact, unzip it, and run `npx playwright show-report <folder>/playwright-report` (or `npx playwright show-trace` on a `trace.zip` under `test-results/`).
+
+Dependabot ([`.github/dependabot.yml`](.github/dependabot.yml)) opens weekly PRs: one for all npm minor and patch updates, one per major version, and one for the actions. It skips the TypeScript and ESLint upgrades held back on purpose (see `docs/decisions.md`, Phase 4).
+
 ## Where to start
 
 - [Roadmap and progress tracker](docs/ROADMAP.md)

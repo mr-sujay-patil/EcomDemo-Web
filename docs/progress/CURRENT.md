@@ -7,7 +7,7 @@
 - **Branch:** `feature/phase-05-github-actions`
 - **Step:** IMPLEMENTING
   (NOT_STARTED | PREFLIGHT | BRANCHED | PLANNING | IMPLEMENTING | TESTING | PR_OPEN | VERIFYING | WAITING_FOR_USER)
-- **PR:** none yet
+- **PR:** #5 (draft while CI is proven; mark ready at the stop)
 - **Backend pinned at:** `ki-001-fixed` (read-only clone `../ecomdemo-backend-readonly`)
 - **Waiting for user:** NO
 
@@ -22,9 +22,9 @@ Phase 4 (PR #4, merge commit `194e7e7`): PASS on 2026-10-01. PR state MERGED; br
 - The CI run on a PR needs the PR to exist: raise it as a **draft** once local checks pass, iterate CI there, do the Done-when throwaway commits (then `git revert`, no history rewrite), then mark it ready and stop.
 
 ## Checklist (from the phase file's "What you'll implement")
-- [ ] `.github/workflows/ci.yml` on every PR and push to `main`
-- [ ] **verify** job: Node from `.nvmrc` + npm cache, `npm ci`, `npm run verify`, coverage uploaded as an artifact
-- [ ] **e2e** job: backend checked out at `BACKEND_TAG` (default `ki-001-fixed`), compose stack up (GHCR where available; built from source today), generated `JWT_SECRET`, wait for health, `npm run e2e`; Playwright report + traces uploaded on failure; stack fit measured
+- [x] `.github/workflows/ci.yml` on every PR and push to `main`
+- [x] **verify** job: Node from `.nvmrc` + npm cache, `npm ci`, `npm run verify`, coverage uploaded as an artifact (run 36761255866: green, 31 s, `coverage` artifact 24.6 kB)
+- [x] **e2e** job: backend checked out at `BACKEND_TAG` (default `ki-001-fixed`), compose stack up (GHCR where available; built from source today), generated `JWT_SECRET`, wait for health, `npm run e2e`; Playwright report + traces uploaded on failure; stack fit measured (run 36761255866: green, 4 m 38 s total, backend build+start 3 m 30 s, 22 passed; footprint now also `tee`d to the log)
 - [x] Dependabot: npm (minor + patch grouped, weekly) and GitHub Actions; ignores TS minor/major and ESLint major (Phase 4 hold-backs)
 - [x] Actions pinned by commit SHA; minimal `permissions:` per job (actionlint + shellcheck clean)
 - [x] Web KI row for the missing per-service GHCR images → **KI-015**
@@ -32,7 +32,7 @@ Phase 4 (PR #4, merge commit `194e7e7`): PASS on 2026-10-01. PR state MERGED; br
 - [ ] Testing protocol → `docs/test-reports/phase-05.md` (CI run links); docs (README, `decisions.md`, `RECENT.md` rotated, tracker 🔵) → PR ready
 
 ## Next action
-`ci.yml` and `dependabot.yml` are committed (local verify green). Raise the **draft** PR, watch both CI jobs (`gh pr checks`), fix until green, then the Done-when throwaway commits.
+Done-when probes on PR #5: (1) `test: throwaway failing unit test` (`src/ciProbe.test.ts`) → expect `verify` red → `git revert` it; (2) a failing `e2e/ciProbe.spec.ts` → expect `e2e` red with the `playwright-report` artifact → `git revert`. Record run links, then write `docs/test-reports/phase-05.md`, add the Phase 05 summary to `RECENT.md` (Phase 03 already archived), tracker 🔵, fill the PR body from the template, `gh pr ready 5`, STOP. README and `decisions.md` are done.
 
 ## ⚠️ Environment notes (this machine)
 - One backend stack at a time: if `ecomdemo-gateway-service` is running, use it.
