@@ -44,7 +44,11 @@ npm run dev             # http://localhost:5173
 | `npm run build` | Production build into `dist/` |
 | `npm run preview` | Serves `dist/` on port 4173, with the same `/api` proxy |
 | `npm run typecheck` | `tsc -b`: strict type check of the app and the Vite config |
-| `npm run verify` | Everything a PR must pass: type check, then build |
+| `npm test` | Unit and component tests once (Vitest, network faked with MSW; no backend needed) |
+| `npm run test:coverage` | The tests with a V8 coverage report; fails below the thresholds in `vite.config.ts` |
+| `npm run verify` | Everything a PR must pass: type check, tests, then build |
+
+While writing tests, `npx vitest` re-runs them on every save. How tests are written: [testing guide](docs/process/testing-guide.md).
 
 When you are done with the backend, stop it from the clone with `docker compose --profile tools down` (never `-v`, which deletes its data).
 

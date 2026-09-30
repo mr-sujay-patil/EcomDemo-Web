@@ -1,3 +1,4 @@
+/// <reference types="vitest/config" />
 import { fileURLToPath } from 'node:url'
 import react from '@vitejs/plugin-react'
 import { defineConfig, loadEnv, type ProxyOptions } from 'vite'
@@ -22,5 +23,18 @@ export default defineConfig(({ mode }) => {
     },
     server: { port: 5173, strictPort: true, proxy },
     preview: { port: 4173, strictPort: true, proxy },
+    // Vitest reads this same file, so tests resolve `@/` and compile JSX exactly like the app.
+    test: {
+      environment: 'jsdom',
+      setupFiles: ['./src/test/setup.ts'],
+      include: ['src/**/*.test.{ts,tsx}'],
+      coverage: {
+        provider: 'v8',
+        include: ['src/**/*.{ts,tsx}'],
+        exclude: ['src/test/**', 'src/**/*.test.{ts,tsx}', 'src/main.tsx'],
+        // A floor, not a target: set to the measured values; later phases raise them, never lower them.
+        thresholds: { statements: 91.11, branches: 74.19, functions: 91.66, lines: 97.5 },
+      },
+    },
   }
 })
