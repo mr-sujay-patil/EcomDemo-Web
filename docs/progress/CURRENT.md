@@ -23,15 +23,15 @@ Phase 0 (no PR by design; bootstrap commit `d6b0d66` on `main`): PASS on 2026-09
 - [x] `.nvmrc` = latest Active LTS Node; `engines` to match
 - [x] TS `strict`, `noUncheckedIndexedAccess`, `noImplicitOverride`; alias `@/` → `src/`
 - [x] `vite.config.ts`: dev 5173, preview 4173, `/api` proxied to `API_TARGET ?? http://localhost:8080` for server and preview
-- [ ] Demo content removed; `src/features/catalog/ProductListPage.tsx`: name, INR price, category (`null` → "Other"); loading, empty, error (`ApiError.message` / `X-Correlation-Id`)
-- [ ] Hand-written `ProductResponse` marked `// replaced by generated types in Phase 7`
+- [x] Demo content removed; `src/features/catalog/ProductListPage.tsx`: name, INR price, category (`null` → "Other"); loading, empty, error (`ApiError.message` / `X-Correlation-Id`)
+- [x] Hand-written `ProductResponse` marked `// replaced by generated types in Phase 7`
 - [x] Scripts `dev`, `build`, `preview`, `typecheck`, `verify` = `typecheck && build`
 - [ ] README: prerequisites, `nvm use`, `npm ci`, backend from the read-only clone, `npm run dev`
 - [ ] Testing protocol (dev + preview against the backend; backend-down error state; console clean) → `docs/test-reports/phase-01.md`
 - [ ] Docs: README, `decisions.md`, `docs/modules/catalog.md`, `RECENT.md`, tracker 🔵 → PR
 
 ## Next action
-Commit the catalog page (`src/main.tsx`, `src/features/catalog/`), then the README. Run everything through `. ~/.nvm/nvm.sh && nvm use` first.
+Write and commit the README (prerequisites, `nvm use`, `npm ci`, backend from the read-only clone, `npm run dev`), then the testing protocol. Run everything through `. ~/.nvm/nvm.sh && nvm use` first.
 
 ## ⚠️ Environment notes (this machine)
 - One backend stack at a time: if `ecomdemo-gateway-service` is running, use it.
