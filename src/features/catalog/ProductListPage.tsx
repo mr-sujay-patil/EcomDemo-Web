@@ -44,8 +44,11 @@ function ProductListBody({ state }: { state: LoadState }) {
         <div role="alert">
           <p>{state.message}</p>
           {state.correlationId && (
+            // On its own line: an unbreakable UUID after the label overflows a 360 px screen.
             <p>
-              Reference for support: <code>{state.correlationId}</code>
+              Reference for support:
+              <br />
+              <code>{state.correlationId}</code>
             </p>
           )}
         </div>
