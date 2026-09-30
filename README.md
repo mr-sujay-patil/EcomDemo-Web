@@ -4,7 +4,7 @@ The storefront and admin console for the [EcomDemo backend](https://github.com/m
 
 The app talks to the backend only through its gateway (`http://localhost:8080`), against a pinned backend tag. The two repositories share a contract, not code.
 
-**Current status:** Phase 1 (Baseline App): one page lists the products from the running backend; no tests, routing or styling yet.
+**Current status:** Phase 3 (End-to-End Smoke Tests): one page lists the products from the running backend. Component tests (Vitest) and an end-to-end smoke suite (Playwright, against the real backend) guard it; no routing or styling yet.
 
 ## Prerequisites
 
@@ -43,12 +43,17 @@ npm run dev             # http://localhost:5173
 | `npm run dev` | Dev server with hot reload on port 5173 |
 | `npm run build` | Production build into `dist/` |
 | `npm run preview` | Serves `dist/` on port 4173, with the same `/api` proxy |
-| `npm run typecheck` | `tsc -b`: strict type check of the app and the Vite config |
+| `npm run typecheck` | `tsc -b`: strict type check of the app, the Vite and Playwright configs, and `e2e/` |
 | `npm test` | Unit and component tests once (Vitest, network faked with MSW; no backend needed) |
 | `npm run test:coverage` | The tests with a V8 coverage report; fails below the thresholds in `vite.config.ts` |
 | `npm run verify` | Everything a PR must pass: type check, tests, then build |
+| `npm run e2e` | End-to-end smoke tests: builds and previews the app on 4173, then drives it in Chromium against the real backend (it must be running). Every screen is also checked at 360–1280 px in light and dark |
+| `npm run e2e:ui` | The same tests in Playwright's UI mode, to watch and debug them step by step |
+| `npm run e2e:report` | Saves screenshots at 360 and 1280 px into `docs/test-reports/phase-XX/` (the phase comes from the branch, or `REPORT_PHASE=phase-XX`) |
 
 While writing tests, `npx vitest` re-runs them on every save. How tests are written: [testing guide](docs/process/testing-guide.md).
+
+The first `npm run e2e` on a machine needs Playwright's Chromium: `npx playwright install --with-deps chromium` (asks for `sudo` for the system libraries). If the backend is down, the run stops at once with one message saying so. When a test fails, `npx playwright show-report` opens the HTML report; `npx playwright test --trace on` records a trace of every test to step through.
 
 When you are done with the backend, stop it from the clone with `docker compose --profile tools down` (never `-v`, which deletes its data).
 
