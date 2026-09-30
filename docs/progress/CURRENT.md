@@ -5,11 +5,11 @@
 - **Updated:** 2026-09-30
 - **Phase:** 1 — Baseline App
 - **Branch:** `feature/phase-01-baseline-app`
-- **Step:** TESTING
+- **Step:** PR_OPEN
   (NOT_STARTED | PREFLIGHT | BRANCHED | PLANNING | IMPLEMENTING | TESTING | PR_OPEN | VERIFYING | WAITING_FOR_USER)
-- **PR:** —
+- **PR:** #1 https://github.com/mr-sujay-patil/EcomDemo-Web/pull/1
 - **Backend pinned at:** `ki-001-fixed` (read-only clone `../ecomdemo-backend-readonly`)
-- **Waiting for user:** NO
+- **Waiting for user:** YES: review and merge PR #1 (merge commit), then `merged, continue`
 
 ## Merge verification before this phase
 Phase 0 (no PR by design; bootstrap commit `d6b0d66` on `main`): PASS on 2026-09-30. Merge settings via `gh api` (merge commits only, no auto-delete); `main` ruleset with no bypass (see `[Phase 00]` in `decisions.md`); a direct push to `main` rejected (GH013); read-only clone at `ki-001-fixed`, push fails locally; backend up from the clone, `GET /api/products` 200; tag `phase-00-complete` pushed.
@@ -31,7 +31,7 @@ Phase 0 (no PR by design; bootstrap commit `d6b0d66` on `main`): PASS on 2026-09
 - [x] Docs: README, `decisions.md`, `RECENT.md`, tracker 🔵 (`docs/modules/catalog.md` is Phase 8's, per `docs/modules/README.md`) → PR
 
 ## Next action
-Push the branch and open the PR `Phase 01: Baseline App` with the template filled in; add the PR number here (step PR_OPEN), commit, push, and stop with the Phase Review Report.
+Stopped: PR #1 awaits review. On `merged, continue` (or `approved, merge it` → `gh pr merge 1 --merge`, never `--delete-branch`): merge verification per `git-workflow.md` step 5 on `main` (`npm ci && npm run verify`; no `npm run e2e` before Phase 3), tag `phase-01-complete`, then start Phase 2 (`docs/phases/phase-02-testing.md`).
 
 ## ⚠️ Environment notes (this machine)
 - One backend stack at a time: if `ecomdemo-gateway-service` is running, use it.
