@@ -5,11 +5,11 @@
 - **Updated:** 2026-10-01
 - **Phase:** 5 — Continuous Integration
 - **Branch:** `feature/phase-05-github-actions`
-- **Step:** PR_OPEN
+- **Step:** WAITING_FOR_USER
   (NOT_STARTED | PREFLIGHT | BRANCHED | PLANNING | IMPLEMENTING | TESTING | PR_OPEN | VERIFYING | WAITING_FOR_USER)
-- **PR:** #5 (draft while CI is proven; mark ready at the stop)
+- **PR:** #5, ready for review; CI green on `5cf58b5` (run 36812735407)
 - **Backend pinned at:** `ki-001-fixed` (read-only clone `../ecomdemo-backend-readonly`)
-- **Waiting for user:** NO
+- **Waiting for user:** YES: review of PR #5
 
 ## Merge verification before this phase
 Phase 4 (PR #4, merge commit `194e7e7`): PASS on 2026-10-01. PR state MERGED; branch tip `aa8d23a` is an ancestor of `origin/main`; `git log main..branch` and `git diff --stat` empty; branch exists locally and on GitHub; deliverables present on `main`; `npm ci && npm run verify` green (6/6) and `npm run e2e` 22/22 against `ki-001-fixed`. Tag `phase-04-complete` pushed.
@@ -32,7 +32,7 @@ Phase 4 (PR #4, merge commit `194e7e7`): PASS on 2026-10-01. PR state MERGED; br
 - [x] Testing protocol → `docs/test-reports/phase-05.md` (local verify 6/6, local e2e 22/22 on `ki-001-fixed`, final CI run 36812323590 green); README, `decisions.md`, `RECENT.md` (Phase 05 added), tracker 🔵
 
 ## Next action
-Fill the PR #5 body from the template, `gh pr ready 5`, confirm CI is green on the final head, set **Step: WAITING_FOR_USER**, STOP for review. Owner TODO to mention: make `verify` and `e2e` required status checks on `main`.
+Waiting for the owner to review PR #5. On `approved, merge it`: `gh pr merge 5 --merge` (no `--delete-branch`), then run merge verification (`docs/process/git-workflow.md`): `npm ci && npm run verify` and `npm run e2e` on `main`, tag `phase-05-complete`, tracker ✅. Owner TODO: make `verify` and `e2e` required status checks on `main`.
 
 ## ⚠️ Environment notes (this machine)
 - One backend stack at a time: if `ecomdemo-gateway-service` is running, use it.
