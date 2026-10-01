@@ -10,3 +10,7 @@ dist/
 coverage/
 playwright-report/
 test-results/
+
+# Backend contract snapshots and the types generated from them: tool output, never hand-edited
+api/
+src/api/generated/

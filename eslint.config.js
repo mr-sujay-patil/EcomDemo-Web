@@ -12,6 +12,9 @@ export default defineConfig([
   // design-system/ is the supplied component library, kept as delivered; Phase 9 decides how the app uses it.
   globalIgnores(['dist/', 'coverage/', 'playwright-report/', 'test-results/', 'design-system/']),
 
+  // Generated from the backend's OpenAPI snapshots by `npm run api:generate`: never hand-edited, so never linted.
+  globalIgnores(['src/api/generated/']),
+
   // Every file: ESLint's and typescript-eslint's recommended rules, the type-aware ones included.
   js.configs.recommended,
   tseslint.configs.recommendedTypeChecked,
@@ -56,6 +59,13 @@ export default defineConfig([
       // A screen's `ready(page)` (e2e/screens.ts) is made of `expect` calls, so a test that awaits it asserts.
       'playwright/expect-expect': ['error', { assertFunctionNames: ['ready'] }],
     },
+  },
+
+  // The API tooling (npm run api:*) runs in Node and reports to the terminal.
+  {
+    files: ['scripts/**'],
+    languageOptions: { globals: globals.node },
+    rules: { 'no-console': 'off' },
   },
 
   // Tool configs run in Node.
