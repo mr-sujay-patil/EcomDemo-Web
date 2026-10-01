@@ -5,7 +5,7 @@
 - **Updated:** 2026-10-01
 - **Phase:** 5 — Continuous Integration
 - **Branch:** `feature/phase-05-github-actions`
-- **Step:** IMPLEMENTING
+- **Step:** PR_OPEN
   (NOT_STARTED | PREFLIGHT | BRANCHED | PLANNING | IMPLEMENTING | TESTING | PR_OPEN | VERIFYING | WAITING_FOR_USER)
 - **PR:** #5 (draft while CI is proven; mark ready at the stop)
 - **Backend pinned at:** `ki-001-fixed` (read-only clone `../ecomdemo-backend-readonly`)
@@ -29,10 +29,10 @@ Phase 4 (PR #4, merge commit `194e7e7`): PASS on 2026-10-01. PR state MERGED; br
 - [x] Actions pinned by commit SHA; minimal `permissions:` per job (actionlint + shellcheck clean)
 - [x] Web KI row for the missing per-service GHCR images → **KI-015**
 - [x] Done when: a failing unit test and a failing E2E test each turn the PR red (throwaway commits, reverted): unit probe `6631321` → run 36762023177 `verify` red, `e2e` green, reverted `61d9163`; E2E probe `95a014e` → run 36763086075 `e2e` red (1 failed, 22 passed; `playwright-report` + `backend-logs` artifacts uploaded), `verify` green, reverted `aa0bb29`
-- [ ] Testing protocol → `docs/test-reports/phase-05.md` (CI run links); docs (README, `decisions.md`, `RECENT.md` rotated, tracker 🔵) → PR ready
+- [x] Testing protocol → `docs/test-reports/phase-05.md` (local verify 6/6, local e2e 22/22 on `ki-001-fixed`, final CI run 36812323590 green); README, `decisions.md`, `RECENT.md` (Phase 05 added), tracker 🔵
 
 ## Next action
-Confirm the CI run on the revert head (`aa0bb29`+checkpoint) is green on both jobs. Then follow `docs/process/testing-protocol.md`: write `docs/test-reports/phase-05.md` (run links above + the green run), add the Phase 05 summary to `RECENT.md` (Phase 03 already archived), tracker 🔵 in `docs/ROADMAP.md`, fill the PR #5 body from the template, `gh pr ready 5`, STOP. README and `decisions.md` are done.
+Fill the PR #5 body from the template, `gh pr ready 5`, confirm CI is green on the final head, set **Step: WAITING_FOR_USER**, STOP for review. Owner TODO to mention: make `verify` and `e2e` required status checks on `main`.
 
 ## ⚠️ Environment notes (this machine)
 - One backend stack at a time: if `ecomdemo-gateway-service` is running, use it.
