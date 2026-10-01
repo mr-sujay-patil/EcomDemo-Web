@@ -1,6 +1,13 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import { describeDifference, findDrift, formatDocument, services, sortKeys } from './openapi.ts'
+import {
+  assumeResponsePropertiesPresent,
+  describeDifference,
+  findDrift,
+  formatDocument,
+  services,
+  sortKeys,
+} from './openapi.ts'
 
 describe('formatDocument', () => {
   it('sorts keys at every depth, keeps array order, and ends with a newline', () => {
@@ -55,5 +62,49 @@ describe('the committed snapshots', () => {
     const text = readFileSync(`api/openapi/${service}.json`, 'utf8')
 
     expect(formatDocument(JSON.parse(text))).toBe(text)
+  })
+})
+
+describe('assumeResponsePropertiesPresent', () => {
+  const document = {
+    components: {
+      schemas: {
+        ProductResponse: { properties: { id: {}, category: { nullable: true } } },
+        LoginRequest: { required: ['username'], properties: { username: {}, password: {} } },
+        ProductUpsert: { properties: { name: {} } },
+        Cart: { required: ['id'], properties: { id: {}, total: {} } },
+        Empty: {},
+      },
+    },
+  }
+
+  const schemasOf = (input: object) =>
+    (
+      assumeResponsePropertiesPresent(input) as unknown as {
+        components: { schemas: Record<string, { required?: string[] }> }
+      }
+    ).components.schemas
+
+  it('lists every property of a response schema as required', () => {
+    const schemas = schemasOf(document)
+
+    expect(schemas.ProductResponse?.required).toEqual(['id', 'category'])
+  })
+
+  it('keeps the backend’s own required list, and leaves request schemas alone', () => {
+    const schemas = schemasOf(document)
+
+    expect(schemas.LoginRequest?.required).toEqual(['username'])
+    expect(schemas.Cart?.required).toEqual(['id'])
+    expect(schemas.ProductUpsert).not.toHaveProperty('required')
+    expect(schemas.Empty).not.toHaveProperty('required')
+  })
+
+  it('does not change the document it was given', () => {
+    const before = JSON.stringify(document)
+
+    assumeResponsePropertiesPresent(document)
+
+    expect(JSON.stringify(document)).toBe(before)
   })
 })

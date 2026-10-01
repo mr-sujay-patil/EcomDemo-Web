@@ -48,3 +48,25 @@ export function findDrift(service: Service, snapshot: string | null, liveDocumen
   if (snapshot === live) return null
   return { service, problem: describeDifference(snapshot, live) }
 }
+
+type Schema = { properties?: Record<string, unknown>; required?: string[] }
+type OpenApiDocument = { components?: { schemas?: Record<string, Schema> } }
+
+/** Schemas that describe what a client sends: their `required` arrays are the backend's own and are kept. */
+const requestSchemaName = /(Request|Upsert)$/
+
+/**
+ * The backend's documents mark no response property as required, so a generated type would make
+ * every field `price?: number`. The backend serialises every property of a response (Jackson's
+ * default includes nulls; nothing in the backend sets NON_NULL), so the types are generated from
+ * a copy of the snapshot in which each response schema lists all its properties as required.
+ * The snapshot itself stays exactly what the backend served. See web KI-016.
+ */
+export function assumeResponsePropertiesPresent<T>(document: T): T {
+  const copy = structuredClone(document) as OpenApiDocument
+  for (const [name, schema] of Object.entries(copy.components?.schemas ?? {})) {
+    if (schema.required !== undefined || requestSchemaName.test(name) || !schema.properties) continue
+    schema.required = Object.keys(schema.properties)
+  }
+  return copy as T
+}
