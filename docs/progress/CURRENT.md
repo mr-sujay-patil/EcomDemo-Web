@@ -3,22 +3,30 @@
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
 - **Updated:** 2026-10-01
-- **Phase:** chore: pin the backend to `phase-33-complete` (between Phase 5 and Phase 6)
-- **Branch:** `chore/pin-backend-phase-33`
-- **Step:** TESTING
+- **Phase:** 6 — Routing
+- **Branch:** `feature/phase-06-routing`
+- **Step:** WAITING_FOR_USER
   (NOT_STARTED | PREFLIGHT | BRANCHED | PLANNING | IMPLEMENTING | TESTING | PR_OPEN | VERIFYING | WAITING_FOR_USER)
-- **PR:** not yet
-- **Backend pinned at:** `phase-33-complete` (clone moved; the running stack on :8080 is NOT ours and still runs `ki-001-fixed`)
-- **Waiting for user:** NO
+- **PR:** #8 (CI running on the head)
+- **Backend pinned at:** `phase-33-complete` (clone moved; the stack running on :8080 is not ours and may still run `ki-001-fixed`: ask before replacing it)
+- **Waiting for user:** YES: review of PR #8
 
-## Merge verification before this work
-Phase 5 (PR #5, merge commit `701a9b3`): PASS on 2026-10-01. Branch tip `5cf58b5` is an ancestor of `origin/main`; `a768ebf` (a progress-file commit pushed 5 s after the merge) was deliberately dropped by the owner; `npm ci && npm run verify` 6/6 and `npm run e2e` 22/22 on `main` against `ki-001-fixed`; tag `phase-05-complete` pushed. Tracker ✅ is this branch's first commit.
+## Merge verification before this phase
+Phase 5 (PR #5, merge `701a9b3`) and the pin chore (PR #7, merge `ebc8a98`): PASS on 2026-10-01. `phase-05-complete` pushed; `verify` green on `main`; CI green on `ebc8a98`. `a768ebf` (post-merge progress commit) deliberately dropped by the owner.
 
-## Scope (owner approved, 2026-10-01)
-Move the pin to `phase-33-complete` (docs, CI `BACKEND_TAG` + generated `.env`), record the keep-the-proxy decision, add `docs/backend/phase-33-delta.md`. NOT in scope: the login form, API types (Phases 7 and 11).
+## Checklist (from the phase file's "What you'll implement")
+- [x] `src/app/router.tsx` (data router) with every route in the phase file; placeholders with final `h1` + one line naming the building phase; product list moves to `/`
+- [x] Layout: header (store name, search and cart placeholders), main with "Skip to content", footer; `TODO(owner)` values only in `src/content/site.ts`
+- [x] `/about`, `/returns`, `/shipping`: final headings and structure, every paragraph a `TODO(owner)`
+- [x] Document titles per route (`EcomDemo · Your cart`), focus to the page `h1` on navigation, scroll restored
+- [x] `lazy` route-level code splitting for `/admin/*`, `/checkout` and the assistant
+- [x] Tests: every route renders its `h1`; 404; skip link moves focus; footer links resolve
+- [x] `docs/architecture/routing.md` (route table and why each route exists)
+- [x] E2E additions: every route by deep link and by navigation; the 404; keyboard skip link; layout matrix covers every route
+- [x] Testing protocol → `docs/test-reports/phase-06.md`; README, `decisions.md`, `RECENT.md` rotated (Phase 04 to archive), tracker 🔵 → PR → STOP
 
 ## Next action
-Push, open the PR, and read the `e2e` job on it: it builds the backend at `phase-33-complete` with the generated signing key and secrets. Ask the owner before replacing the running stack for a local rerun. Then `npm run verify`, write the PR body (fix-style: results in the description), `gh pr ready`, STOP.
+Confirm CI is green on the head of PR #8. Then wait for the owner's review. On `approved, merge it`: `gh pr merge 8 --merge` (no `--delete-branch`), merge verification on `main`, tag `phase-06-complete`. Next phase only on `continue` (Phase 7: typed API client; its Requires and the Phase 33 delta checklist are in `docs/backend/phase-33-delta.md`).
 
 ## ⚠️ Environment notes (this machine)
 - One backend stack at a time: if `ecomdemo-gateway-service` is running, use it.

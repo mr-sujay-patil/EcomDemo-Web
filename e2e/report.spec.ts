@@ -16,7 +16,7 @@ function reportDirectory(): string {
 
 // Run with `npm run e2e:report`. Regenerates the screenshots every test report links to, the same way each phase.
 test.describe('@report screenshots', () => {
-  for (const screen of screens) {
+  for (const screen of screens.filter((candidate) => candidate.report !== false)) {
     for (const colorScheme of colorSchemes) {
       for (const width of [360, 1280]) {
         test.describe(`${screen.name} at ${width} px, ${colorScheme}`, () => {

@@ -62,6 +62,10 @@ The first `npm run e2e` on a machine needs Playwright's Chromium: `npx playwrigh
 
 When you are done with the backend, stop it from the clone with `docker compose --profile tools down` (never `-v`, which deletes its data).
 
+## Routes
+
+Routing is React Router's data router: the table is in `src/app/router.tsx` and explained in [`docs/architecture/routing.md`](docs/architecture/routing.md). Every screen has a URL (`/`, `/cart`, `/about`, ...); pages a later phase builds show a placeholder naming that phase. The store's operator, contact email and ship-from city are `TODO(owner)` values in `src/content/site.ts`, shown in the footer until you fill them in, and the words on `/about`, `/returns`, `/shipping`, `/privacy` and `/terms` are `TODO(owner)` paragraphs in `src/features/content/`.
+
 ## Continuous integration
 
 Every pull request, and every push to `main`, runs [`.github/workflows/ci.yml`](.github/workflows/ci.yml) on GitHub Actions. **A PR is merged only when both checks are green.**

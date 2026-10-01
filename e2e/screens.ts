@@ -11,7 +11,29 @@ export type Screen = {
   ready: (page: Page) => Promise<void>
   /** Console errors this screen causes on purpose (see `allowedConsoleErrors`). */
   allowedConsoleErrors?: RegExp[]
+  /** False for screens that look like another one (the placeholders): the report skips their screenshots. */
+  report?: boolean
 }
+
+/** Every route of src/app/router.tsx, as a user would reach it: the path, the h1 and the document title. */
+export const routePages = [
+  { name: 'product-detail', path: '/products/7', h1: 'Product', title: 'Product', report: false },
+  { name: 'search', path: '/search', h1: 'Search', title: 'Search', report: false },
+  { name: 'cart', path: '/cart', h1: 'Your cart', title: 'Your cart', report: true },
+  { name: 'checkout', path: '/checkout', h1: 'Checkout', title: 'Checkout', report: false },
+  { name: 'orders', path: '/orders', h1: 'Your orders', title: 'Your orders', report: false },
+  { name: 'order-detail', path: '/orders/42', h1: 'Order', title: 'Order', report: false },
+  { name: 'account', path: '/account', h1: 'Your account', title: 'Your account', report: false },
+  { name: 'sign-in', path: '/sign-in', h1: 'Sign in', title: 'Sign in', report: false },
+  { name: 'register', path: '/register', h1: 'Create an account', title: 'Create an account', report: false },
+  { name: 'admin', path: '/admin', h1: 'Admin', title: 'Admin', report: false },
+  { name: 'about', path: '/about', h1: 'About', title: 'About', report: true },
+  { name: 'returns', path: '/returns', h1: 'Returns', title: 'Returns', report: false },
+  { name: 'shipping', path: '/shipping', h1: 'Shipping', title: 'Shipping', report: false },
+  { name: 'privacy', path: '/privacy', h1: 'Privacy', title: 'Privacy', report: false },
+  { name: 'terms', path: '/terms', h1: 'Terms', title: 'Terms', report: false },
+  { name: 'not-found', path: '/no/such/page', h1: 'Page not found', title: 'Page not found', report: true },
+] as const
 
 /** Aborting a request makes Chrome log this console error itself; the app logs nothing. */
 export const abortedRequestError = /Failed to load resource: net::ERR_FAILED/
@@ -42,6 +64,14 @@ export const screens: Screen[] = [
     },
     allowedConsoleErrors: [abortedRequestError],
   },
+  ...routePages.map(({ name, path, h1, report }): Screen => ({
+    name,
+    path,
+    report,
+    ready: async (page) => {
+      await expect(page.getByRole('heading', { level: 1, name: h1 })).toBeVisible()
+    },
+  })),
 ]
 
 export const widths = [360, 480, 768, 1024, 1280] as const
