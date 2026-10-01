@@ -33,7 +33,7 @@ export default defineConfig(({ mode }) => {
         include: ['src/**/*.{ts,tsx}'],
         exclude: ['src/test/**', 'src/**/*.test.{ts,tsx}', 'src/main.tsx'],
         // A floor, not a target: set to the measured values; later phases raise them, never lower them.
-        thresholds: { statements: 98.02, branches: 89.77, functions: 100, lines: 99.21 },
+        thresholds: { statements: 99.13, branches: 92.68, functions: 100, lines: 100 },
       },
     },
   }

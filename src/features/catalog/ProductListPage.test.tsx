@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { createEvent, fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
@@ -184,6 +184,17 @@ describe('filter and sort, kept in the URL', () => {
     expect(await screen.findByText('No products match.')).toBeInTheDocument()
     expect(screen.getByRole('combobox', { name: 'Category' })).toHaveValue('Gone')
     expect(screen.getByRole('link', { name: 'Show all products' })).toHaveAttribute('href', '/')
+  })
+
+  it('never submits the filter form: the controls act as they change', async () => {
+    renderRoute('/')
+    await screen.findByRole('heading', { name: 'Test Kettle' })
+    const form = screen.getByRole('form', { name: 'Filter and sort the products' })
+
+    const submit = createEvent.submit(form)
+    fireEvent(form, submit)
+
+    expect(submit.defaultPrevented).toBe(true)
   })
 
   it('follows the browser’s back button through filter changes', async () => {

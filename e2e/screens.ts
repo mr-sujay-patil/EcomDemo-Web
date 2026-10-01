@@ -17,7 +17,8 @@ export type Screen = {
 
 /** Every route of src/app/router.tsx, as a user would reach it: the path, the h1 and the document title. */
 export const routePages = [
-  { name: 'product-detail', path: '/products/7', h1: 'Product', title: 'Product', report: false },
+  // Seeded by the backend's migration (catalog-service V2__seed_products.sql), as in e2e/catalog.spec.ts.
+  { name: 'product-detail', path: '/products/1', h1: 'Mechanical Keyboard', title: 'Product', report: true },
   { name: 'search', path: '/search', h1: 'Search', title: 'Search', report: false },
   { name: 'cart', path: '/cart', h1: 'Your cart', title: 'Your cart', report: true },
   { name: 'checkout', path: '/checkout', h1: 'Checkout', title: 'Checkout', report: false },
@@ -37,6 +38,9 @@ export const routePages = [
 
 /** Aborting a request makes Chrome log this console error itself; the app logs nothing. */
 export const abortedRequestError = /Failed to load resource: net::ERR_FAILED/
+
+/** The browser logs a 404 response itself, even though the app handles it. */
+export const notFoundResponseError = /Failed to load resource: the server responded with a status of 404/
 
 /** Makes every product request fail as if the gateway were unreachable. */
 export async function gatewayUnreachable(page: Page) {
@@ -63,6 +67,14 @@ export const screens: Screen[] = [
       await expect(page.getByRole('alert')).toBeVisible()
     },
     allowedConsoleErrors: [abortedRequestError],
+  },
+  {
+    name: 'product-not-found',
+    path: '/products/999999999',
+    ready: async (page) => {
+      await expect(page.getByRole('heading', { level: 1, name: 'No longer available' })).toBeVisible()
+    },
+    allowedConsoleErrors: [notFoundResponseError],
   },
   ...routePages.map(({ name, path, h1, report }): Screen => ({
     name,
