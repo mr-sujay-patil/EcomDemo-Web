@@ -3,30 +3,32 @@
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
 - **Updated:** 2026-10-01
-- **Phase:** 6 — Routing
-- **Branch:** `feature/phase-06-routing`
-- **Step:** WAITING_FOR_USER
+- **Phase:** 7 — Typed API Client
+- **Branch:** `feature/phase-07-api-client`
+- **Step:** IMPLEMENTING
   (NOT_STARTED | PREFLIGHT | BRANCHED | PLANNING | IMPLEMENTING | TESTING | PR_OPEN | VERIFYING | WAITING_FOR_USER)
-- **PR:** #8 (CI running on the head)
-- **Backend pinned at:** `phase-33-complete` (clone moved; the stack running on :8080 is not ours and may still run `ki-001-fixed`: ask before replacing it)
-- **Waiting for user:** YES: review of PR #8
+- **PR:** not yet
+- **Backend pinned at:** `phase-33-complete`. Needs the stack up for `api:snapshot`, `api:check`, `e2e`: if `ecomdemo-gateway-service` is running use it, else start it from the clone and stop it after (never `-v`).
+- **Waiting for user:** NO
 
 ## Merge verification before this phase
-Phase 5 (PR #5, merge `701a9b3`) and the pin chore (PR #7, merge `ebc8a98`): PASS on 2026-10-01. `phase-05-complete` pushed; `verify` green on `main`; CI green on `ebc8a98`. `a768ebf` (post-merge progress commit) deliberately dropped by the owner.
+Phase 6 (PR #8, merge `98465e2`): PASS on 2026-10-01. PR MERGED; branch tip `52e51c9` is an ancestor of `origin/main`; `git log` and `git diff --stat` empty; branch kept; `npm ci && npm run verify` 38/38 and `npm run e2e` 206/206 on `main` against `phase-33-complete`; tag `phase-06-complete` pushed. Tracker ✅ is this branch's first commit.
 
 ## Checklist (from the phase file's "What you'll implement")
-- [x] `src/app/router.tsx` (data router) with every route in the phase file; placeholders with final `h1` + one line naming the building phase; product list moves to `/`
-- [x] Layout: header (store name, search and cart placeholders), main with "Skip to content", footer; `TODO(owner)` values only in `src/content/site.ts`
-- [x] `/about`, `/returns`, `/shipping`: final headings and structure, every paragraph a `TODO(owner)`
-- [x] Document titles per route (`EcomDemo · Your cart`), focus to the page `h1` on navigation, scroll restored
-- [x] `lazy` route-level code splitting for `/admin/*`, `/checkout` and the assistant
-- [x] Tests: every route renders its `h1`; 404; skip link moves focus; footer links resolve
-- [x] `docs/architecture/routing.md` (route table and why each route exists)
-- [x] E2E additions: every route by deep link and by navigation; the 404; keyboard skip link; layout matrix covers every route
-- [x] Testing protocol → `docs/test-reports/phase-06.md`; README, `decisions.md`, `RECENT.md` rotated (Phase 04 to archive), tracker 🔵 → PR → STOP
+- [ ] `npm run api:snapshot` → `api/openapi/<service>.json` (5 services, pretty, key-sorted), own commit `chore(api): regenerate from backend phase-33-complete`
+- [ ] `npm run api:generate` → `src/api/generated/<service>.ts`
+- [ ] `npm run api:check` (live vs snapshot, fails on any diff); first step of `npm run e2e`
+- [ ] `src/api/client.ts`: one openapi-fetch client per service on `/api`; middleware: Bearer from an injected provider (empty now), new `X-Correlation-Id` per request, failures → `ApiError { status, message, correlationId, retryAfter? }`
+- [ ] Field-error helper (split 400 `message` on `"; "`, match leading field name; guide section 4)
+- [ ] Retry policy in one place (no mutation retry; GET once on 429 after back-off/`Retry-After`; GET once on network error; no other 4xx)
+- [ ] Access rules from the guide's tables (web KI-011)
+- [ ] Replace Phase 1's hand-written type; MSW handlers typed from the generated types
+- [ ] Tests: 400 fields, 401, 403, 404, 409, 429 (GET retried once), 500 (correlation id kept), network failure; `api:check` fails on a changed snapshot
+- [ ] Done when: a field renamed in a snapshot fails `npm run verify` at compile time (shown, reverted); `api:check` passes
+- [ ] Testing protocol → `docs/test-reports/phase-07.md`; `docs/architecture/api-layer.md`; README, `decisions.md`, `RECENT.md` rotated (Phase 05 to archive), tracker 🔵 → PR → STOP
 
 ## Next action
-Confirm CI is green on the head of PR #8. Then wait for the owner's review. On `approved, merge it`: `gh pr merge 8 --merge` (no `--delete-branch`), merge verification on `main`, tag `phase-06-complete`. Next phase only on `continue` (Phase 7: typed API client; its Requires and the Phase 33 delta checklist are in `docs/backend/phase-33-delta.md`).
+Read `docs/backend/integration-guide.md` section 4 (errors) and the phase-33 delta (`docs/backend/phase-33-delta.md`: login 429 + `Retry-After` is documented on the customer document), find the five document URLs through the gateway, then add `openapi-typescript` and `openapi-fetch` (exact, latest stable).
 
 ## ⚠️ Environment notes (this machine)
 - One backend stack at a time: if `ecomdemo-gateway-service` is running, use it.
