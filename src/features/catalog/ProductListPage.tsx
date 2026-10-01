@@ -28,10 +28,10 @@ export function ProductListPage() {
   }, [])
 
   return (
-    <main>
+    <>
       <h1>Products</h1>
       <ProductListBody state={state} />
-    </main>
+    </>
   )
 }
 
