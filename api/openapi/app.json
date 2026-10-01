@@ -1,0 +1,1281 @@
+{
+  "components": {
+    "schemas": {
+      "AddCartItemRequest": {
+        "description": "A product and how many of it to put in the cart.",
+        "properties": {
+          "productId": {
+            "description": "Id of an existing product; unknown ids give 404.",
+            "example": 1,
+            "format": "int64",
+            "type": "integer"
+          },
+          "quantity": {
+            "description": "Units to add. Adding a product already in the cart adds to its quantity.",
+            "example": 2,
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "productId",
+          "quantity"
+        ],
+        "type": "object"
+      },
+      "ApiError": {
+        "description": "The shape every failing request returns.",
+        "properties": {
+          "message": {
+            "description": "A human-readable explanation. Validation failures list every rejected field, separated by '; '.",
+            "example": "Product 42 not found",
+            "type": "string"
+          },
+          "status": {
+            "description": "The HTTP status code, repeated in the body so a client that only logs the body still has it.",
+            "example": 404,
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "CartItemResponse": {
+        "description": "One line of the cart.",
+        "properties": {
+          "lineTotal": {
+            "description": "unitPrice x quantity, calculated on the server.",
+            "example": 17998,
+            "type": "number"
+          },
+          "productId": {
+            "example": 1,
+            "format": "int64",
+            "type": "integer"
+          },
+          "productName": {
+            "description": "Read live from the catalogue, so a rename shows up here immediately.",
+            "example": "Mechanical Keyboard",
+            "type": "string"
+          },
+          "quantity": {
+            "example": 2,
+            "format": "int32",
+            "type": "integer"
+          },
+          "unitPrice": {
+            "description": "The catalogue price right now, not a snapshot. It is fixed only at checkout.",
+            "example": 8999,
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "CartResponse": {
+        "description": "The single shared cart. Every cart endpoint returns the whole cart after its change.",
+        "properties": {
+          "id": {
+            "description": "Id of the one shared cart, created on first use.",
+            "example": 1,
+            "format": "int64",
+            "type": "integer"
+          },
+          "items": {
+            "description": "One entry per product. Empty for a new or just-checked-out cart.",
+            "items": {
+              "$ref": "#/components/schemas/CartItemResponse"
+            },
+            "type": "array"
+          },
+          "totalAmount": {
+            "description": "The sum of every lineTotal, calculated on the server.",
+            "example": 17998,
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "DeadLetterView": {
+        "description": "A saga event that could not be processed and was moved to a dead-letter topic",
+        "properties": {
+          "exceptionClass": {
+            "description": "The exception that dead-lettered it",
+            "type": "string"
+          },
+          "exceptionMessage": {
+            "description": "The exception's message",
+            "type": "string"
+          },
+          "key": {
+            "description": "The record key: the order id, for every saga event",
+            "example": "4812",
+            "type": "string"
+          },
+          "offset": {
+            "description": "Its offset: with topic and partition, the record's address",
+            "example": 3,
+            "format": "int64",
+            "type": "integer"
+          },
+          "originalTopic": {
+            "description": "The topic it failed on, where a replay sends it",
+            "example": "inventory.stock-reserved",
+            "type": "string"
+          },
+          "partition": {
+            "description": "Its partition",
+            "example": 0,
+            "format": "int32",
+            "type": "integer"
+          },
+          "payload": {
+            "description": "The record's value as text, truncated to 2000 characters",
+            "type": "string"
+          },
+          "replayed": {
+            "description": "Whether it has already been replayed (see the replay log)",
+            "type": "boolean"
+          },
+          "timestamp": {
+            "description": "When it was written to the dead-letter topic",
+            "format": "date-time",
+            "type": "string"
+          },
+          "topic": {
+            "description": "The dead-letter topic",
+            "example": "inventory.stock-reserved-dlt",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "JobExecutionResponse": {
+        "properties": {
+          "endTime": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "exitCode": {
+            "type": "string"
+          },
+          "failureMessage": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "instanceId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "jobName": {
+            "type": "string"
+          },
+          "readCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "skipCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "startTime": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "steps": {
+            "items": {
+              "$ref": "#/components/schemas/StepExecutionResponse"
+            },
+            "type": "array"
+          },
+          "writeCount": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "OrderItemResponse": {
+        "description": "One line of a placed order, frozen at checkout time.",
+        "properties": {
+          "lineTotal": {
+            "description": "unitPrice x quantity.",
+            "example": 17998,
+            "type": "number"
+          },
+          "productId": {
+            "description": "The product ordered. It is only a reference: the product may since have been deleted.",
+            "example": 1,
+            "format": "int64",
+            "type": "integer"
+          },
+          "productName": {
+            "description": "The name as it was at checkout, copied into the order on purpose.",
+            "example": "Mechanical Keyboard",
+            "type": "string"
+          },
+          "quantity": {
+            "example": 2,
+            "format": "int32",
+            "type": "integer"
+          },
+          "unitPrice": {
+            "description": "The price paid. It does not follow later catalogue changes.",
+            "example": 8999,
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "OrderResponse": {
+        "description": "An order. Its lines and total never change; its status moves once, from PENDING to CONFIRMED or CANCELLED, as the saga completes.",
+        "properties": {
+          "id": {
+            "description": "Generated identifier.",
+            "example": 1,
+            "format": "int64",
+            "type": "integer"
+          },
+          "items": {
+            "description": "The cart lines, copied into the order.",
+            "items": {
+              "$ref": "#/components/schemas/OrderItemResponse"
+            },
+            "type": "array"
+          },
+          "placedAt": {
+            "description": "When checkout succeeded, UTC.",
+            "example": "2026-09-21T18:30:00Z",
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "description": "PENDING when checkout returns; CONFIRMED once stock is reserved and payment taken; CANCELLED if either failed. Poll GET /api/orders/{id}/status for the change.",
+            "enum": [
+              "PENDING",
+              "CONFIRMED",
+              "CANCELLED"
+            ],
+            "example": "PENDING",
+            "type": "string"
+          },
+          "statusChangedAt": {
+            "description": "When the order left PENDING, UTC; null while PENDING.",
+            "example": "2026-09-21T18:30:03Z",
+            "format": "date-time",
+            "type": "string"
+          },
+          "statusReason": {
+            "description": "Why the order was cancelled; null unless CANCELLED.",
+            "example": "Payment declined: 12000.00 exceeds the limit of 10000.00",
+            "type": "string"
+          },
+          "totalAmount": {
+            "description": "The cart total at checkout, stored with the order.",
+            "example": 17998,
+            "type": "number"
+          },
+          "username": {
+            "description": "The username of the account that placed it. Present so that a client can tell whose order it is looking at, and because the ownership rule on GET /api/orders/{id} is expressed in terms of it.",
+            "example": "asha",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "OrderStatusResponse": {
+        "description": "Where an order stands in the saga.",
+        "properties": {
+          "changedAt": {
+            "description": "When it left PENDING, UTC; null while PENDING.",
+            "example": "2026-09-21T18:30:03Z",
+            "format": "date-time",
+            "type": "string"
+          },
+          "orderId": {
+            "description": "The order's id.",
+            "example": 42,
+            "format": "int64",
+            "type": "integer"
+          },
+          "reason": {
+            "description": "Why it was cancelled; null unless CANCELLED.",
+            "example": "Insufficient stock for 'Mouse': requested 3, available 2",
+            "type": "string"
+          },
+          "status": {
+            "description": "PENDING, CONFIRMED or CANCELLED.",
+            "enum": [
+              "PENDING",
+              "CONFIRMED",
+              "CANCELLED"
+            ],
+            "example": "CONFIRMED",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ProductImportResponse": {
+        "properties": {
+          "errorFile": {
+            "type": "string"
+          },
+          "execution": {
+            "$ref": "#/components/schemas/JobExecutionResponse"
+          },
+          "inputFile": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "ReplayView": {
+        "description": "A dead-lettered record that was sent back to its topic, and who did it",
+        "properties": {
+          "dltOffset": {
+            "description": "Its offset there",
+            "example": 3,
+            "format": "int64",
+            "type": "integer"
+          },
+          "dltPartition": {
+            "description": "Its partition there",
+            "example": 0,
+            "format": "int32",
+            "type": "integer"
+          },
+          "dltTopic": {
+            "description": "The dead-letter topic it was read from",
+            "example": "inventory.stock-reserved-dlt",
+            "type": "string"
+          },
+          "key": {
+            "description": "The record key (the order id)",
+            "example": "4812",
+            "type": "string"
+          },
+          "originalTopic": {
+            "description": "The topic it was replayed to",
+            "example": "inventory.stock-reserved",
+            "type": "string"
+          },
+          "replayedAt": {
+            "description": "When",
+            "format": "date-time",
+            "type": "string"
+          },
+          "replayedBy": {
+            "description": "The administrator who replayed it",
+            "example": "admin",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "StepExecutionResponse": {
+        "properties": {
+          "commitCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "readCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "rollbackCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "skipCount": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "status": {
+            "type": "string"
+          },
+          "writeCount": {
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "UpdateCartItemRequest": {
+        "description": "The new absolute quantity for a line already in the cart.",
+        "properties": {
+          "quantity": {
+            "description": "Replaces the current quantity; it is not added to it. Use DELETE to remove a line.",
+            "example": 3,
+            "format": "int32",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "quantity"
+        ],
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "bearerFormat": "JWT",
+        "description": "A signed JWT from POST /api/auth/login, sent as `Authorization: Bearer <token>`. \"Bearer\" is meant literally: whoever holds it is the account, so it is only safe over TLS or, as here, on localhost. It expires after 15 minutes and cannot be revoked before then.",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "contact": {
+      "name": "EcomDemo",
+      "url": "https://github.com/mr-sujay-patil/ecomdemo"
+    },
+    "description": "Your cart, checkout and orders (a CUSTOMER each has their own; checkout empties the cart), plus the ADMIN tools: batch product import and saga dead-letter replay.\n\n**Conventions**\n\n- Every endpoint lives under `/api` and is reached through the gateway. A service's own port is not for clients.\n- Money is a decimal with two places; totals are always calculated on the server and never taken from the request.\n- Endpoints marked with a padlock need a token. Call `POST /api/auth/login` (the **customer** document), copy the `accessToken`, and paste it into **Authorize** above - then \"Try it out\" sends it as `Authorization: Bearer <token>`.\n- Every failure returns the same shape, `{\"status\": <code>, \"message\": <text>}` - see the `ApiError` schema.\n",
+    "license": {
+      "name": "MIT"
+    },
+    "title": "EcomDemo Orders API",
+    "version": "v1"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/admin/batch/executions/{id}": {
+      "get": {
+        "description": "Reads the run back out of the JobRepository, so it works for a job that ran days ago or in another instance of the application.",
+        "operationId": "execution",
+        "parameters": [
+          {
+            "description": "JobExecution id",
+            "example": 1,
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobExecutionResponse"
+                }
+              }
+            },
+            "description": "The execution"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No execution with that id"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Look up one job execution",
+        "tags": [
+          "Batch"
+        ]
+      }
+    },
+    "/api/admin/batch/executions/{id}/restart": {
+      "post": {
+        "description": "Runs the same import again against the same file. Spring Batch resumes from the last committed chunk rather than from the first row, so the rows already imported are not re-read. Fix the offending rows in place first — leave the line numbering alone, because the saved position is a line count.",
+        "operationId": "restart",
+        "parameters": [
+          {
+            "description": "JobExecution id of the failed run",
+            "example": 1,
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductImportResponse"
+                }
+              }
+            },
+            "description": "The restarted run"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No execution with that id"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "That execution is not a failed product import"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Restart a failed import",
+        "tags": [
+          "Batch"
+        ]
+      }
+    },
+    "/api/admin/batch/product-import": {
+      "post": {
+        "description": "Runs the import job against the uploaded file and returns when it has finished. The CSV must have the header `name,description,price,stock_quantity,category`. A row whose name matches an existing product updates it; anything else is created. Rows that fail validation are skipped up to the configured limit and listed in the error file named in the response.",
+        "operationId": "importProducts",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "properties": {
+                  "file": {
+                    "description": "The CSV file to import",
+                    "format": "binary",
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "file"
+                ],
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductImportResponse"
+                }
+              }
+            },
+            "description": "The job ran; the body says how it ended"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Not an ADMIN"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Import products from a CSV file",
+        "tags": [
+          "Batch"
+        ]
+      }
+    },
+    "/api/admin/dead-letters": {
+      "get": {
+        "description": "Reads the five saga dead-letter topics from the beginning, every time: a dead-letter topic is a record of what went wrong, not a queue to drain. At most 500 records.",
+        "operationId": "list_1",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/DeadLetterView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Every record waiting, with why it is there"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Not an ADMIN"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List dead-lettered saga events",
+        "tags": [
+          "Dead letters"
+        ]
+      }
+    },
+    "/api/admin/dead-letters/replays": {
+      "get": {
+        "description": "Every replay, newest first (the latest 200): which record, where it went, who, when.",
+        "operationId": "replays",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ReplayView"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The audit trail"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Not an ADMIN"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "The replay log",
+        "tags": [
+          "Dead letters"
+        ]
+      }
+    },
+    "/api/admin/dead-letters/{topic}/{partition}/{offset}/replay": {
+      "post": {
+        "description": "Sends the record back to the topic it failed on, byte for byte, and records who did it. Safe to do: saga consumers ignore an event they have already handled, and an order the saga deadline has decided is fenced against late events. A record can be replayed once.",
+        "operationId": "replay",
+        "parameters": [
+          {
+            "description": "The dead-letter topic",
+            "example": "inventory.stock-reserved-dlt",
+            "in": "path",
+            "name": "topic",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "description": "The record's partition",
+            "example": 0,
+            "in": "path",
+            "name": "partition",
+            "required": true,
+            "schema": {
+              "format": "int32",
+              "type": "integer"
+            }
+          },
+          {
+            "description": "The record's offset",
+            "example": 3,
+            "in": "path",
+            "name": "offset",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReplayView"
+                }
+              }
+            },
+            "description": "Replayed; the audit entry"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Not an ADMIN"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Not a saga dead-letter topic, or no record at that position"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "That record has already been replayed"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Replay one dead-lettered event",
+        "tags": [
+          "Dead letters"
+        ]
+      }
+    },
+    "/api/cart": {
+      "get": {
+        "description": "Creates your cart on first call, so this never returns 404.",
+        "operationId": "view",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartResponse"
+                }
+              }
+            },
+            "description": "The cart, empty if nothing has been added"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No Bearer token, or one that is invalid or expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Authenticated, but not as a CUSTOMER"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "View your cart",
+        "tags": [
+          "Cart"
+        ]
+      }
+    },
+    "/api/cart/items": {
+      "post": {
+        "description": "Adding a product already in the cart increases that line rather than creating a second one.",
+        "operationId": "addItem",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AddCartItemRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartResponse"
+                }
+              }
+            },
+            "description": "The cart after the addition"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "productId or quantity is missing, or quantity is below 1"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No product with that id"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Add a product to the cart",
+        "tags": [
+          "Cart"
+        ]
+      }
+    },
+    "/api/cart/items/{productId}": {
+      "delete": {
+        "operationId": "removeItem",
+        "parameters": [
+          {
+            "description": "Id of the product to remove",
+            "example": 1,
+            "in": "path",
+            "name": "productId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartResponse"
+                }
+              }
+            },
+            "description": "The cart after the removal"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "That product is not in the cart"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Remove a line from the cart",
+        "tags": [
+          "Cart"
+        ]
+      },
+      "put": {
+        "description": "Replaces the quantity outright. To take a product out of the cart, use DELETE.",
+        "operationId": "updateItem",
+        "parameters": [
+          {
+            "description": "Id of the product whose line is being changed",
+            "example": 1,
+            "in": "path",
+            "name": "productId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCartItemRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartResponse"
+                }
+              }
+            },
+            "description": "The cart after the change"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "quantity is missing or below 1"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "That product is not in the cart"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Set the quantity of a line",
+        "tags": [
+          "Cart"
+        ]
+      }
+    },
+    "/api/orders": {
+      "get": {
+        "description": "Only the authenticated account's own orders, ordered by id, oldest first. Unpaged. There is no endpoint that lists everybody's orders.",
+        "operationId": "list",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OrderResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Your orders, possibly empty"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No Bearer token, or one that is invalid or expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Authenticated, but not as a CUSTOMER"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "List your orders",
+        "tags": [
+          "Orders"
+        ]
+      },
+      "post": {
+        "description": "Takes no body: it always checks out your own cart. Stock is checked for every line first, the order is saved PENDING with the names and prices copied in, and the cart is emptied.\n\nThe order is not final yet. Stock is reserved and payment taken asynchronously, by a saga across inventory-service and payment-service, and the order becomes CONFIRMED or CANCELLED a few seconds later - poll GET /api/orders/{id}/status. The stock check here is a courtesy that answers an obviously short cart at once; the reservation is the guarantee, so an order can still be cancelled for stock if another checkout took the last units first.\n",
+        "operationId": "place",
+        "responses": {
+          "201": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponse"
+                }
+              }
+            },
+            "description": "The order was accepted as PENDING. The Location header points at it."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No Bearer token, or one that is invalid or expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Authenticated, but not as a CUSTOMER"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "The cart is empty, a line asks for more units than are in stock, or the request kept losing to concurrent checkouts of the same products"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Check out the cart",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/orders/{id}": {
+      "get": {
+        "description": "Asking for an order that belongs to somebody else is answered 403, not 404: the order exists, it is simply not yours.",
+        "operationId": "get",
+        "parameters": [
+          {
+            "description": "Id of the order",
+            "example": 1,
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponse"
+                }
+              }
+            },
+            "description": "The order"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No Bearer token, or one that is invalid or expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Authenticated, but not as a CUSTOMER, or the order belongs to another account"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No order with that id"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Get one of your orders by id",
+        "tags": [
+          "Orders"
+        ]
+      }
+    },
+    "/api/orders/{id}/status": {
+      "get": {
+        "description": "PENDING until stock and payment are settled, then CONFIRMED or CANCELLED (with the reason). The thing to poll after checkout. Same ownership rule as GET /api/orders/{id}.",
+        "operationId": "status",
+        "parameters": [
+          {
+            "description": "Id of the order",
+            "example": 1,
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderStatusResponse"
+                }
+              }
+            },
+            "description": "The order's status"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No Bearer token, or one that is invalid or expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Authenticated, but not as a CUSTOMER, or the order belongs to another account"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No order with that id"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Where one of your orders stands in the saga",
+        "tags": [
+          "Orders"
+        ]
+      }
+    }
+  },
+  "servers": [
+    {
+      "description": "The gateway this document was fetched through",
+      "url": "/"
+    }
+  ],
+  "tags": [
+    {
+      "description": "Checkout and your own order history. Requires a CUSTOMER account. An order is immutable once placed, and is only ever visible to the account that placed it.",
+      "name": "Orders"
+    },
+    {
+      "description": "Background jobs. Upload a product CSV to import it, inspect any run by its execution id, and restart a failed import from where it stopped. ADMIN only.",
+      "name": "Batch"
+    },
+    {
+      "description": "Saga events that could not be processed and were moved to a dead-letter topic. List them with the error that sent them there, and replay one to the topic it came from once the cause is fixed. Every replay is recorded. ADMIN only.",
+      "name": "Dead letters"
+    },
+    {
+      "description": "Your own cart. Requires a CUSTOMER account: it is created on first use, every endpoint returns the whole cart afterwards, and checkout empties it.",
+      "name": "Cart"
+    }
+  ]
+}

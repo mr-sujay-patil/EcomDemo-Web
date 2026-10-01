@@ -1,0 +1,261 @@
+{
+  "components": {
+    "schemas": {
+      "ApiError": {
+        "description": "The shape every failing request returns.",
+        "properties": {
+          "message": {
+            "description": "A human-readable explanation. Validation failures list every rejected field, separated by '; '.",
+            "example": "Product 42 not found",
+            "type": "string"
+          },
+          "status": {
+            "description": "The HTTP status code, repeated in the body so a client that only logs the body still has it.",
+            "example": 404,
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "AssistantReply": {
+        "properties": {
+          "answer": {
+            "type": "string"
+          },
+          "conversationId": {
+            "type": "string"
+          },
+          "pendingAction": {
+            "$ref": "#/components/schemas/PendingCartAddition",
+            "type": "null"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/Source"
+            },
+            "type": "array"
+          },
+          "toolsUsed": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ChatRequest": {
+        "properties": {
+          "conversationId": {
+            "description": "Continue a conversation: the id a previous answer returned. Omit to start one.",
+            "example": "2f1c7a36-5a5e-4c55-9d0e-0f1a8f0f3b9e",
+            "pattern": "[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "message": {
+            "description": "The customer's message.",
+            "example": "Which headphones are good for flights?",
+            "maxLength": 1000,
+            "minLength": 0,
+            "type": "string"
+          }
+        },
+        "required": [
+          "message"
+        ],
+        "type": "object"
+      },
+      "ConfirmedAddition": {
+        "properties": {
+          "cartTotal": {
+            "type": "number"
+          },
+          "productId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "quantity": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "PendingCartAddition": {
+        "description": "A cart addition the assistant proposed. Nothing is in the cart until it is confirmed.",
+        "properties": {
+          "id": {
+            "description": "Confirm with POST /api/assistant/actions/{id}/confirm.",
+            "type": "string"
+          },
+          "productId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "productName": {
+            "type": "string"
+          },
+          "quantity": {
+            "format": "int32",
+            "type": "integer"
+          },
+          "unitPrice": {
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "Source": {
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "type": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "bearerFormat": "JWT",
+        "description": "A signed JWT from POST /api/auth/login, sent as `Authorization: Bearer <token>`. \"Bearer\" is meant literally: whoever holds it is the account, so it is only safe over TLS or, as here, on localhost. It expires after 15 minutes and cannot be revoked before then.",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "contact": {
+      "name": "EcomDemo",
+      "url": "https://github.com/mr-sujay-patil/ecomdemo"
+    },
+    "description": "The shopping assistant: chat about products and your orders, and confirm the actions it proposes. Needs a CUSTOMER token.\n\n**Conventions**\n\n- Every endpoint lives under `/api` and is reached through the gateway. A service's own port is not for clients.\n- Money is a decimal with two places; totals are always calculated on the server and never taken from the request.\n- Endpoints marked with a padlock need a token. Call `POST /api/auth/login` (the **customer** document), copy the `accessToken`, and paste it into **Authorize** above - then \"Try it out\" sends it as `Authorization: Bearer <token>`.\n- Every failure returns the same shape, `{\"status\": <code>, \"message\": <text>}` - see the `ApiError` schema.\n",
+    "license": {
+      "name": "MIT"
+    },
+    "title": "EcomDemo Assistant API",
+    "version": "v1"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/assistant/actions/{actionId}/confirm": {
+      "post": {
+        "description": "Adds the product to your cart. Each proposal can be confirmed once, only by you, and expires after 10 minutes.",
+        "operationId": "confirm",
+        "parameters": [
+          {
+            "description": "The pendingAction.id from an answer",
+            "in": "path",
+            "name": "actionId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConfirmedAddition"
+                }
+              }
+            },
+            "description": "Added; the cart's new total"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No such proposal for you: expired, already confirmed, or never made"
+          }
+        },
+        "summary": "Confirm a cart addition the assistant proposed",
+        "tags": [
+          "Assistant"
+        ]
+      }
+    },
+    "/api/assistant/chat": {
+      "post": {
+        "description": "Answers from the store's policies and from what its tools find: product search, the status of YOUR orders, and proposing a cart addition (which you then confirm). Send the returned conversationId back to continue the conversation.",
+        "operationId": "chat",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantReply"
+                }
+              }
+            },
+            "description": "The answer, what it was based on, and any proposed cart addition"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No message, a message over 1000 characters, or a malformed conversationId"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No model configured, or the model did not answer (see Retry-After)"
+          }
+        },
+        "summary": "Ask the shopping assistant",
+        "tags": [
+          "Assistant"
+        ]
+      }
+    }
+  },
+  "servers": [
+    {
+      "description": "The gateway this document was fetched through",
+      "url": "/"
+    }
+  ],
+  "tags": [
+    {
+      "description": "A shopping assistant grounded in the store's products, policies and your orders",
+      "name": "Assistant"
+    }
+  ]
+}
