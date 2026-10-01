@@ -2,6 +2,7 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { renderRoute } from '@/test/render'
+import { createAppRouter } from './router'
 
 // One row per route in src/app/router.tsx: the path to visit, its h1 and its document title.
 const pages = [
@@ -125,5 +126,16 @@ describe('layout', () => {
 
     await screen.findByRole('heading', { level: 1, name: 'About' })
     expect(within(screen.getByRole('contentinfo')).getAllByText(/TODO\(owner\)/)).toHaveLength(3)
+  })
+})
+
+describe('the browser router', () => {
+  it('starts at the address bar and uses the same route table', () => {
+    window.history.pushState({}, '', '/about')
+    const router = createAppRouter()
+
+    expect(router.state.location.pathname).toBe('/about')
+    expect(router.state.matches.at(-1)?.route.path).toBe('about')
+    router.dispose()
   })
 })

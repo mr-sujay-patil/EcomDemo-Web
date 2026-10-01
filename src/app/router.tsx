@@ -18,6 +18,8 @@ function route(path: string, title: string, element: RouteObject['element']): Ro
 export const routes: RouteObject[] = [
   {
     element: <Layout />,
+    // Shown while a lazy route's code loads on the very first page view (before the layout exists).
+    HydrateFallback: () => <p role="status">Loading…</p>,
     children: [
       { index: true, element: <ProductListPage />, handle: { title: 'Products' } satisfies RouteHandle },
       route('products/:id', 'Product', <PlaceholderPage title="Product" phase={8} />),
