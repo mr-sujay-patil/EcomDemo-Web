@@ -15,6 +15,17 @@
 **Follow-ups (not done, out of scope):** <suggestions deferred to later phases>
 -->
 
+## Phase 07: Typed API Client (tag: phase-07-complete, PR #N)
+**What exists now:** Every backend call is typed from the backend's OpenAPI documents: a committed snapshot per service, generated types, one `openapi-fetch` client per service, one `ApiError`. The product list now loads through it.
+**Key code:** `scripts/api.ts` + `scripts/openapi.ts` (`api:snapshot`, `api:generate`, `api:check`), `api/openapi/*.json`, `src/api/generated/*.ts` (never edited), `src/api/client.ts` (`catalogApi`, `customerApi`, `appApi`, `assistantApi`, `inventoryApi`, `createApiClient`, `setAccessTokenProvider` for Phase 11), `src/api/errors.ts` (`ApiError`), `retry.ts` (the only retry policy), `fieldErrors.ts` (`splitFieldErrors` for Phase 10), `access.ts` (`accessFor`, from the guide's tables). Architecture: `docs/architecture/api-layer.md`.
+**Config & infrastructure:** `openapi-fetch` 0.17.0, `openapi-typescript` 7.13.0 (npm `overrides` for its TypeScript peer). `npm run e2e` starts with `api:check`. Coverage floor 98.02 / 89.77 / 100 / 99.21. Backend pin `phase-33-complete`.
+**Tests:** 137 unit and component (was 38), 208 E2E (was 206).
+**Backend tested against:** `phase-33-complete`
+**Gotchas:** Failures reject with `ApiError` (status 0 = no response); aborts stay `AbortError`. Only GETs retry, once. The base URL is the page's origin because the documents' paths already include `/api`. Types are generated with response properties as required (web KI-016). A pin move = `api:snapshot`, `api:generate`, review, commit alone. The login `429` has `retryAfter`: the countdown is Phase 11 (`docs/backend/phase-33-delta.md`). The 429 retry waits at most 5 s; a longer `Retry-After` reaches the caller.
+**Owner TODOs open:** `src/content/site.ts`; every paragraph of About, Returns, Shipping, Privacy, Terms
+**Backend asks:** none (cosmetic: response properties marked required, KI-016; who may call `DELETE /api/inventory/{productId}`)
+**Follow-ups (not done, out of scope):** caching and loading states (Phase 8); the login countdown and token provider (Phase 11); `@types/node` 26 against Node 24 (Dependabot PR #6, still not investigated).
+
 ## Phase 06: Routing (tag: phase-06-complete, PR #8)
 **What exists now:** Every screen of the guide has a URL, a document title and a place in the layout (skip link, header, `<main>`, footer). Pages later phases build show their final `h1` and "built in Phase N". The product list is at `/`.
 **Key code:** `src/app/router.tsx` (exported `routes`, `createAppRouter()`; `handle: { title }` per route; `lazy` for `/checkout` and `/admin/*`; `HydrateFallback`), `src/app/Layout.tsx` (title, focus the new `h1` after a pathname change, skip link, `<ScrollRestoration />`), `src/content/site.ts` (the owner's values), `src/features/content/*Page.tsx` (`TODO(owner)` paragraphs), `src/components/{Todo,PlaceholderPage}.tsx`, `renderRoute(path)` in `src/test/render.tsx`.
@@ -25,15 +36,4 @@
 **Owner TODOs open:** `src/content/site.ts`; every paragraph of About, Returns, Shipping, Privacy, Terms
 **Backend asks:** none
 **Follow-ups (not done, out of scope):** the assistant's lazy split (Phase 16); real styling (Phase 9); `@types/node` 26 against Node 24 (bumped by Dependabot PR #6; `verify` passes, not investigated).
-
-## Phase 05: Continuous Integration (tag: phase-05-complete, PR #5)
-**What exists now:** Every PR and push to `main` runs GitHub Actions: `verify` (the full `npm run verify` + coverage thresholds) and `e2e` (the Playwright suite against the real backend stack at `BACKEND_TAG`, built on the runner). A failing unit or E2E test turns the PR red (proven with reverted probes). Dependabot watches npm and Actions weekly.
-**Key code:** `.github/workflows/ci.yml` (jobs `verify` ~30 s, `e2e` ~4 min; e2e checks out this repo to `web/` and the backend to `ecomdemo-backend-readonly/` side by side, writes the backend `.env` from `.env.example` + a generated masked `JWT_SECRET`, `docker compose up --build --wait`, tees a footprint table to the job summary, uploads `playwright-report` + `backend-logs` on failure). `.github/dependabot.yml`.
-**Config & infrastructure:** Actions pinned by SHA (checkout v7.0.1, setup-node v7.0.0, upload-artifact v7.0.1); `permissions: {}` at the top, `contents: read` per job. `BACKEND_TAG` = repo variable or `ki-001-fixed`. Runner: `ubuntu-latest`, 4 vCPU / 16 GB; the stack uses ~5 GB.
-**Tests:** unchanged: 6 component, 22 E2E (CI: 22 passed, 2 retries on CI only).
-**Backend tested against:** `ki-001-fixed` (locally and in CI)
-**Gotchas:** Backend build dominates the e2e job (~3 min) because there are no per-service GHCR images (KI-015). CI does not block merging until the owner makes `verify` and `e2e` required checks in branch protection. Dependabot starts only after the merge to `main`. Only the head commit of a push gets a run.
-**Owner TODOs open:** make `verify` and `e2e` required status checks on `main` (GitHub settings, admin only)
-**Backend asks:** per-service images on GHCR tagged by release (web KI-015; backend: not tracked)
-**Follow-ups (not done, out of scope):** switch e2e to `docker compose pull` when KI-015 is fixed; cache the backend's Maven/Docker layers if build time matters; publish this app's image (Phase 19); security scans (Phase 22).
 

@@ -333,6 +333,24 @@ describe('retry policy', () => {
 })
 
 describe('the shared clients', () => {
+  it('send the token the session provider hands them, and none after it is cleared', async () => {
+    const { catalogApi, setAccessTokenProvider } = await import('./client')
+    const seen: (string | null)[] = []
+    server.use(
+      http.get('/api/products', ({ request }) => {
+        seen.push(request.headers.get('Authorization'))
+        return HttpResponse.json([])
+      }),
+    )
+
+    setAccessTokenProvider(() => 'session-token')
+    await catalogApi.GET('/api/products')
+    setAccessTokenProvider(() => null)
+    await catalogApi.GET('/api/products')
+
+    expect(seen).toEqual(['Bearer session-token', null])
+  })
+
   it('are created for each service on the page’s own origin', async () => {
     const { catalogApi } = await import('./client')
     server.use(http.get('/api/products', () => HttpResponse.json([product])))
