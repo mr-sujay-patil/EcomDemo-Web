@@ -3,36 +3,22 @@
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
 - **Updated:** 2026-10-01
-- **Phase:** 5 — Continuous Integration
-- **Branch:** `feature/phase-05-github-actions`
-- **Step:** PR_OPEN
+- **Phase:** chore: pin the backend to `phase-33-complete` (between Phase 5 and Phase 6)
+- **Branch:** `chore/pin-backend-phase-33`
+- **Step:** TESTING
   (NOT_STARTED | PREFLIGHT | BRANCHED | PLANNING | IMPLEMENTING | TESTING | PR_OPEN | VERIFYING | WAITING_FOR_USER)
-- **PR:** #5 (draft while CI is proven; mark ready at the stop)
-- **Backend pinned at:** `ki-001-fixed` (read-only clone `../ecomdemo-backend-readonly`)
+- **PR:** not yet
+- **Backend pinned at:** `phase-33-complete` (clone moved; the running stack on :8080 is NOT ours and still runs `ki-001-fixed`)
 - **Waiting for user:** NO
 
-## Merge verification before this phase
-Phase 4 (PR #4, merge commit `194e7e7`): PASS on 2026-10-01. PR state MERGED; branch tip `aa8d23a` is an ancestor of `origin/main`; `git log main..branch` and `git diff --stat` empty; branch exists locally and on GitHub; deliverables present on `main`; `npm ci && npm run verify` green (6/6) and `npm run e2e` 22/22 against `ki-001-fixed`. Tag `phase-04-complete` pushed.
+## Merge verification before this work
+Phase 5 (PR #5, merge commit `701a9b3`): PASS on 2026-10-01. Branch tip `5cf58b5` is an ancestor of `origin/main`; `a768ebf` (a progress-file commit pushed 5 s after the merge) was deliberately dropped by the owner; `npm ci && npm run verify` 6/6 and `npm run e2e` 22/22 on `main` against `ki-001-fixed`; tag `phase-05-complete` pushed. Tracker ✅ is this branch's first commit.
 
-## Design (decided)
-- **Requires gap, user chose option 1 (2026-10-01):** the backend publishes only one GHCR image (`ghcr.io/mr-sujay-patil/ecomdemo`, the default `MODULE=ecomdemo-app`, tagged `latest`/`sha-<main commit>`); none of the 8 per-service images the compose stack uses, and nothing for `ki-001-fixed` (`sha-9023940` absent). So the e2e job **builds the backend from source** at `BACKEND_TAG`; record the gap as a web KI row pointing at the backend (backend: not tracked). Swap to pulled images when they exist.
-- Repo is PUBLIC → `ubuntu-latest` hosted runner has 4 vCPU / 16 GB. Backend JVM caps sum ≈ 6.4 GB (1G app + 7×768M) plus DBs, Kafka, observability: measure in CI and record in the test report.
-- Actions pinned by SHA (latest stable, 2026-10-01): checkout v7.0.1 `3d3c42e5…`, setup-node v7.0.0 `82076278…`, upload-artifact v7.0.1 `043fb46d…`, cache v6.1.0 `55cc8345…`.
-- Workflow `permissions: {}`; each job `contents: read`. `BACKEND_TAG` = `${{ vars.BACKEND_TAG || 'ki-001-fixed' }}`. Backend `.env` = its `.env.example` with a generated, masked `JWT_SECRET`.
-- The CI run on a PR needs the PR to exist: raise it as a **draft** once local checks pass, iterate CI there, do the Done-when throwaway commits (then `git revert`, no history rewrite), then mark it ready and stop.
-
-## Checklist (from the phase file's "What you'll implement")
-- [x] `.github/workflows/ci.yml` on every PR and push to `main`
-- [x] **verify** job: Node from `.nvmrc` + npm cache, `npm ci`, `npm run verify`, coverage uploaded as an artifact (run 36761255866: green, 31 s, `coverage` artifact 24.6 kB)
-- [x] **e2e** job: backend checked out at `BACKEND_TAG` (default `ki-001-fixed`), compose stack up (GHCR where available; built from source today), generated `JWT_SECRET`, wait for health, `npm run e2e`; Playwright report + traces uploaded on failure; stack fit measured (run 36761255866: green, 4 m 38 s total, backend build+start 3 m 30 s, 22 passed; footprint now also `tee`d to the log)
-- [x] Dependabot: npm (minor + patch grouped, weekly) and GitHub Actions; ignores TS minor/major and ESLint major (Phase 4 hold-backs)
-- [x] Actions pinned by commit SHA; minimal `permissions:` per job (actionlint + shellcheck clean)
-- [x] Web KI row for the missing per-service GHCR images → **KI-015**
-- [x] Done when: a failing unit test and a failing E2E test each turn the PR red (throwaway commits, reverted): unit probe `6631321` → run 36762023177 `verify` red, `e2e` green, reverted `61d9163`; E2E probe `95a014e` → run 36763086075 `e2e` red (1 failed, 22 passed; `playwright-report` + `backend-logs` artifacts uploaded), `verify` green, reverted `aa0bb29`
-- [x] Testing protocol → `docs/test-reports/phase-05.md` (local verify 6/6, local e2e 22/22 on `ki-001-fixed`, final CI run 36812323590 green); README, `decisions.md`, `RECENT.md` (Phase 05 added), tracker 🔵
+## Scope (owner approved, 2026-10-01)
+Move the pin to `phase-33-complete` (docs, CI `BACKEND_TAG` + generated `.env`), record the keep-the-proxy decision, add `docs/backend/phase-33-delta.md`. NOT in scope: the login form, API types (Phases 7 and 11).
 
 ## Next action
-Fill the PR #5 body from the template, `gh pr ready 5`, confirm CI is green on the final head, set **Step: WAITING_FOR_USER**, STOP for review. Owner TODO to mention: make `verify` and `e2e` required status checks on `main`.
+Push, open the PR, and read the `e2e` job on it: it builds the backend at `phase-33-complete` with the generated signing key and secrets. Ask the owner before replacing the running stack for a local rerun. Then `npm run verify`, write the PR body (fix-style: results in the description), `gh pr ready`, STOP.
 
 ## ⚠️ Environment notes (this machine)
 - One backend stack at a time: if `ecomdemo-gateway-service` is running, use it.

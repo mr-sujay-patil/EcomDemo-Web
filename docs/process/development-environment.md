@@ -6,9 +6,9 @@ Goal: the machine is never the reason a result is in doubt. The web app is light
 
 | | |
 |---|---|
-| **Pinned backend tag** | **`ki-001-fixed`** |
-| Why this one | the tag the integration guide was written against: Swagger UI and the five `/v3/api-docs/<service>` documents work through the gateway from here on |
-| Next candidate | `ki-041-fixed` (CORS preflight fix, merged in backend PR #53 on 2026-09-30, **not tagged yet**). It doesn't block anything: this app always uses a same-origin proxy |
+| **Pinned backend tag** | **`phase-33-complete`** (backend PR #54, merge commit `f1a9547`, 2026-10-01) |
+| Why this one | it includes `ki-041-fixed` (the gateway answers CORS preflights, so cross-origin browser calls work) and Phase 33 (RS256 tokens, login throttling: `429` + `Retry-After`). Before it: `ki-001-fixed` (Swagger UI and `/v3/api-docs/<service>` through the gateway) |
+| Delta since `ki-001-fixed` | `docs/backend/phase-33-delta.md` |
 
 Moving the pin is a deliberate commit inside a phase or fix (`chore(backend): pin <tag>`), with `npm run verify`, `npm run api:check` (from Phase 7) and `npm run e2e` rerun, and a `docs/decisions.md` line saying why.
 
@@ -23,7 +23,7 @@ Everything lives **inside the WSL2 Linux filesystem**, never under `/mnt/c/...` 
 The read-only clone is set up once, in Phase 0:
 
     git clone https://github.com/mr-sujay-patil/ecomdemo ../ecomdemo-backend-readonly
-    git -C ../ecomdemo-backend-readonly checkout ki-001-fixed
+    git -C ../ecomdemo-backend-readonly checkout phase-33-complete
     git -C ../ecomdemo-backend-readonly remote set-url --push origin no-push   # a mistaken push fails locally
 
 Reading it is allowed (files, `git log`, `git fetch --tags`, checking out a newer tag when the pin moves). Writing is never allowed: no commits, branches, pushes, PRs, issues or comments on the backend. Never check out a tag in `~/projects/ecomdemo`: that would move the backend team's work.
@@ -38,7 +38,7 @@ Only one backend stack can run at a time: both copies use the same container nam
        cd ../ecomdemo-backend-readonly
        docker compose up --build --wait      # about 2 minutes cold; gateway on :8080
 
-   The clone needs a `.env` (at least `JWT_SECRET`, 32+ characters). The user creates it once from the backend's `.env.example`; it is untracked, never committed, never printed.
+   The clone needs a `.env` with four values since Phase 33: `JWT_SIGNING_KEY` and `GATEWAY_CLIENT_SECRET`, `APP_CLIENT_SECRET`, `CATALOG_CLIENT_SECRET` (without them anonymous browsing fails with 500). The user creates it once from the backend's `.env.example`, using the one-line generator in that file; it is untracked, never committed, never printed. `JWT_SECRET` is no longer read.
 3. Leave the stack as you found it: if you started it, say so in the test report and stop it at the end with `docker compose --profile tools down` (never `-v`).
 
 Swagger UI: http://localhost:8080/swagger-ui.html (pick a service top-right). The ADMIN account is seeded by a backend migration; its credentials are in the backend README. Use it only in Phase 17's tests, and never write it into this repository: tests read it from `E2E_ADMIN_USERNAME` / `E2E_ADMIN_PASSWORD` in the user's environment.

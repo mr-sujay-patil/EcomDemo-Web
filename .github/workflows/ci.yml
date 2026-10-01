@@ -61,7 +61,7 @@ jobs:
       contents: read
     env:
       # The backend this app is tested against. Override with a repository variable when the pin moves.
-      BACKEND_TAG: ${{ vars.BACKEND_TAG || 'ki-001-fixed' }}
+      BACKEND_TAG: ${{ vars.BACKEND_TAG || 'phase-33-complete' }}
     steps:
       # The same side-by-side layout as a laptop, so e2e/global-setup.ts finds ../ecomdemo-backend-readonly.
       - name: Check out the code
@@ -82,9 +82,19 @@ jobs:
       - name: Write the backend's .env
         working-directory: ecomdemo-backend-readonly
         run: |
+          cp .env.example .env
+          # Phase 33 (tag phase-33-complete): one RSA signing key and three client secrets, all generated
+          # here and masked. An older tag ignores them and still reads JWT_SECRET.
+          key="$(openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 2>/dev/null | openssl pkcs8 -topk8 -nocrypt -outform DER | base64 -w0)"
+          echo "::add-mask::$key"
+          sed -i "s|^JWT_SIGNING_KEY=.*|JWT_SIGNING_KEY=$key|" .env
+          for name in GATEWAY APP CATALOG; do
+            secret="$(openssl rand -hex 32)"
+            echo "::add-mask::$secret"
+            sed -i "s|^${name}_CLIENT_SECRET=.*|${name}_CLIENT_SECRET=$secret|" .env
+          done
           secret="$(openssl rand -hex 32)"
           echo "::add-mask::$secret"
-          cp .env.example .env
           sed -i "s|^JWT_SECRET=.*|JWT_SECRET=$secret|" .env
 
       # The backend publishes no per-service images to GHCR yet (web KI-015), so they are built here.
