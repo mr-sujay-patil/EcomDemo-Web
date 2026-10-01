@@ -28,11 +28,11 @@ Phase 4 (PR #4, merge commit `194e7e7`): PASS on 2026-10-01. PR state MERGED; br
 - [x] Dependabot: npm (minor + patch grouped, weekly) and GitHub Actions; ignores TS minor/major and ESLint major (Phase 4 hold-backs)
 - [x] Actions pinned by commit SHA; minimal `permissions:` per job (actionlint + shellcheck clean)
 - [x] Web KI row for the missing per-service GHCR images → **KI-015**
-- [ ] Done when: a failing unit test and a failing E2E test each turn the PR red (throwaway commits, reverted)
+- [x] Done when: a failing unit test and a failing E2E test each turn the PR red (throwaway commits, reverted): unit probe `6631321` → run 36762023177 `verify` red, `e2e` green, reverted `61d9163`; E2E probe `95a014e` → run 36763086075 `e2e` red (1 failed, 22 passed; `playwright-report` + `backend-logs` artifacts uploaded), `verify` green, reverted `aa0bb29`
 - [ ] Testing protocol → `docs/test-reports/phase-05.md` (CI run links); docs (README, `decisions.md`, `RECENT.md` rotated, tracker 🔵) → PR ready
 
 ## Next action
-Done-when probes on PR #5: (1) `test: throwaway failing unit test` (`src/ciProbe.test.ts`) → expect `verify` red → `git revert` it; (2) a failing `e2e/ciProbe.spec.ts` → expect `e2e` red with the `playwright-report` artifact → `git revert`. Record run links, then write `docs/test-reports/phase-05.md`, add the Phase 05 summary to `RECENT.md` (Phase 03 already archived), tracker 🔵, fill the PR body from the template, `gh pr ready 5`, STOP. README and `decisions.md` are done.
+Confirm the CI run on the revert head (`aa0bb29`+checkpoint) is green on both jobs. Then follow `docs/process/testing-protocol.md`: write `docs/test-reports/phase-05.md` (run links above + the green run), add the Phase 05 summary to `RECENT.md` (Phase 03 already archived), tracker 🔵 in `docs/ROADMAP.md`, fill the PR #5 body from the template, `gh pr ready 5`, STOP. README and `decisions.md` are done.
 
 ## ⚠️ Environment notes (this machine)
 - One backend stack at a time: if `ecomdemo-gateway-service` is running, use it.
