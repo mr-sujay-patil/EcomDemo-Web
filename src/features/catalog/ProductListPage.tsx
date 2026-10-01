@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
-import { fetchProducts, ProductsRequestError, type ProductResponse } from './products'
+import { ApiError } from '@/api/errors'
+import { fetchProducts, type ProductResponse } from './products'
 
 const priceFormat = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' })
 
@@ -18,8 +19,10 @@ export function ProductListPage() {
       .then((products) => setState({ kind: 'loaded', products }))
       .catch((error: unknown) => {
         if (controller.signal.aborted) return
-        if (error instanceof ProductsRequestError) {
-          setState({ kind: 'failed', message: error.message, correlationId: error.correlationId })
+        if (error instanceof ApiError) {
+          // The id helps support find a server-side failure or a request that never arrived; for a 4xx the message says enough.
+          const showId = error.status === 0 || error.status >= 500
+          setState({ kind: 'failed', message: error.message, correlationId: showId ? error.correlationId : null })
         } else {
           setState({ kind: 'failed', message: 'Something went wrong while loading the products.', correlationId: null })
         }

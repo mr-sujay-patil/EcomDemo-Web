@@ -1,5 +1,8 @@
 import { http, HttpResponse } from 'msw'
-import type { ApiError, ProductResponse } from '@/features/catalog/products'
+import type { components } from '@/api/generated/catalog'
+
+type ProductResponse = components['schemas']['ProductResponse']
+type ApiError = components['schemas']['ApiError']
 
 // Test data only: prices chosen to show Indian digit grouping, one product without a category.
 export const productFixtures: ProductResponse[] = [
@@ -18,7 +21,7 @@ export const productFixtures: ProductResponse[] = [
 export const SERVER_ERROR_CORRELATION_ID = 'test-correlation-id-500'
 
 // The generic parameters (path params, request body, response body) type each response against
-// the API types, so a fixture that drifts from ProductResponse or ApiError fails the type check.
+// the generated API types (src/api/generated), so a fixture that drifts from ProductResponse or ApiError fails the type check.
 export const productHandlers = {
   success: http.get<never, never, ProductResponse[]>('/api/products', () => HttpResponse.json(productFixtures)),
 
