@@ -18,12 +18,32 @@ export const productFixtures: ProductResponse[] = [
   { id: 3, name: 'Test Gift Card', description: 'Fixture product', price: 500, stockQuantity: 10, category: null },
 ]
 
+/** Enough products for a second page (24 per page) and two categories plus none. */
+export function manyProducts(count: number): ProductResponse[] {
+  return Array.from({ length: count }, (_, index) => ({
+    id: 100 + index,
+    name: `Item ${String(index + 1).padStart(2, '0')}`,
+    description: 'Fixture product',
+    price: 100 + index,
+    stockQuantity: 10,
+    category: index % 2 === 0 ? 'Audio' : 'Kitchen',
+  }))
+}
+
 export const SERVER_ERROR_CORRELATION_ID = 'test-correlation-id-500'
 
 // The generic parameters (path params, request body, response body) type each response against
 // the generated API types (src/api/generated), so a fixture that drifts from ProductResponse or ApiError fails the type check.
 export const productHandlers = {
   success: http.get<never, never, ProductResponse[]>('/api/products', () => HttpResponse.json(productFixtures)),
+
+  /** GET /api/products/:id from the fixtures; an id they do not hold is a 404 with the backend's body. */
+  detail: http.get<{ id: string }, never, ProductResponse | ApiError>('/api/products/:id', ({ params }) => {
+    const product = productFixtures.find((candidate) => candidate.id === Number(params.id))
+    return product
+      ? HttpResponse.json(product)
+      : HttpResponse.json({ status: 404, message: `Product ${params.id} not found` }, { status: 404 })
+  }),
 
   empty: http.get<never, never, ProductResponse[]>('/api/products', () => HttpResponse.json([])),
 
@@ -36,4 +56,4 @@ export const productHandlers = {
 }
 
 /** The happy path for every endpoint; a test swaps one in with `server.use(...)`. */
-export const handlers = [productHandlers.success]
+export const handlers = [productHandlers.success, productHandlers.detail]

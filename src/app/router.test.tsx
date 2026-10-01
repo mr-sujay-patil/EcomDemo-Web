@@ -7,7 +7,8 @@ import { createAppRouter } from './router'
 // One row per route in src/app/router.tsx: the path to visit, its h1 and its document title.
 const pages = [
   ['/', 'Products', 'EcomDemo · Products'],
-  ['/products/7', 'Product', 'EcomDemo · Product'],
+  ['/products/1', 'Test Kettle', 'EcomDemo · Product'],
+  ['/products/7', 'No longer available', 'EcomDemo · Product'],
   ['/search', 'Search', 'EcomDemo · Search'],
   ['/cart', 'Your cart', 'EcomDemo · Your cart'],
   ['/checkout', 'Checkout', 'EcomDemo · Checkout'],

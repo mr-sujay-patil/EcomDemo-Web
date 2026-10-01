@@ -66,6 +66,10 @@ When you are done with the backend, stop it from the clone with `docker compose 
 
 Routing is React Router's data router: the table is in `src/app/router.tsx` and explained in [`docs/architecture/routing.md`](docs/architecture/routing.md). Every screen has a URL (`/`, `/cart`, `/about`, ...); pages a later phase builds show a placeholder naming that phase. The store's operator, contact email and ship-from city are `TODO(owner)` values in `src/content/site.ts`, shown in the footer until you fill them in, and the words on `/about`, `/returns`, `/shipping`, `/privacy` and `/terms` are `TODO(owner)` paragraphs in `src/features/content/`.
 
+## Catalogue and server state
+
+The shelf (`/`) loads the product list once and filters, sorts and pages it in the browser; category, sort and page are in the URL (`/?category=AUDIO&sort=price&page=2`), so a reload or a shared link keeps them. A product opens at `/products/:id`. Server data is cached by TanStack Query: how, and why the defaults are what they are, is in [`docs/architecture/state.md`](docs/architecture/state.md), and the feature is described in [`docs/modules/catalog.md`](docs/modules/catalog.md).
+
 ## API contract
 
 The backend's OpenAPI documents are the contract. Three commands keep the types honest (details: [`docs/architecture/api-layer.md`](docs/architecture/api-layer.md)); they need the backend running at the pinned tag:

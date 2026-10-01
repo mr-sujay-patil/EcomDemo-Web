@@ -3,32 +3,32 @@
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
 - **Updated:** 2026-10-01
-- **Phase:** 7 — Typed API Client
-- **Branch:** `feature/phase-07-api-client`
+- **Phase:** 8 — Server State
+- **Branch:** `feature/phase-08-server-state`
 - **Step:** WAITING_FOR_USER
   (NOT_STARTED | PREFLIGHT | BRANCHED | PLANNING | IMPLEMENTING | TESTING | PR_OPEN | VERIFYING | WAITING_FOR_USER)
-- **PR:** #9 (CI running on the head)
-- **Backend pinned at:** `phase-33-complete`. Needs the stack up for `api:snapshot`, `api:check`, `e2e`: if `ecomdemo-gateway-service` is running use it, else start it from the clone and stop it after (never `-v`).
-- **Waiting for user:** YES: review of PR #9
+- **PR:** #10 (CI running on the head)
+- **Backend pinned at:** `phase-33-complete`. Start the stack from the clone if `ecomdemo-gateway-service` is not running; stop it after (never `-v`).
+- **Waiting for user:** YES: review of PR #10
 
 ## Merge verification before this phase
-Phase 6 (PR #8, merge `98465e2`): PASS on 2026-10-01. PR MERGED; branch tip `52e51c9` is an ancestor of `origin/main`; `git log` and `git diff --stat` empty; branch kept; `npm ci && npm run verify` 38/38 and `npm run e2e` 206/206 on `main` against `phase-33-complete`; tag `phase-06-complete` pushed. Tracker ✅ is this branch's first commit.
+Phase 7 (PR #9, merge `58c20ae`): PASS on 2026-10-01. PR MERGED; branch tip `3a1ded7` is an ancestor of `origin/main`; `git log` and `git diff --stat` empty; branch kept; `npm ci && npm run verify` 137/137 and `npm run e2e` 208/208 (`api:check` green) on `main` against `phase-33-complete`; CI green on `main`; tag `phase-07-complete` pushed. Tracker ✅ is this branch's first commit.
 
 ## Checklist (from the phase file's "What you'll implement")
-- [x] `npm run api:snapshot` → `api/openapi/<service>.json` (5 services, pretty, key-sorted), own commit `chore(api): regenerate from backend phase-33-complete`
-- [x] `npm run api:generate` → `src/api/generated/<service>.ts`
-- [x] `npm run api:check` (live vs snapshot, fails on any diff); first step of `npm run e2e`
-- [x] `src/api/client.ts`: one openapi-fetch client per service on `/api`; middleware: Bearer from an injected provider (empty now), new `X-Correlation-Id` per request, failures → `ApiError { status, message, correlationId, retryAfter? }`
-- [x] Field-error helper (split 400 `message` on `"; "`, match leading field name; guide section 4)
-- [x] Retry policy in one place (no mutation retry; GET once on 429 after back-off/`Retry-After`; GET once on network error; no other 4xx)
-- [x] Access rules from the guide's tables (web KI-011)
-- [x] Replace Phase 1's hand-written type; MSW handlers typed from the generated types
-- [x] Tests: 400 fields, 401, 403, 404, 409, 429 (GET retried once), 500 (correlation id kept), network failure; `api:check` fails on a changed snapshot
-- [x] Done when: a field renamed in a snapshot fails `npm run verify` at compile time (shown, reverted); `api:check` passes
-- [x] Testing protocol → `docs/test-reports/phase-07.md`; `docs/architecture/api-layer.md`; README, `decisions.md`, `RECENT.md` rotated (Phase 05 to archive), tracker 🔵 → PR → STOP
+- [x] TanStack Query (latest stable): `QueryClient` in `src/app/providers.tsx`, defaults recorded in `docs/decisions.md`
+- [x] Key factory + hooks in `src/features/catalog/api.ts` (`catalogKeys.list()`, `catalogKeys.detail(id)`)
+- [x] Catalogue page: one `GET /api/products`; client-side category filter (`null` = "Other"), sort (name, price), 24 per page; filter, sort, page in the URL
+- [x] Product page `/products/:id`: name, category, price, description, stock hint; 404 → "No longer available" + link back; disabled Add to cart ("Sign in to add to your cart")
+- [x] Prefetch a product on card hover or focus
+- [x] Loading states reserve space and say what loads; error states: `ApiError.message` / correlation id + Retry
+- [x] Tests with MSW: filter and sort update URL and list; pagination; 404 page; error and retry
+- [x] `docs/modules/catalog.md`
+- [x] E2E: filter → URL → reload keeps it; sort by price; next page; open a product; unknown id → "No longer available"
+- [x] Done when (real backend): shelf shows seeded products, filter/sort/pages survive reload, product page by link and deep URL
+- [x] Testing protocol → `docs/test-reports/phase-08.md`; README, `decisions.md`, `RECENT.md` rotated (Phase 06 to archive), tracker 🔵 → PR → STOP
 
 ## Next action
-Confirm CI is green on the head of PR #9 (its e2e job runs `api:check` against a backend built at `phase-33-complete`). Then wait for the owner's review. On `approved, merge it`: `gh pr merge 9 --merge` (no `--delete-branch`), merge verification on `main` (start the stack from the clone, stop it after), tag `phase-07-complete`. Next phase only on `continue` (Phase 8: server state / TanStack Query).
+Confirm CI is green on the head of PR #10. Then wait for the owner's review. On `approved, merge it`: `gh pr merge 10 --merge` (no `--delete-branch`), merge verification on `main` (start the stack from the clone, stop it after), tag `phase-08-complete`. Next phase only on `continue` (Phase 9: design system; read its file and `design-system/` first: styling rules change from Phase 9).
 
 ## ⚠️ Environment notes (this machine)
 - One backend stack at a time: if `ecomdemo-gateway-service` is running, use it.

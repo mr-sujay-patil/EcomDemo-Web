@@ -6,6 +6,7 @@ import { ReturnsPage } from '@/features/content/ReturnsPage'
 import { ShippingPage } from '@/features/content/ShippingPage'
 import { TermsPage } from '@/features/content/TermsPage'
 import { ProductListPage } from '@/features/catalog/ProductListPage'
+import { ProductPage } from '@/features/catalog/ProductPage'
 import { Layout, type RouteHandle } from './Layout'
 import { NotFoundPage } from './NotFoundPage'
 
@@ -22,7 +23,7 @@ export const routes: RouteObject[] = [
     HydrateFallback: () => <p role="status">Loading…</p>,
     children: [
       { index: true, element: <ProductListPage />, handle: { title: 'Products' } satisfies RouteHandle },
-      route('products/:id', 'Product', <PlaceholderPage title="Product" phase={8} />),
+      route('products/:id', 'Product', <ProductPage />),
       route('search', 'Search', <PlaceholderPage title="Search" phase={15} />),
       route('cart', 'Your cart', <PlaceholderPage title="Your cart" phase={12} />),
       {
