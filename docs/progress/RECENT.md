@@ -15,6 +15,17 @@
 **Follow-ups (not done, out of scope):** <suggestions deferred to later phases>
 -->
 
+## Phase 05: Continuous Integration (tag: phase-05-complete, PR #5)
+**What exists now:** Every PR and push to `main` runs GitHub Actions: `verify` (the full `npm run verify` + coverage thresholds) and `e2e` (the Playwright suite against the real backend stack at `BACKEND_TAG`, built on the runner). A failing unit or E2E test turns the PR red (proven with reverted probes). Dependabot watches npm and Actions weekly.
+**Key code:** `.github/workflows/ci.yml` (jobs `verify` ~30 s, `e2e` ~4 min; e2e checks out this repo to `web/` and the backend to `ecomdemo-backend-readonly/` side by side, writes the backend `.env` from `.env.example` + a generated masked `JWT_SECRET`, `docker compose up --build --wait`, tees a footprint table to the job summary, uploads `playwright-report` + `backend-logs` on failure). `.github/dependabot.yml`.
+**Config & infrastructure:** Actions pinned by SHA (checkout v7.0.1, setup-node v7.0.0, upload-artifact v7.0.1); `permissions: {}` at the top, `contents: read` per job. `BACKEND_TAG` = repo variable or `ki-001-fixed`. Runner: `ubuntu-latest`, 4 vCPU / 16 GB; the stack uses ~5 GB.
+**Tests:** unchanged: 6 component, 22 E2E (CI: 22 passed, 2 retries on CI only).
+**Backend tested against:** `ki-001-fixed` (locally and in CI)
+**Gotchas:** Backend build dominates the e2e job (~3 min) because there are no per-service GHCR images (KI-015). CI does not block merging until the owner makes `verify` and `e2e` required checks in branch protection. Dependabot starts only after the merge to `main`. Only the head commit of a push gets a run.
+**Owner TODOs open:** make `verify` and `e2e` required status checks on `main` (GitHub settings, admin only)
+**Backend asks:** per-service images on GHCR tagged by release (web KI-015; backend: not tracked)
+**Follow-ups (not done, out of scope):** switch e2e to `docker compose pull` when KI-015 is fixed; cache the backend's Maven/Docker layers if build time matters; publish this app's image (Phase 19); security scans (Phase 22).
+
 ## Phase 04: Code Quality (tag: phase-04-complete, PR #4)
 **What exists now:** The app is unchanged (same bundle hash); `npm run verify` now also runs ESLint and a Prettier check, so style and a set of bug-prone patterns are enforced by machines.
 **Key code:** `eslint.config.js` (flat, `defineConfig`: `recommendedTypeChecked` + `projectService`; hooks + jsx-a11y on `src/`; Playwright `flat/recommended` on `e2e/` with `expect-expect` counting `ready`; `no-console` off in tests/`e2e/`; `disableTypeChecked` for `**/*.js`; `eslint-config-prettier` last). `.prettierrc.json` (120 cols, no semicolons, single quotes), `.prettierignore` (`*.md`, `design-system/`, generated dirs), `.editorconfig`.
@@ -26,13 +37,3 @@
 **Backend asks:** none
 **Follow-ups (not done, out of scope):** back to TypeScript 7 when typescript-eslint supports it; ESLint 10 when jsx-a11y does; consider `strictTypeChecked`; run `verify` in CI (Phase 5); lint/format `design-system/` or not (Phase 9).
 
-## Phase 03: End-to-End Smoke Tests (tag: phase-03-complete, PR #3)
-**What exists now:** The app is unchanged; `npm run e2e` builds and previews it, then drives it in Chromium against the real backend: the catalogue, the gateway-unreachable error state, and every screen at 360/480/768/1024/1280 px in light and dark.
-**Key code:** `playwright.config.ts`; `e2e/global-setup.ts` (gateway check, prints the backend tag from `BACKEND_TAG` or the clone); `e2e/fixtures.ts` (**import `test`/`expect` from here**: console guard, `allowedConsoleErrors` option); `e2e/screens.ts` (**add every new screen/state here**: `name`, `path`, `prepare`, `ready`, `allowedConsoleErrors`; also `gatewayUnreachable`, `abortedRequestError`); `e2e/catalog.spec.ts`; `e2e/layout.spec.ts`; `e2e/report.spec.ts` (`@report`).
-**Config & infrastructure:** @playwright/test 1.63.0 (Chromium build 1243). Projects `chromium` (smoke, excludes `@report`) and `report`. Scripts: `e2e` (`--project=chromium`), `e2e:ui`, `e2e:report` (screenshots → `docs/test-reports/phase-XX/`, phase from the branch or `REPORT_PHASE`). `tsconfig.e2e.json` joins `tsc -b`. `webServer` never reuses a running 4173. Retries 0 locally, 2 on CI (traces on first retry).
-**Tests:** 22 E2E (2 catalogue + 20 layout matrix) + 8 report screenshots; 6 component tests unchanged.
-**Backend tested against:** `ki-001-fixed`
-**Gotchas:** Aborting a request makes Chrome log "Failed to load resource: net::ERR_FAILED": declare it in `allowedConsoleErrors`. React dev warnings never show in the preview build, so keep the dev-server console check. The catalogue has 22 rows but only ids 1–10 are seeded: assert names, never counts. "Dark" screenshots equal light until Phase 9 adds `color-scheme`. `pkill -f <pattern>` inside `bash -c` also matches its own shell.
-**Owner TODOs open:** none
-**Backend asks:** none
-**Follow-ups (not done, out of scope):** run `e2e` in CI with the backend (Phase 5); the "Try again" button on the error state (carried; the E2E suite should then click it); `npx playwright install --with-deps` for CI runners (Phase 5).
