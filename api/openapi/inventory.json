@@ -1,0 +1,353 @@
+{
+  "components": {
+    "schemas": {
+      "CloseOrderRequest": {
+        "properties": {
+          "reason": {
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "reason"
+        ],
+        "type": "object"
+      },
+      "CloseResult": {
+        "properties": {
+          "alreadyClosed": {
+            "type": "boolean"
+          },
+          "released": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "StockLevelRequest": {
+        "properties": {
+          "quantity": {
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "quantity"
+        ],
+        "type": "object"
+      },
+      "StockResponse": {
+        "properties": {
+          "productId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "quantity": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "UnitsRequest": {
+        "properties": {
+          "productName": {
+            "type": "string"
+          },
+          "units": {
+            "exclusiveMinimum": 0,
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "units"
+        ],
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "bearerFormat": "JWT",
+        "description": "A signed JWT from POST /api/auth/login, sent as `Authorization: Bearer <token>`. \"Bearer\" is meant literally: whoever holds it is the account, so it is only safe over TLS or, as here, on localhost. It expires after 15 minutes and cannot be revoked before then.",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "contact": {
+      "name": "EcomDemo",
+      "url": "https://github.com/mr-sujay-patil/ecomdemo"
+    },
+    "description": "Stock levels and reservations. An ADMIN may read and adjust stock through the gateway; the reservation endpoints are for the order saga.\n\n**Conventions**\n\n- Every endpoint lives under `/api` and is reached through the gateway. A service's own port is not for clients.\n- Money is a decimal with two places; totals are always calculated on the server and never taken from the request.\n- Endpoints marked with a padlock need a token. Call `POST /api/auth/login` (the **customer** document), copy the `accessToken`, and paste it into **Authorize** above - then \"Try it out\" sends it as `Authorization: Bearer <token>`.\n- Every failure returns the same shape, `{\"status\": <code>, \"message\": <text>}` - see the `ApiError` schema.\n",
+    "license": {
+      "name": "MIT"
+    },
+    "title": "EcomDemo Inventory API",
+    "version": "v1"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/inventory": {
+      "get": {
+        "operationId": "quantities",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "productIds",
+            "required": true,
+            "schema": {
+              "items": {
+                "format": "int64",
+                "type": "integer"
+              },
+              "type": "array"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StockResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "inventory-controller"
+        ]
+      }
+    },
+    "/api/inventory/orders/{orderId}/close": {
+      "post": {
+        "operationId": "closeOrder",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "orderId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CloseOrderRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CloseResult"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "inventory-controller"
+        ]
+      }
+    },
+    "/api/inventory/{productId}": {
+      "delete": {
+        "operationId": "forget",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "productId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "inventory-controller"
+        ]
+      },
+      "get": {
+        "operationId": "stockFor",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "productId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "inventory-controller"
+        ]
+      },
+      "put": {
+        "operationId": "setLevel",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "productId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StockLevelRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "inventory-controller"
+        ]
+      }
+    },
+    "/api/inventory/{productId}/release": {
+      "post": {
+        "operationId": "release",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "productId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnitsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "inventory-controller"
+        ]
+      }
+    },
+    "/api/inventory/{productId}/reserve": {
+      "post": {
+        "operationId": "reserve",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "productId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnitsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/StockResponse"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "tags": [
+          "inventory-controller"
+        ]
+      }
+    }
+  },
+  "servers": [
+    {
+      "description": "The gateway this document was fetched through",
+      "url": "/"
+    }
+  ]
+}

@@ -66,6 +66,16 @@ When you are done with the backend, stop it from the clone with `docker compose 
 
 Routing is React Router's data router: the table is in `src/app/router.tsx` and explained in [`docs/architecture/routing.md`](docs/architecture/routing.md). Every screen has a URL (`/`, `/cart`, `/about`, ...); pages a later phase builds show a placeholder naming that phase. The store's operator, contact email and ship-from city are `TODO(owner)` values in `src/content/site.ts`, shown in the footer until you fill them in, and the words on `/about`, `/returns`, `/shipping`, `/privacy` and `/terms` are `TODO(owner)` paragraphs in `src/features/content/`.
 
+## API contract
+
+The backend's OpenAPI documents are the contract. Three commands keep the types honest (details: [`docs/architecture/api-layer.md`](docs/architecture/api-layer.md)); they need the backend running at the pinned tag:
+
+| Command | What it does |
+|---|---|
+| `npm run api:snapshot` | downloads the five documents into `api/openapi/` (commit alone: `chore(api): regenerate from backend <tag>`) |
+| `npm run api:generate` | generates `src/api/generated/*.ts` from the snapshots (never hand-edited) |
+| `npm run api:check` | fails if the live backend differs from the snapshots; runs first in `npm run e2e` |
+
 ## Continuous integration
 
 Every pull request, and every push to `main`, runs [`.github/workflows/ci.yml`](.github/workflows/ci.yml) on GitHub Actions. **A PR is merged only when both checks are green.**

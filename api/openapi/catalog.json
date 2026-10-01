@@ -1,0 +1,893 @@
+{
+  "components": {
+    "schemas": {
+      "ApiError": {
+        "description": "The shape every failing request returns.",
+        "properties": {
+          "message": {
+            "description": "A human-readable explanation. Validation failures list every rejected field, separated by '; '.",
+            "example": "Product 42 not found",
+            "type": "string"
+          },
+          "status": {
+            "description": "The HTTP status code, repeated in the body so a client that only logs the body still has it.",
+            "example": 404,
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "BackfillStatus": {
+        "properties": {
+          "endedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "executionId": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "failure": {
+            "description": "Why the run failed, if it did",
+            "type": "string"
+          },
+          "indexedProducts": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "read": {
+            "description": "Products read so far in this run",
+            "format": "int64",
+            "type": "integer"
+          },
+          "startedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "status": {
+            "example": "COMPLETED",
+            "type": "string"
+          },
+          "totalProducts": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "written": {
+            "description": "Products embedded and saved so far in this run",
+            "format": "int64",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "GeneratedDescriptionResponse": {
+        "description": "Copy written by the configured language model, already saved to the product.",
+        "properties": {
+          "completionTokens": {
+            "description": "Tokens in the reply. Null if the provider did not report usage.",
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "description": {
+            "description": "Now the product's description.",
+            "example": "A compact 87-key mechanical keyboard with hot-swappable switches.",
+            "type": "string"
+          },
+          "generatedAt": {
+            "format": "date-time",
+            "type": "string"
+          },
+          "model": {
+            "description": "The model that wrote it, as the provider reported it. Null if not reported.",
+            "example": "gpt-4.1-mini",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "productId": {
+            "example": 1,
+            "format": "int64",
+            "type": "integer"
+          },
+          "promptTokens": {
+            "description": "Tokens in the prompt. Null if the provider did not report usage.",
+            "format": "int32",
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "seoTitle": {
+            "example": "Mechanical Keyboard with Hot-Swap Switches",
+            "type": "string"
+          },
+          "tags": {
+            "example": [
+              "mechanical keyboard",
+              "hot-swap",
+              "pbt keycaps"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ProductRequest": {
+        "description": "The catalogue fields a client may set.",
+        "properties": {
+          "category": {
+            "description": "Optional catalogue category. Omitting it is allowed: the column is nullable so that the migration that added it could not break clients written before it existed.",
+            "example": "PERIPHERALS",
+            "maxLength": 50,
+            "minLength": 0,
+            "type": "string"
+          },
+          "description": {
+            "description": "Optional long description.",
+            "example": "Hot-swappable switches, PBT keycaps, 87 keys.",
+            "maxLength": 1000,
+            "minLength": 0,
+            "type": "string"
+          },
+          "name": {
+            "description": "Display name, unique only by convention.",
+            "example": "Mechanical Keyboard",
+            "maxLength": 255,
+            "minLength": 0,
+            "type": "string"
+          },
+          "price": {
+            "description": "Unit price, at most two decimal places.",
+            "example": 8999,
+            "minimum": 0.01,
+            "type": "number"
+          },
+          "stockQuantity": {
+            "description": "Units available to sell. Zero is allowed; negative is not.",
+            "example": 25,
+            "format": "int32",
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "name",
+          "price",
+          "stockQuantity"
+        ],
+        "type": "object"
+      },
+      "ProductResponse": {
+        "description": "A product as the catalogue returns it.",
+        "properties": {
+          "category": {
+            "description": "Optional catalogue category. Null for products created before the category column existed, or created without one.",
+            "example": "PERIPHERALS",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "description": {
+            "example": "Hot-swappable switches, PBT keycaps, 87 keys.",
+            "type": "string"
+          },
+          "id": {
+            "description": "Generated identifier.",
+            "example": 1,
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "example": "Mechanical Keyboard",
+            "type": "string"
+          },
+          "price": {
+            "description": "Unit price with two decimal places.",
+            "example": 8999,
+            "type": "number"
+          },
+          "stockQuantity": {
+            "description": "Units currently available. Checkout reduces this.",
+            "example": 25,
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "ProductSearchHit": {
+        "properties": {
+          "product": {
+            "$ref": "#/components/schemas/ProductResponse"
+          },
+          "similarity": {
+            "description": "Cosine similarity between the query and the product, 1 = identical in meaning.",
+            "example": 0.71,
+            "format": "double",
+            "type": "number"
+          }
+        },
+        "type": "object"
+      },
+      "ProductSearchResponse": {
+        "properties": {
+          "query": {
+            "type": "string"
+          },
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/ProductSearchHit"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "ProductSnapshot": {
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          },
+          "stockQuantity": {
+            "format": "int32",
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "ProductUpsert": {
+        "properties": {
+          "category": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "id": {
+            "format": "int64",
+            "type": "integer"
+          },
+          "name": {
+            "type": "string"
+          },
+          "price": {
+            "type": "number"
+          }
+        },
+        "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "bearerFormat": "JWT",
+        "description": "A signed JWT from POST /api/auth/login, sent as `Authorization: Bearer <token>`. \"Bearer\" is meant literally: whoever holds it is the account, so it is only safe over TLS or, as here, on localhost. It expires after 15 minutes and cannot be revoked before then.",
+        "scheme": "bearer",
+        "type": "http"
+      }
+    }
+  },
+  "info": {
+    "contact": {
+      "name": "EcomDemo",
+      "url": "https://github.com/mr-sujay-patil/ecomdemo"
+    },
+    "description": "The product catalogue: browse, search (by keyword or by meaning) and, as an ADMIN, maintain it. Browsing needs no account.\n\n**Conventions**\n\n- Every endpoint lives under `/api` and is reached through the gateway. A service's own port is not for clients.\n- Money is a decimal with two places; totals are always calculated on the server and never taken from the request.\n- Endpoints marked with a padlock need a token. Call `POST /api/auth/login` (the **customer** document), copy the `accessToken`, and paste it into **Authorize** above - then \"Try it out\" sends it as `Authorization: Bearer <token>`.\n- Every failure returns the same shape, `{\"status\": <code>, \"message\": <text>}` - see the `ApiError` schema.\n",
+    "license": {
+      "name": "MIT"
+    },
+    "title": "EcomDemo Catalog API",
+    "version": "v1"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/products": {
+      "get": {
+        "description": "Returns the whole catalogue, unpaged and unsorted. Paging arrives when the catalogue is big enough to need it.",
+        "operationId": "list",
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProductResponse"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "The catalogue, possibly empty"
+          }
+        },
+        "summary": "List every product",
+        "tags": [
+          "Products"
+        ]
+      },
+      "post": {
+        "description": "The id is generated by the server; anything sent for it is ignored.",
+        "operationId": "create",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponse"
+                }
+              }
+            },
+            "description": "Created. The Location header points at the new product."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "A field failed validation, or the body was not readable JSON"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No Bearer token, or one that is invalid or expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Authenticated, but not as an ADMIN"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Create a product (ADMIN)",
+        "tags": [
+          "Products"
+        ]
+      }
+    },
+    "/api/products/batch": {
+      "post": {
+        "description": "A null id creates; a set id updates. Used by the CSV import.",
+        "operationId": "upsertAll",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "items": {
+                  "$ref": "#/components/schemas/ProductUpsert"
+                },
+                "type": "array"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ProductSnapshot"
+                  },
+                  "type": "array"
+                }
+              }
+            },
+            "description": "OK"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Create or update many products",
+        "tags": [
+          "Products"
+        ]
+      }
+    },
+    "/api/products/embeddings/backfill": {
+      "post": {
+        "description": "Starts the backfill job and returns at once; poll the execution id for progress.",
+        "operationId": "start",
+        "responses": {
+          "202": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackfillStatus"
+                }
+              }
+            },
+            "description": "Started"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No embedding model configured"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Embed every product again (ADMIN)",
+        "tags": [
+          "embedding-backfill-controller"
+        ]
+      }
+    },
+    "/api/products/embeddings/backfill/{executionId}": {
+      "get": {
+        "operationId": "status",
+        "parameters": [
+          {
+            "description": "The executionId the POST returned",
+            "example": 1,
+            "in": "path",
+            "name": "executionId",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BackfillStatus"
+                }
+              }
+            },
+            "description": "The run"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No backfill run with that id"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "One backfill run's progress, and how much of the catalogue is indexed (ADMIN)",
+        "tags": [
+          "embedding-backfill-controller"
+        ]
+      }
+    },
+    "/api/products/search": {
+      "get": {
+        "description": "Embeds the query and returns the products nearest to it in meaning, best first, optionally only in one category and price range. Words need not match: \"something to carry my laptop in\" finds a laptop sleeve.",
+        "operationId": "search",
+        "parameters": [
+          {
+            "description": "What the shopper is looking for, in their own words",
+            "example": "something to protect my laptop on the train",
+            "in": "query",
+            "name": "q",
+            "required": true,
+            "schema": {
+              "maxLength": 200,
+              "minLength": 0,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Only this category (any case)",
+            "example": "ACCESSORIES",
+            "in": "query",
+            "name": "category",
+            "required": false,
+            "schema": {
+              "maxLength": 50,
+              "minLength": 0,
+              "type": "string"
+            }
+          },
+          {
+            "description": "Lowest price, inclusive",
+            "example": 1000,
+            "in": "query",
+            "name": "minPrice",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "number"
+            }
+          },
+          {
+            "description": "Highest price, inclusive",
+            "example": 5000,
+            "in": "query",
+            "name": "maxPrice",
+            "required": false,
+            "schema": {
+              "minimum": 0,
+              "type": "number"
+            }
+          },
+          {
+            "description": "How many results, at most (default 5, max 20)",
+            "example": 5,
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "format": "int32",
+              "maximum": 20,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductSearchResponse"
+                }
+              }
+            },
+            "description": "The matches; an empty list if nothing was close enough"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No query, a query over 200 characters, or a bad filter"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No embedding model configured, or it did not answer; Retry-After says when to try again"
+          }
+        },
+        "summary": "Search products by meaning",
+        "tags": [
+          "product-search-controller"
+        ]
+      }
+    },
+    "/api/products/{id}": {
+      "delete": {
+        "description": "Removing a product that is still in the cart is not prevented yet.",
+        "operationId": "delete",
+        "parameters": [
+          {
+            "description": "Id of the product to delete",
+            "example": 1,
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Deleted; no body"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No Bearer token, or one that is invalid or expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Authenticated, but not as an ADMIN"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No product with that id"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Delete a product (ADMIN)",
+        "tags": [
+          "Products"
+        ]
+      },
+      "get": {
+        "operationId": "get",
+        "parameters": [
+          {
+            "description": "Id of the product",
+            "example": 1,
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponse"
+                }
+              }
+            },
+            "description": "The product"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No product with that id"
+          }
+        },
+        "summary": "Get one product by id",
+        "tags": [
+          "Products"
+        ]
+      },
+      "put": {
+        "description": "A full replacement: every field in the body is written, so omitting one clears it.",
+        "operationId": "update",
+        "parameters": [
+          {
+            "description": "Id of the product to replace",
+            "example": 1,
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProductRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProductResponse"
+                }
+              }
+            },
+            "description": "The updated product"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "A field failed validation, or the body was not readable JSON"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No Bearer token, or one that is invalid or expired"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "Authenticated, but not as an ADMIN"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No product with that id"
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Replace a product (ADMIN)",
+        "tags": [
+          "Products"
+        ]
+      }
+    },
+    "/api/products/{id}/generate-description": {
+      "post": {
+        "description": "Writes a description, tags and an SEO title, saves the description to the product, and keeps the whole answer in the generation history.",
+        "operationId": "generate",
+        "parameters": [
+          {
+            "description": "Id of the product",
+            "example": 1,
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/GeneratedDescriptionResponse"
+                }
+              }
+            },
+            "description": "Generated and saved"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No product with that id"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No model configured, the model failed or timed out, or its answer was unusable. The product is unchanged; Retry-After says when to try again."
+          }
+        },
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "summary": "Generate a product description with the configured LLM (ADMIN)",
+        "tags": [
+          "product-description-controller"
+        ]
+      }
+    }
+  },
+  "servers": [
+    {
+      "description": "The gateway this document was fetched through",
+      "url": "/"
+    }
+  ],
+  "tags": [
+    {
+      "description": "The catalogue. Browsing is open to anyone — it is the shop window. Creating, replacing and deleting require an ADMIN account.",
+      "name": "Products"
+    }
+  ]
+}

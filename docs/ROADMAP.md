@@ -64,8 +64,8 @@ Status: ⬜ Not started · 🟡 In progress · 🔵 PR open · ✅ Done (verifie
 | 3 | [End-to-End Smoke Tests](phases/phase-03-playwright.md) | Playwright | `feature/phase-03-playwright` | Foundation | backend compose stack at the pinned tag | ✅ |
 | 4 | [Code Quality](phases/phase-04-code-quality.md) | ESLint + Prettier | `feature/phase-04-code-quality` | Foundation | none | ✅ |
 | 5 | [Continuous Integration](phases/phase-05-github-actions.md) | GitHub Actions | `feature/phase-05-github-actions` | Foundation | backend images for the E2E job (GHCR) | ✅ |
-| 6 | [Routing](phases/phase-06-routing.md) | React Router | `feature/phase-06-routing` | Application shell | none | 🔵 |
-| 7 | [Typed API Client](phases/phase-07-api-client.md) | openapi-typescript + openapi-fetch | `feature/phase-07-api-client` | Application shell | the five `/v3/api-docs/<service>` documents | ⬜ |
+| 6 | [Routing](phases/phase-06-routing.md) | React Router | `feature/phase-06-routing` | Application shell | none | ✅ |
+| 7 | [Typed API Client](phases/phase-07-api-client.md) | openapi-typescript + openapi-fetch | `feature/phase-07-api-client` | Application shell | the five `/v3/api-docs/<service>` documents | 🔵 |
 | 8 | [Server State](phases/phase-08-server-state.md) | TanStack Query | `feature/phase-08-server-state` | Application shell | none | ⬜ |
 | 9 | [Design System](phases/phase-09-design-system.md) | CSS custom properties + the EcomDemo component library | `feature/phase-09-design-system` | Application shell | a decision on product images (web KI-002) | ⬜ |
 | 10 | [Forms and Validation](phases/phase-10-forms.md) | React Hook Form + Zod | `feature/phase-10-forms` | Application shell | validation rules (guide sections 3, 6, 7) | ⬜ |
