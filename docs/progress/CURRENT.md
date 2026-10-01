@@ -5,30 +5,30 @@
 - **Updated:** 2026-10-01
 - **Phase:** 8 — Server State
 - **Branch:** `feature/phase-08-server-state`
-- **Step:** IMPLEMENTING
+- **Step:** WAITING_FOR_USER
   (NOT_STARTED | PREFLIGHT | BRANCHED | PLANNING | IMPLEMENTING | TESTING | PR_OPEN | VERIFYING | WAITING_FOR_USER)
-- **PR:** not yet
+- **PR:** #10 (CI running on the head)
 - **Backend pinned at:** `phase-33-complete`. Start the stack from the clone if `ecomdemo-gateway-service` is not running; stop it after (never `-v`).
-- **Waiting for user:** NO
+- **Waiting for user:** YES: review of PR #10
 
 ## Merge verification before this phase
 Phase 7 (PR #9, merge `58c20ae`): PASS on 2026-10-01. PR MERGED; branch tip `3a1ded7` is an ancestor of `origin/main`; `git log` and `git diff --stat` empty; branch kept; `npm ci && npm run verify` 137/137 and `npm run e2e` 208/208 (`api:check` green) on `main` against `phase-33-complete`; CI green on `main`; tag `phase-07-complete` pushed. Tracker ✅ is this branch's first commit.
 
 ## Checklist (from the phase file's "What you'll implement")
-- [ ] TanStack Query (latest stable): `QueryClient` in `src/app/providers.tsx`, defaults recorded in `docs/decisions.md`
-- [ ] Key factory + hooks in `src/features/catalog/api.ts` (`catalogKeys.list()`, `catalogKeys.detail(id)`)
-- [ ] Catalogue page: one `GET /api/products`; client-side category filter (`null` = "Other"), sort (name, price), 24 per page; filter, sort, page in the URL
-- [ ] Product page `/products/:id`: name, category, price, description, stock hint; 404 → "No longer available" + link back; disabled Add to cart ("Sign in to add to your cart")
-- [ ] Prefetch a product on card hover or focus
-- [ ] Loading states reserve space and say what loads; error states: `ApiError.message` / correlation id + Retry
-- [ ] Tests with MSW: filter and sort update URL and list; pagination; 404 page; error and retry
-- [ ] `docs/modules/catalog.md`
-- [ ] E2E: filter → URL → reload keeps it; sort by price; next page; open a product; unknown id → "No longer available"
-- [ ] Done when (real backend): shelf shows seeded products, filter/sort/pages survive reload, product page by link and deep URL
-- [ ] Testing protocol → `docs/test-reports/phase-08.md`; README, `decisions.md`, `RECENT.md` rotated (Phase 06 to archive), tracker 🔵 → PR → STOP
+- [x] TanStack Query (latest stable): `QueryClient` in `src/app/providers.tsx`, defaults recorded in `docs/decisions.md`
+- [x] Key factory + hooks in `src/features/catalog/api.ts` (`catalogKeys.list()`, `catalogKeys.detail(id)`)
+- [x] Catalogue page: one `GET /api/products`; client-side category filter (`null` = "Other"), sort (name, price), 24 per page; filter, sort, page in the URL
+- [x] Product page `/products/:id`: name, category, price, description, stock hint; 404 → "No longer available" + link back; disabled Add to cart ("Sign in to add to your cart")
+- [x] Prefetch a product on card hover or focus
+- [x] Loading states reserve space and say what loads; error states: `ApiError.message` / correlation id + Retry
+- [x] Tests with MSW: filter and sort update URL and list; pagination; 404 page; error and retry
+- [x] `docs/modules/catalog.md`
+- [x] E2E: filter → URL → reload keeps it; sort by price; next page; open a product; unknown id → "No longer available"
+- [x] Done when (real backend): shelf shows seeded products, filter/sort/pages survive reload, product page by link and deep URL
+- [x] Testing protocol → `docs/test-reports/phase-08.md`; README, `decisions.md`, `RECENT.md` rotated (Phase 06 to archive), tracker 🔵 → PR → STOP
 
 ## Next action
-Read KI-003 and KI-004 in `docs/KNOWN_ISSUES.md` and the catalogue rows of the guide, then add `@tanstack/react-query` (exact, latest stable).
+Confirm CI is green on the head of PR #10. Then wait for the owner's review. On `approved, merge it`: `gh pr merge 10 --merge` (no `--delete-branch`), merge verification on `main` (start the stack from the clone, stop it after), tag `phase-08-complete`. Next phase only on `continue` (Phase 9: design system; read its file and `design-system/` first: styling rules change from Phase 9).
 
 ## ⚠️ Environment notes (this machine)
 - One backend stack at a time: if `ecomdemo-gateway-service` is running, use it.

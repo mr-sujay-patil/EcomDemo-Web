@@ -15,7 +15,7 @@
 **Follow-ups (not done, out of scope):** <suggestions deferred to later phases>
 -->
 
-## Phase 08: Server State (tag: phase-08-complete, PR #N)
+## Phase 08: Server State (tag: phase-08-complete, PR #10)
 **What exists now:** The catalogue is real: a shelf with a category filter, sort (name, price either way) and 24 to a page, all in the URL (`?category=&sort=&page=`), and a product page (`/products/:id`) with a stock hint, a disabled Add to cart and "No longer available" for a missing product. Server data lives in the TanStack Query cache.
 **Key code:** `src/app/providers.tsx` (`createQueryClient`, `AppProviders`), `src/features/catalog/api.ts` (`catalogKeys`, `productsQuery`, `productQuery`, `useProducts`, `useProduct`, `usePrefetchProduct`), `shelf.ts` (the pure filter, sort, page and URL functions; `stockHint`), `ProductListPage.tsx`, `ProductPage.tsx`, `src/components/ErrorPanel.tsx` (message, correlation id on 5xx and network, Retry), `src/lib/money.ts` (`formatPrice`). Docs: `docs/architecture/state.md`, `docs/modules/catalog.md`.
 **Config & infrastructure:** `@tanstack/react-query` 5.104.0. App-wide `retry: false` (Phase 7 retries); catalogue fresh 5 min, no refetch on focus. Coverage floor 99.13 / 92.68 / 100 / 100. Backend pin `phase-33-complete`.
