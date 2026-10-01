@@ -1,75 +1,141 @@
-import { useEffect, useState } from 'react'
-import { ApiError } from '@/api/errors'
-import { fetchProducts, type ProductResponse } from './products'
+import { Link, useSearchParams } from 'react-router'
+import { ErrorPanel } from '@/components/ErrorPanel'
+import { formatPrice } from '@/lib/money'
+import { usePrefetchProduct, useProducts } from './api'
+import { applyShelf, categoriesOf, categoryOf, parseShelf, sortOptions, toSearchParams, type ShelfState } from './shelf'
+import type { ProductResponse } from './products'
 
-const priceFormat = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' })
+// The results area keeps this height while loading and after, so the footer does not jump when the
+// products arrive. Phase 9 replaces it with a token-based class.
+const reserveResults = { minHeight: '24rem' }
 
-type LoadState =
-  | { kind: 'loading' }
-  | { kind: 'loaded'; products: ProductResponse[] }
-  | { kind: 'failed'; message: string; correlationId: string | null }
-
-// Fetching in useEffect is a stopgap: Phase 8 moves server state into the query cache.
 export function ProductListPage() {
-  const [state, setState] = useState<LoadState>({ kind: 'loading' })
+  const [params, setParams] = useSearchParams()
+  const shelf = parseShelf(params)
+  const products = useProducts()
 
-  useEffect(() => {
-    const controller = new AbortController()
-    fetchProducts(controller.signal)
-      .then((products) => setState({ kind: 'loaded', products }))
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) return
-        if (error instanceof ApiError) {
-          // The id helps support find a server-side failure or a request that never arrived; for a 4xx the message says enough.
-          const showId = error.status === 0 || error.status >= 500
-          setState({ kind: 'failed', message: error.message, correlationId: showId ? error.correlationId : null })
-        } else {
-          setState({ kind: 'failed', message: 'Something went wrong while loading the products.', correlationId: null })
-        }
-      })
-    return () => controller.abort()
-  }, [])
+  function show(next: Partial<ShelfState>) {
+    setParams(toSearchParams({ ...shelf, ...next }))
+  }
 
   return (
     <>
       <h1>Products</h1>
-      <ProductListBody state={state} />
+      {products.isPending && (
+        <div style={reserveResults}>
+          <p role="status">Loading products…</p>
+        </div>
+      )}
+      {products.isError && <ErrorPanel error={products.error} onRetry={() => void products.refetch()} />}
+      {products.isSuccess &&
+        (products.data.length === 0 ? (
+          <p>No products yet.</p>
+        ) : (
+          <Shelf products={products.data} shelf={shelf} show={show} />
+        ))}
     </>
   )
 }
 
-function ProductListBody({ state }: { state: LoadState }) {
-  switch (state.kind) {
-    case 'loading':
-      return <p role="status">Loading products…</p>
-    case 'failed':
-      return (
-        <div role="alert">
-          <p>{state.message}</p>
-          {state.correlationId && (
-            // On its own line: an unbreakable UUID after the label overflows a 360 px screen.
-            <p>
-              Reference for support:
-              <br />
-              <code>{state.correlationId}</code>
-            </p>
+function Shelf({
+  products,
+  shelf,
+  show,
+}: {
+  products: ProductResponse[]
+  shelf: ShelfState
+  show: (next: Partial<ShelfState>) => void
+}) {
+  const prefetch = usePrefetchProduct()
+  const result = applyShelf(products, shelf)
+  // A shared link may name a category that no longer exists: keep it in the list so the control still says what is filtered.
+  const categories = categoriesOf(products)
+  if (shelf.category !== null && !categories.includes(shelf.category)) categories.push(shelf.category)
+
+  return (
+    <>
+      <form
+        aria-label="Filter and sort the products"
+        onSubmit={(event) => {
+          event.preventDefault()
+        }}
+      >
+        <label>
+          Category{' '}
+          <select
+            value={shelf.category ?? ''}
+            onChange={(event) => show({ category: event.target.value || null, page: 1 })}
+          >
+            <option value="">All categories</option>
+            {categories.map((category) => (
+              <option key={category} value={category}>
+                {category}
+              </option>
+            ))}
+          </select>
+        </label>{' '}
+        <label>
+          Sort by{' '}
+          <select
+            value={shelf.sort}
+            onChange={(event) =>
+              show({ sort: parseShelf(new URLSearchParams({ sort: event.target.value })).sort, page: 1 })
+            }
+          >
+            {sortOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </form>
+
+      <div style={reserveResults}>
+        {/* aria-live, not role="status": it announces a changed count without being a loading message. */}
+        <p aria-live="polite">
+          {result.total === 0
+            ? 'No products match.'
+            : `Showing ${result.first}–${result.last} of ${result.total} products`}
+        </p>
+        {result.total === 0 ? (
+          <p>
+            <Link to="/">Show all products</Link>
+          </p>
+        ) : (
+          <ul>
+            {result.items.map((product) => (
+              <li key={product.id}>
+                <h2>
+                  <Link
+                    to={`/products/${product.id}`}
+                    onMouseEnter={() => prefetch(product.id)}
+                    onFocus={() => prefetch(product.id)}
+                  >
+                    {product.name}
+                  </Link>
+                </h2>
+                <p>{formatPrice(product.price)}</p>
+                <p>Category: {categoryOf(product)}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {result.pageCount > 1 && (
+        <nav aria-label="Pagination">
+          {result.page > 1 && (
+            <Link to={{ search: toSearchParams({ ...shelf, page: result.page - 1 }).toString() }}>Previous page</Link>
+          )}{' '}
+          <span>
+            Page {result.page} of {result.pageCount}
+          </span>{' '}
+          {result.page < result.pageCount && (
+            <Link to={{ search: toSearchParams({ ...shelf, page: result.page + 1 }).toString() }}>Next page</Link>
           )}
-        </div>
-      )
-    case 'loaded':
-      if (state.products.length === 0) {
-        return <p>No products yet.</p>
-      }
-      return (
-        <ul>
-          {state.products.map((product) => (
-            <li key={product.id}>
-              <h2>{product.name}</h2>
-              <p>{priceFormat.format(product.price)}</p>
-              <p>Category: {product.category ?? 'Other'}</p>
-            </li>
-          ))}
-        </ul>
-      )
-  }
+        </nav>
+      )}
+    </>
+  )
 }

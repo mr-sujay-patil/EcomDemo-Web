@@ -8,3 +8,10 @@ export async function fetchProducts(signal?: AbortSignal): Promise<ProductRespon
   const { data } = await catalogApi.GET('/api/products', { signal })
   return data ?? []
 }
+
+/** GET /api/products/{id}. Rejects with an `ApiError`; status 404 means the product is gone. */
+export async function fetchProduct(id: number, signal?: AbortSignal): Promise<ProductResponse> {
+  const { data } = await catalogApi.GET('/api/products/{id}', { params: { path: { id } }, signal })
+  if (!data) throw new Error('The server answered without a product.')
+  return data
+}

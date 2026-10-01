@@ -1,10 +1,10 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
-import { productHandlers, SERVER_ERROR_CORRELATION_ID } from '@/test/msw/handlers'
+import { manyProducts, productHandlers, SERVER_ERROR_CORRELATION_ID } from '@/test/msw/handlers'
 import { server } from '@/test/msw/server'
-import { renderWithProviders } from '@/test/render'
-import { ProductListPage } from './ProductListPage'
+import { renderRoute } from '@/test/render'
 
 /** The list item that holds the product with this name. */
 async function findProductItem(name: string) {
@@ -14,11 +14,13 @@ async function findProductItem(name: string) {
   return item
 }
 
-describe('ProductListPage', () => {
-  it('shows a loading message, then the products', async () => {
-    renderWithProviders(<ProductListPage />)
+const itemNames = () => screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)
 
-    expect(screen.getByRole('status')).toHaveTextContent('Loading products…')
+describe('the product list', () => {
+  it('shows a loading message, then the products', async () => {
+    renderRoute('/')
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Loading products…')
 
     expect(await screen.findByRole('heading', { name: 'Test Kettle' })).toBeInTheDocument()
     expect(screen.getAllByRole('listitem')).toHaveLength(3)
@@ -26,14 +28,14 @@ describe('ProductListPage', () => {
   })
 
   it('formats prices in rupees with Indian digit grouping', async () => {
-    renderWithProviders(<ProductListPage />)
+    renderRoute('/')
 
     expect(within(await findProductItem('Test Kettle')).getByText('₹1,299.00')).toBeInTheDocument()
     expect(within(await findProductItem('Test Sofa')).getByText('₹1,25,000.50')).toBeInTheDocument()
   })
 
   it('shows "Other" for a product without a category', async () => {
-    renderWithProviders(<ProductListPage />)
+    renderRoute('/')
 
     expect(within(await findProductItem('Test Gift Card')).getByText('Category: Other')).toBeInTheDocument()
     expect(within(await findProductItem('Test Kettle')).getByText('Category: Kitchen')).toBeInTheDocument()
@@ -41,19 +43,36 @@ describe('ProductListPage', () => {
 
   it('says so when there are no products', async () => {
     server.use(productHandlers.empty)
-    renderWithProviders(<ProductListPage />)
+    renderRoute('/')
 
     expect(await screen.findByText('No products yet.')).toBeInTheDocument()
     expect(screen.queryByRole('list')).not.toBeInTheDocument()
   })
 
-  it('shows the server’s error message and the correlation id on a 500', async () => {
+  it('links every product to its page', async () => {
+    renderRoute('/')
+
+    const link = within(await findProductItem('Test Sofa')).getByRole('link', { name: 'Test Sofa' })
+
+    expect(link).toHaveAttribute('href', '/products/2')
+  })
+
+  it('announces the count of what is shown', async () => {
+    renderRoute('/')
+
+    expect(await screen.findByText('Showing 1–3 of 3 products')).toBeInTheDocument()
+  })
+})
+
+describe('errors and retry', () => {
+  it('shows the server’s error message and the correlation id on a 500, with a Retry button', async () => {
     server.use(productHandlers.serverError)
-    renderWithProviders(<ProductListPage />)
+    renderRoute('/')
 
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent('The catalogue is unavailable right now.')
     expect(alert).toHaveTextContent(SERVER_ERROR_CORRELATION_ID)
+    expect(within(alert).getByRole('button', { name: 'Retry' })).toBeInTheDocument()
   })
 
   it('shows the correlation id it sent when the server cannot be reached', async () => {
@@ -65,11 +84,230 @@ describe('ProductListPage', () => {
         return HttpResponse.error()
       }),
     )
-    renderWithProviders(<ProductListPage />)
+    renderRoute('/')
 
     const alert = await screen.findByRole('alert')
     expect(alert).toHaveTextContent('Could not reach the server. Check your connection and try again.')
     expect(sentId).toMatch(/^[0-9a-f-]{36}$/)
     expect(within(alert).getByText(sentId)).toBeInTheDocument()
+  })
+
+  it('loads the products when Retry is pressed after a failure', async () => {
+    const user = userEvent.setup()
+    server.use(
+      http.get(
+        '/api/products',
+        () => HttpResponse.json({ status: 500, message: 'The catalogue is unavailable right now.' }, { status: 500 }),
+        { once: true },
+      ),
+    )
+    renderRoute('/')
+    await user.click(await within(await screen.findByRole('alert')).findByRole('button', { name: 'Retry' }))
+
+    expect(await screen.findByRole('heading', { name: 'Test Kettle' })).toBeInTheDocument()
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('does not show a correlation id for a client error', async () => {
+    server.use(
+      http.get('/api/products', () =>
+        HttpResponse.json(
+          { status: 403, message: 'Not permitted' },
+          { status: 403, headers: { 'X-Correlation-Id': 'abc12345' } },
+        ),
+      ),
+    )
+    renderRoute('/')
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('Not permitted')
+    expect(alert).not.toHaveTextContent('abc12345')
+  })
+})
+
+describe('filter and sort, kept in the URL', () => {
+  it('filters by a category derived from the products, and puts it in the URL', async () => {
+    const user = userEvent.setup()
+    const { router } = renderRoute('/')
+    await screen.findByRole('heading', { name: 'Test Kettle' })
+
+    const select = screen.getByRole('combobox', { name: 'Category' })
+    expect(
+      within(select)
+        .getAllByRole('option')
+        .map((option) => option.textContent),
+    ).toEqual(['All categories', 'Furniture', 'Kitchen', 'Other'])
+    await user.selectOptions(select, 'Kitchen')
+
+    expect(itemNames()).toEqual(['Test Kettle'])
+    expect(router.state.location.search).toBe('?category=Kitchen')
+    expect(screen.getByText('Showing 1–1 of 1 products')).toBeInTheDocument()
+  })
+
+  it('groups products without a category under "Other"', async () => {
+    const user = userEvent.setup()
+    renderRoute('/')
+    await screen.findByRole('heading', { name: 'Test Kettle' })
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Category' }), 'Other')
+
+    expect(itemNames()).toEqual(['Test Gift Card'])
+  })
+
+  it('sorts by name by default, then by price either way, and puts the sort in the URL', async () => {
+    const user = userEvent.setup()
+    const { router } = renderRoute('/')
+    await screen.findByRole('heading', { name: 'Test Kettle' })
+    expect(itemNames()).toEqual(['Test Gift Card', 'Test Kettle', 'Test Sofa'])
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Sort by' }), 'price')
+    expect(itemNames()).toEqual(['Test Gift Card', 'Test Kettle', 'Test Sofa'])
+    expect(router.state.location.search).toBe('?sort=price')
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Sort by' }), 'price-desc')
+    expect(itemNames()).toEqual(['Test Sofa', 'Test Kettle', 'Test Gift Card'])
+    expect(router.state.location.search).toBe('?sort=price-desc')
+  })
+
+  it('opens already filtered and sorted from a shared link', async () => {
+    renderRoute('/?category=Kitchen&sort=price-desc')
+
+    expect(await screen.findByRole('heading', { name: 'Test Kettle' })).toBeInTheDocument()
+    expect(itemNames()).toEqual(['Test Kettle'])
+    expect(screen.getByRole('combobox', { name: 'Category' })).toHaveValue('Kitchen')
+    expect(screen.getByRole('combobox', { name: 'Sort by' })).toHaveValue('price-desc')
+  })
+
+  it('says so, and offers the whole shelf, for a category nothing is in', async () => {
+    renderRoute('/?category=Gone')
+
+    expect(await screen.findByText('No products match.')).toBeInTheDocument()
+    expect(screen.getByRole('combobox', { name: 'Category' })).toHaveValue('Gone')
+    expect(screen.getByRole('link', { name: 'Show all products' })).toHaveAttribute('href', '/')
+  })
+
+  it('follows the browser’s back button through filter changes', async () => {
+    const user = userEvent.setup()
+    const { router } = renderRoute('/')
+    await screen.findByRole('heading', { name: 'Test Kettle' })
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Category' }), 'Kitchen')
+    expect(itemNames()).toEqual(['Test Kettle'])
+
+    await router.navigate(-1)
+
+    await waitFor(() => {
+      expect(itemNames()).toEqual(['Test Gift Card', 'Test Kettle', 'Test Sofa'])
+    })
+    expect(screen.getByRole('combobox', { name: 'Category' })).toHaveValue('')
+  })
+})
+
+describe('pagination', () => {
+  const thirtyProducts = () => server.use(http.get('/api/products', () => HttpResponse.json(manyProducts(30))))
+
+  it('shows 24 products a page and a pager', async () => {
+    thirtyProducts()
+    renderRoute('/')
+
+    expect(await screen.findByText('Showing 1–24 of 30 products')).toBeInTheDocument()
+    expect(screen.getAllByRole('listitem')).toHaveLength(24)
+    const pager = screen.getByRole('navigation', { name: 'Pagination' })
+    expect(within(pager).getByText('Page 1 of 2')).toBeInTheDocument()
+    expect(within(pager).queryByRole('link', { name: 'Previous page' })).not.toBeInTheDocument()
+  })
+
+  it('goes to the next page and back, keeping the page in the URL', async () => {
+    const user = userEvent.setup()
+    thirtyProducts()
+    const { router } = renderRoute('/')
+    await user.click(await screen.findByRole('link', { name: 'Next page' }))
+
+    expect(await screen.findByText('Showing 25–30 of 30 products')).toBeInTheDocument()
+    expect(screen.getAllByRole('listitem')).toHaveLength(6)
+    expect(router.state.location.search).toBe('?page=2')
+    expect(screen.queryByRole('link', { name: 'Next page' })).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('link', { name: 'Previous page' }))
+    expect(await screen.findByText('Showing 1–24 of 30 products')).toBeInTheDocument()
+    expect(router.state.location.search).toBe('')
+  })
+
+  it('opens on the page the link names', async () => {
+    thirtyProducts()
+    renderRoute('/?page=2')
+
+    expect(await screen.findByText('Showing 25–30 of 30 products')).toBeInTheDocument()
+  })
+
+  it('shows the last page for a page past the end', async () => {
+    thirtyProducts()
+    renderRoute('/?page=99')
+
+    expect(await screen.findByText('Showing 25–30 of 30 products')).toBeInTheDocument()
+  })
+
+  it('returns to page 1 when the filter changes, and keeps the sort across pages', async () => {
+    const user = userEvent.setup()
+    thirtyProducts()
+    const { router } = renderRoute('/?page=2&sort=price-desc')
+    await screen.findByText('Showing 25–30 of 30 products')
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Category' }), 'Audio')
+
+    expect(await screen.findByText('Showing 1–15 of 15 products')).toBeInTheDocument()
+    expect(router.state.location.search).toBe('?category=Audio&sort=price-desc')
+  })
+})
+
+describe('prefetching', () => {
+  it('starts loading a product when its card is hovered, so opening it asks the server nothing more', async () => {
+    const user = userEvent.setup()
+    let requests = 0
+    server.use(
+      http.get('/api/products/:id', ({ params }) => {
+        requests++
+        return HttpResponse.json({
+          id: Number(params.id),
+          name: 'Test Kettle',
+          description: 'Fixture product',
+          price: 1299,
+          stockQuantity: 5,
+          category: 'Kitchen',
+        })
+      }),
+    )
+    renderRoute('/')
+    const link = within(await findProductItem('Test Kettle')).getByRole('link', { name: 'Test Kettle' })
+
+    await user.hover(link)
+    await waitFor(() => {
+      expect(requests).toBe(1)
+    })
+    await user.click(link)
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Test Kettle' })).toBeInTheDocument()
+    expect(requests).toBe(1)
+  })
+
+  it('also prefetches on keyboard focus', async () => {
+    const user = userEvent.setup()
+    const requested: string[] = []
+    server.use(
+      http.get('/api/products/:id', ({ params }) => {
+        requested.push(String(params.id))
+        return HttpResponse.json({ status: 404, message: 'x' }, { status: 404 })
+      }),
+    )
+    renderRoute('/')
+    const link = within(await findProductItem('Test Kettle')).getByRole('link', { name: 'Test Kettle' })
+
+    // Tab until the product link has focus, as a keyboard user would.
+    for (let step = 0; step < 10 && link !== document.activeElement; step++) await user.tab()
+
+    expect(link).toHaveFocus()
+    // Tabbing past the products before it prefetched those too; the focused one is among them.
+    await waitFor(() => {
+      expect(requested).toContain('1')
+    })
   })
 })
