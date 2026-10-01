@@ -15,7 +15,7 @@
 **Follow-ups (not done, out of scope):** <suggestions deferred to later phases>
 -->
 
-## Phase 06: Routing (tag: phase-06-complete, PR #N)
+## Phase 06: Routing (tag: phase-06-complete, PR #8)
 **What exists now:** Every screen of the guide has a URL, a document title and a place in the layout (skip link, header, `<main>`, footer). Pages later phases build show their final `h1` and "built in Phase N". The product list is at `/`.
 **Key code:** `src/app/router.tsx` (exported `routes`, `createAppRouter()`; `handle: { title }` per route; `lazy` for `/checkout` and `/admin/*`; `HydrateFallback`), `src/app/Layout.tsx` (title, focus the new `h1` after a pathname change, skip link, `<ScrollRestoration />`), `src/content/site.ts` (the owner's values), `src/features/content/*Page.tsx` (`TODO(owner)` paragraphs), `src/components/{Todo,PlaceholderPage}.tsx`, `renderRoute(path)` in `src/test/render.tsx`.
 **Config & infrastructure:** `react-router` 8.4.0 (`RouterProvider` from `react-router/dom`). Backend pin moved to `phase-33-complete` (chore PR #7). Coverage floor raised to 94.04 / 75.6 / 96.96 / 98.68.
