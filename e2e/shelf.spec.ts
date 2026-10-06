@@ -124,8 +124,7 @@ test.describe('the product page', () => {
     await expect(page.getByText('PERIPHERALS', { exact: true })).toBeVisible()
     await expect(page.getByText(/₹8,999\.00/)).toBeVisible()
     await expect(page.getByText(/^(\d+ in stock|Only \d+ left|Out of stock)$/)).toBeVisible()
-    await expect(page.getByRole('button', { name: 'Add to cart' })).toBeDisabled()
-    await expect(page.getByText('to add to your cart')).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Add to cart' })).toBeEnabled()
 
     await page.goBack()
 

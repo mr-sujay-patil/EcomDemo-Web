@@ -2,6 +2,7 @@ import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
+import { fakeCart } from '@/test/msw/cart'
 import { server } from '@/test/msw/server'
 import { renderRoute } from '@/test/render'
 
@@ -48,15 +49,66 @@ describe('the product page', () => {
     expect(screen.getByText('Other')).toBeInTheDocument()
   })
 
-  it('has a disabled Add to cart button that points to signing in', async () => {
-    renderRoute('/products/1')
+  it('sends someone who is signed out to sign in, and back here', async () => {
+    const user = userEvent.setup()
+    const { router } = renderRoute('/products/1')
     await screen.findByRole('heading', { level: 1, name: 'Test Kettle' })
 
-    const button = screen.getByRole('button', { name: 'Add to cart' })
+    await user.click(screen.getByRole('button', { name: 'Add to cart' }))
 
-    expect(button).toBeDisabled()
-    expect(button).toHaveAccessibleDescription('Sign in to add to your cart')
-    expect(within(screen.getByRole('main')).getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/sign-in')
+    expect(router.state.location.pathname).toBe('/sign-in')
+    expect(router.state.location.search).toBe('?next=%2Fproducts%2F1')
+  })
+
+  it('adds to the cart for a customer, and then says how many are in it', async () => {
+    const cart = fakeCart()
+    server.use(...cart.handlers)
+    const user = userEvent.setup()
+    renderRoute('/products/1', { signedInAs: 'CUSTOMER' })
+    await screen.findByRole('heading', { level: 1, name: 'Test Kettle' })
+
+    await user.click(screen.getByRole('button', { name: 'Add to cart' }))
+
+    expect(await screen.findByRole('button', { name: 'In your cart (1)' })).toBeInTheDocument()
+    expect(cart.calls).toEqual(['POST 1 x1'])
+    expect(screen.getByRole('link', { name: 'Cart, 1 item' })).toBeInTheDocument()
+  })
+
+  it('shows the button busy while the add is on its way', async () => {
+    let release: () => void = () => undefined
+    const held = new Promise<void>((resolve) => (release = resolve))
+    server.use(
+      http.post('/api/cart/items', async () => {
+        await held
+        return HttpResponse.json({ id: 1, items: [], totalAmount: 0 })
+      }),
+    )
+    const user = userEvent.setup()
+    renderRoute('/products/1', { signedInAs: 'CUSTOMER' })
+    await screen.findByRole('heading', { level: 1, name: 'Test Kettle' })
+
+    await user.click(screen.getByRole('button', { name: 'Add to cart' }))
+
+    expect(screen.getByRole('button', { name: 'Add to cart' })).toHaveAttribute('aria-busy', 'true')
+    release()
+  })
+
+  it('shows why the server refused an add', async () => {
+    server.use(...fakeCart({ refuse: { status: 404, message: 'Product 1 not found' } }).handlers)
+    const user = userEvent.setup()
+    renderRoute('/products/1', { signedInAs: 'CUSTOMER' })
+    await screen.findByRole('heading', { level: 1, name: 'Test Kettle' })
+
+    await user.click(screen.getByRole('button', { name: 'Add to cart' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Product 1 not found')
+  })
+
+  it('offers an admin no Add to cart', async () => {
+    renderRoute('/products/1', { signedInAs: 'ADMIN' })
+    await screen.findByRole('heading', { level: 1, name: 'Test Kettle' })
+
+    expect(screen.queryByRole('button', { name: /cart/i })).not.toBeInTheDocument()
   })
 
   it('says "No longer available", with a way back, for a product the backend does not have', async () => {
