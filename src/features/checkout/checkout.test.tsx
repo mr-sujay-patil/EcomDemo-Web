@@ -197,6 +197,28 @@ describe('a lost answer', () => {
     expect(orders.calls).toContain('GET /api/orders')
   })
 
+  it('opens the newest order when the account has older ones', async () => {
+    const { orders, user, router } = await openCart({ drop: 'after' })
+    orders.orders.push(orderFixture({ id: 5 }), orderFixture({ id: 3 }))
+
+    await placeOrder(user)
+
+    await screen.findByRole('heading', { level: 1, name: 'Order #102' })
+    expect(router.state.location.pathname).toBe('/orders/102')
+  })
+
+  it('shows the error when the re-reading fails too, rather than guessing', async () => {
+    const { orders, user, router } = await openCart({ drop: 'after' })
+    const down = () => HttpResponse.json({ status: 500, message: 'Down' }, { status: 500 })
+    server.use(http.get('/api/orders', down), http.get('/api/cart', down))
+
+    await placeOrder(user)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Could not reach the server')
+    expect(router.state.location.pathname).toBe('/cart')
+    expect(orders.calls.filter((call) => call === 'POST /api/orders')).toHaveLength(1)
+  })
+
   it('never asks twice, and keeps the cart when no order was made', async () => {
     const { cart, orders, user, router } = await openCart({ drop: 'before' })
 
@@ -253,6 +275,23 @@ describe('the order page', () => {
 
     expect(await screen.findByText('Orders are unavailable')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
+  })
+
+  it('retries loading the order', async () => {
+    let answered = false
+    server.use(
+      http.get('/api/orders/4', () => {
+        if (answered) return HttpResponse.json(orderFixture({ id: 4 }))
+        answered = true
+        return HttpResponse.json({ status: 500, message: 'Orders are unavailable' }, { status: 500 })
+      }),
+    )
+    const user = userEvent.setup()
+    renderRoute('/orders/4', { signedInAs: 'CUSTOMER' })
+
+    await user.click(await screen.findByRole('button', { name: 'Retry' }))
+
+    expect(await screen.findByRole('region', { name: 'Items in this order' })).toBeInTheDocument()
   })
 
   it('not-a-number ids are not orders', async () => {

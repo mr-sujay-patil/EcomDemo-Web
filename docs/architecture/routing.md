@@ -28,7 +28,7 @@ The skip link focuses `<main>` itself (the browser scrolls to `#main` on its own
 | `/products/:id` | Product | 8 | one product: price, stock, add to cart |
 | `/search` | Search | 15 | semantic search results; the query lives in the URL |
 | `/cart` | Your cart | 12 | what the customer is about to buy |
-| `/checkout` | Checkout | 13 | placing the order and watching the saga; **lazy** |
+| `/checkout` | (redirect) | 13 | an old address: goes to `/cart`, where the order is placed |
 | `/orders` | Your orders | 14 | the customer's order history |
 | `/orders/:id` | Order | 13, 14 | one order and its status |
 | `/account` | Your account | 14 | profile |
@@ -42,7 +42,7 @@ Placeholders show their final `h1` and one line naming the phase that builds the
 
 ## Code splitting
 
-`/checkout` and `/admin/*` use the route's `lazy` property: the page's module is a separate file (`CheckoutPage-*.js`, `AdminPage-*.js` in `dist/assets/`), downloaded only when the route is opened. `e2e/routes.spec.ts` proves the home page requests neither. If a lazy route is the *first* page a visitor loads, the router shows `HydrateFallback` ("Loading…") until the chunk arrives; without it the router warns in development.
+`/cart`, `/orders/:id` and `/admin/*` use the route's `lazy` property: the page's module is a separate file (`CartPage-*.js`, `OrderPage-*.js`, `AdminPage-*.js` in `dist/assets/`), downloaded only when the route is opened. `e2e/routes.spec.ts` proves the home page requests neither. If a lazy route is the *first* page a visitor loads, the router shows `HydrateFallback` ("Loading…") until the chunk arrives; without it the router warns in development.
 
 ## Deep links need an SPA fallback
 

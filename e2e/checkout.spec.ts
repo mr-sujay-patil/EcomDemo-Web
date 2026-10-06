@@ -82,6 +82,7 @@ test.describe('checkout', () => {
   test.describe('a refused order', () => {
     // The browser logs a 409 response itself, even though the app handles it.
     test.use({ allowedConsoleErrors: [/Failed to load resource: the server responded with a status of 409/] })
+
     test('a quantity above stock is refused up front, by its line, and the cart is kept', async ({ page, request }) => {
       await signedInShelf(page, request)
       // Seeded with two in stock: asking for three is refused before any order exists.

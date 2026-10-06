@@ -52,3 +52,8 @@
   margin: var(--space-3) 0 0;
   font-family: var(--font-mono);
 }
+
+/* The mono face is bundled in Regular and Medium only: a heavier weight would be drawn by the browser, smeared. */
+.order-total strong {
+  font-weight: 500;
+}
