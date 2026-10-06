@@ -15,7 +15,7 @@
 **Follow-ups (not done, out of scope):** <suggestions deferred to later phases>
 -->
 
-## Phase 10: Forms and Validation (tag: phase-10-complete, PR: see `gh pr list`)
+## Phase 10: Forms and Validation (tag: phase-10-complete, PR #13)
 **What exists now:** `/register` and `/sign-in` work against the real backend. Register creates the account and goes to `/sign-in` with the username filled in and a note; sign-in checks the credentials and says "Signed in. Sessions arrive in the next phase." (the token is dropped: Phase 11). Every backend 400 lands on its own field; 409 on the username field; 401 reads "Wrong username or password."
 **Key code:** `src/components/forms/` (`Form`, `Field`, `FormError`, `SubmitButton`, `applyServerErrors`), `src/features/accounts/` (`schemas.ts`: register, login, profile; `api.ts`; `RegisterPage`; `SignInPage`; `signInState.ts`), `TextField`'s `ref` and `trailing`, `supportReference` in `src/api/errors.ts`, `docs/architecture/forms.md`.
 **Config & infrastructure:** `react-hook-form` 7.89.0, `zod` 4.6.5, `@hookform/resolvers` 5.9.1. **The dev and preview proxy keeps `Host`** (web KI-017: otherwise every browser write is a 403). Coverage floor 99.53 / 96.11 / 100 / 100.
