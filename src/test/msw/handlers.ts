@@ -6,7 +6,15 @@ type ApiError = components['schemas']['ApiError']
 
 // Test data only: prices chosen to show Indian digit grouping, one product without a category.
 export const productFixtures: ProductResponse[] = [
-  { id: 1, name: 'Test Kettle', description: 'Fixture product', price: 1299, stockQuantity: 5, category: 'Kitchen' },
+  {
+    id: 1,
+    name: 'Test Kettle',
+    description: 'Fixture product',
+    price: 1299,
+    stockQuantity: 5,
+    category: 'Kitchen',
+    imageUrl: null,
+  },
   {
     id: 2,
     name: 'Test Sofa',
@@ -14,8 +22,17 @@ export const productFixtures: ProductResponse[] = [
     price: 125000.5,
     stockQuantity: 1,
     category: 'Furniture',
+    imageUrl: null,
   },
-  { id: 3, name: 'Test Gift Card', description: 'Fixture product', price: 500, stockQuantity: 10, category: null },
+  {
+    id: 3,
+    name: 'Test Gift Card',
+    description: 'Fixture product',
+    price: 500,
+    stockQuantity: 10,
+    category: null,
+    imageUrl: null,
+  },
 ]
 
 /** Enough products for a second page (24 per page) and two categories plus none. */
@@ -27,6 +44,7 @@ export function manyProducts(count: number): ProductResponse[] {
     price: 100 + index,
     stockQuantity: 10,
     category: index % 2 === 0 ? 'Audio' : 'Kitchen',
+    imageUrl: null,
   }))
 }
 

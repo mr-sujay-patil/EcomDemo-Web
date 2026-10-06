@@ -186,6 +186,14 @@
             "format": "int64",
             "type": "integer"
           },
+          "imageUrl": {
+            "description": "Where to fetch this product's image: a path relative to the gateway origin, to be requested by a browser <img> with no Authorization header. Null when the product has no image, which is valid and must be handled (show a placeholder).",
+            "example": "/api/products/1/image",
+            "type": [
+              "string",
+              "null"
+            ]
+          },
           "name": {
             "example": "Mechanical Keyboard",
             "type": "string"
@@ -876,6 +884,55 @@
           "product-description-controller"
         ]
       }
+    },
+    "/api/products/{id}/image": {
+      "get": {
+        "description": "The image named by the product's imageUrl. Formats: SVG, PNG, WebP, JPEG. No size variants. Cached publicly for a day and revalidated by ETag (If-None-Match gives 304). Sent with X-Content-Type-Options: nosniff and Cross-Origin-Resource-Policy: cross-origin, so a storefront on another origin may embed it; an <img> needs no CORS. SVGs also carry a Content-Security-Policy that forbids everything.",
+        "operationId": "image",
+        "parameters": [
+          {
+            "description": "Id of the product",
+            "example": 1,
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "format": "int64",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "image/*": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "The image"
+          },
+          "304": {
+            "description": "The image has not changed since the ETag in If-None-Match"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "No such product, or the product has no image"
+          }
+        },
+        "summary": "Get a product's image",
+        "tags": [
+          "Product images"
+        ]
+      }
     }
   },
   "servers": [
@@ -888,6 +945,10 @@
     {
       "description": "The catalogue. Browsing is open to anyone — it is the shop window. Creating, replacing and deleting require an ADMIN account.",
       "name": "Products"
+    },
+    {
+      "description": "A product's picture, for a browser <img>. Public to read.",
+      "name": "Product images"
     }
   ]
 }
