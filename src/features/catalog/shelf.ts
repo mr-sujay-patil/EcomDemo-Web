@@ -1,3 +1,4 @@
+import { LOW_STOCK } from '@/components/ProductCard'
 import type { ProductResponse } from './products'
 
 // The shelf's filter, sort and page, as plain functions. The backend returns the whole catalogue,
@@ -26,6 +27,11 @@ export type ShelfState = {
 }
 
 export const defaultShelf: ShelfState = { category: null, sort: 'name', page: 1 }
+
+/** A category's words on screen: the catalogue stores `AUDIO`, the shelf says "Audio". */
+export function categoryLabel(category: string): string {
+  return category === OTHER ? category : category.charAt(0) + category.slice(1).toLowerCase()
+}
 
 export function categoryOf(product: ProductResponse): string {
   return product.category?.trim() || OTHER
@@ -98,10 +104,14 @@ export function applyShelf(products: readonly ProductResponse[], state: ShelfSta
 }
 
 /** What the product page says about stock: a hint, not a promise (checkout still re-checks). */
-export const LOW_STOCK_THRESHOLD = 5
+export const LOW_STOCK_THRESHOLD = LOW_STOCK
 
 export function stockHint(quantity: number): string {
   if (quantity <= 0) return 'Out of stock'
   if (quantity <= LOW_STOCK_THRESHOLD) return `Only ${quantity} left`
   return `${quantity} in stock`
+}
+
+export function stockTone(quantity: number): 'out' | 'low' | 'in' {
+  return quantity <= 0 ? 'out' : quantity <= LOW_STOCK_THRESHOLD ? 'low' : 'in'
 }

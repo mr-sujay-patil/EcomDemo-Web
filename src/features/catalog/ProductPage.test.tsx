@@ -18,7 +18,7 @@ describe('the product page', () => {
     renderRoute('/products/2')
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Test Sofa' })).toBeInTheDocument()
-    expect(screen.getByText('Category: Furniture')).toBeInTheDocument()
+    expect(screen.getByText('Furniture')).toBeInTheDocument()
     expect(screen.getByText('₹1,25,000.50')).toBeInTheDocument()
     expect(screen.getByText('Fixture product')).toBeInTheDocument()
     expect(screen.getByText('Only 1 left')).toBeInTheDocument()
@@ -31,13 +31,21 @@ describe('the product page', () => {
   ])('says "%s units" as "%s"', async (stockQuantity, hint) => {
     server.use(
       http.get('/api/products/:id', () =>
-        HttpResponse.json({ id: 9, name: 'Thing', description: '', price: 10, stockQuantity, category: null }),
+        HttpResponse.json({
+          id: 9,
+          name: 'Thing',
+          description: '',
+          price: 10,
+          stockQuantity,
+          category: null,
+          imageUrl: null,
+        }),
       ),
     )
     renderRoute('/products/9')
 
     expect(await screen.findByText(hint)).toBeInTheDocument()
-    expect(screen.getByText('Category: Other')).toBeInTheDocument()
+    expect(screen.getByText('Other')).toBeInTheDocument()
   })
 
   it('has a disabled Add to cart button that points to signing in', async () => {
@@ -48,7 +56,7 @@ describe('the product page', () => {
 
     expect(button).toBeDisabled()
     expect(button).toHaveAccessibleDescription('Sign in to add to your cart')
-    expect(screen.getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/sign-in')
+    expect(within(screen.getByRole('main')).getByRole('link', { name: 'Sign in' })).toHaveAttribute('href', '/sign-in')
   })
 
   it('says "No longer available", with a way back, for a product the backend does not have', async () => {
@@ -58,7 +66,7 @@ describe('the product page', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'No longer available' })).toBeInTheDocument()
     await user.click(screen.getByRole('link', { name: 'Back to all products' }))
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Products' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Everything for the desk' })).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/')
   })
 

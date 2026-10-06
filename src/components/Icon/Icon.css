@@ -1,0 +1,25 @@
+/* Ported from design-system/components/components.css. Every value is a token. */
+.ed-icon {
+  flex: none;
+  display: inline-block;
+  vertical-align: middle;
+}
+.ed-step-dot .ed-icon {
+  width: 14px;
+  height: 14px;
+}
+.ed-alert--info > .ed-icon {
+  color: var(--brand);
+}
+.ed-alert--success > .ed-icon,
+.ed-alert--success .ed-alert-title {
+  color: var(--success);
+}
+.ed-alert--warning > .ed-icon,
+.ed-alert--warning .ed-alert-title {
+  color: var(--accent);
+}
+.ed-alert--danger > .ed-icon,
+.ed-alert--danger .ed-alert-title {
+  color: var(--danger);
+}

@@ -1,0 +1,56 @@
+/* Ported from design-system/components/components.css. Every value is a token. */
+.ed-header-wrap {
+  container-type: inline-size;
+}
+.ed-header {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-6);
+  padding: var(--space-3) var(--space-6);
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  font-family: var(--font-sans);
+}
+.ed-header-search {
+  flex: 1;
+  max-width: 480px;
+}
+.ed-header-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-left: auto;
+}
+.ed-cart-btn {
+  position: relative;
+  display: inline-flex;
+}
+@container (max-width: 639px) {
+  .ed-header {
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+  }
+  .ed-header-search {
+    order: 3;
+    flex-basis: 100%;
+    max-width: none;
+  }
+  .ed-header-nav .ed-btn--ghost span {
+    display: none;
+  }
+}
+.ed-cart-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  box-sizing: border-box;
+  border-radius: var(--radius-round);
+  background: var(--accent);
+  color: var(--surface-card);
+  font: 500 var(--fs-micro)/var(--lh-caption) var(--font-mono);
+  text-align: center;
+}

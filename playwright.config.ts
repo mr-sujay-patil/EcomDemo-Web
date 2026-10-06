@@ -24,7 +24,8 @@ export default defineConfig({
   ],
   // The production build, served the way users get it; `preview` proxies /api to the gateway (API_TARGET).
   webServer: {
-    command: 'npm run build && npm run preview',
+    // VITE_STYLEGUIDE=true puts the /styleguide route in this build (src/app/router.tsx); the production build has none.
+    command: 'VITE_STYLEGUIDE=true npm run build && npm run preview',
     url: baseURL,
     // Never test a stale build left running on 4173: fail on the busy port instead.
     reuseExistingServer: false,

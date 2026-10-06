@@ -1,0 +1,49 @@
+/* Ported from design-system/components/components.css. Every value is a token. */
+.ed-note {
+  margin: 0;
+  max-width: 460px;
+  padding: var(--space-4) 0 0;
+  border-top: 2px solid var(--ink-strong);
+  font-family: var(--font-sans);
+}
+.ed-note-text {
+  margin: 0 0 var(--space-3);
+  font: italic 600 var(--fs-note)/var(--lh-note) var(--font-serif);
+  color: var(--ink-strong);
+}
+.ed-note-text p {
+  margin: 0 0 var(--space-2);
+}
+.ed-note-text p:last-child {
+  margin: 0;
+}
+.ed-note-by {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-3);
+}
+.ed-note-by > span:nth-child(2) {
+  display: flex;
+  flex-direction: column;
+}
+.ed-note-initials {
+  width: 32px;
+  height: 32px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: var(--radius-round);
+  background: var(--brand-soft);
+  color: var(--brand);
+  font: 600 var(--fs-caption)/1 var(--font-sans);
+}
+.ed-note-name {
+  font: 600 var(--fs-label)/var(--lh-label) var(--font-sans);
+  color: var(--ink-strong);
+}
+.ed-note-date {
+  margin-left: auto;
+  font: 400 var(--fs-overline)/var(--lh-overline) var(--font-mono);
+  color: var(--ink-muted);
+}

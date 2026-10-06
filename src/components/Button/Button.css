@@ -1,0 +1,90 @@
+/* Ported from design-system/components/components.css. Every value is a token. */
+.ed-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-md);
+  font: 600 var(--fs-label)/var(--lh-label) var(--font-sans);
+  padding: var(--space-2) var(--space-4);
+  min-height: 40px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ed-btn--sm {
+  min-height: 32px;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--fs-caption);
+}
+.ed-btn--icon {
+  padding: 0;
+  width: 40px;
+}
+.ed-btn--sm.ed-btn--icon {
+  width: 32px;
+}
+.ed-btn--block {
+  width: 100%;
+}
+.ed-btn--primary {
+  background: var(--brand);
+  color: var(--on-brand);
+}
+.ed-btn--primary:hover:not(:disabled) {
+  background: var(--brand-hover);
+}
+.ed-btn--primary:active:not(:disabled) {
+  transform: translateY(1px);
+}
+.ed-btn--secondary {
+  background: var(--surface-card);
+  color: var(--ink-strong);
+  border-color: var(--border-strong);
+}
+.ed-btn--secondary:hover:not(:disabled) {
+  border-color: var(--ink-strong);
+}
+.ed-btn--ghost {
+  background: transparent;
+  color: var(--ink);
+  padding-left: var(--space-2);
+  padding-right: var(--space-2);
+}
+.ed-btn--ghost:hover:not(:disabled) {
+  color: var(--ink-strong);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.ed-btn--danger {
+  background: transparent;
+  color: var(--danger);
+  border-color: var(--danger);
+}
+.ed-btn--danger:hover:not(:disabled) {
+  background: var(--danger-soft);
+}
+.ed-btn:disabled {
+  cursor: not-allowed;
+  background: var(--surface-alt);
+  color: var(--ink-muted);
+  border-color: transparent;
+}
+.ed-spinner {
+  width: 14px;
+  height: 14px;
+  border-radius: var(--radius-round);
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  animation: ed-spin 0.8s linear infinite;
+}
+@keyframes ed-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ed-spinner {
+    animation-duration: 2.4s;
+  }
+}

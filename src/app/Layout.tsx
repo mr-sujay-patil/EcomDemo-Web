@@ -1,6 +1,12 @@
 import { useEffect, useRef, type MouseEvent } from 'react'
-import { Link, Outlet, ScrollRestoration, useLocation, useMatches } from 'react-router'
+import { createSearchParams, Link, Outlet, ScrollRestoration, useLocation, useMatches, useNavigate } from 'react-router'
+import { buttonClass } from '@/components/Button'
+import { Header } from '@/components/Header'
+import { Icon } from '@/components/Icon'
+import { Logo } from '@/components/Logo'
 import { site } from '@/content/site'
+import { ThemeToggle } from './ThemeToggle'
+import './Layout.css'
 
 /** Each route names its page in `handle.title`; the layout turns it into the document title. */
 export type RouteHandle = { title: string }
@@ -11,6 +17,7 @@ function isRouteHandle(handle: unknown): handle is RouteHandle {
 
 export function Layout() {
   const { pathname } = useLocation()
+  const navigate = useNavigate()
   const matches = useMatches()
   const handle = matches.map((match) => match.handle).findLast(isRouteHandle)
   const title = handle ? `${site.storeName} · ${handle.title}` : site.storeName
@@ -39,30 +46,56 @@ export function Layout() {
     document.getElementById('main')?.focus()
   }
 
+  function search(query: string) {
+    const trimmed = query.trim()
+    void navigate({ pathname: '/search', search: trimmed ? `?${createSearchParams({ q: trimmed })}` : '' })
+  }
+
   return (
-    <>
-      <a href="#main" onClick={skipToContent}>
+    <div className="site">
+      <a className="skip-link" href="#main" onClick={skipToContent}>
         Skip to content
       </a>
-      <header>
-        <Link to="/">{site.storeName}</Link>
-        <nav aria-label="Primary">
-          <Link to="/search">Search</Link> <Link to="/cart">Cart</Link>
-        </nav>
-      </header>
-      <main id="main" tabIndex={-1}>
+      <Header
+        brand={
+          <Link to="/" className="site-brand">
+            <Logo height={26} />
+          </Link>
+        }
+        onSearch={search}
+        tools={<ThemeToggle />}
+        account={
+          <Link to="/sign-in" className={buttonClass({ variant: 'ghost' })}>
+            <Icon name="user" size={18} />
+            <span>Sign in</span>
+          </Link>
+        }
+        cart={
+          <Link to="/cart" className={buttonClass({ variant: 'secondary', iconOnly: true })} aria-label="Cart">
+            <Icon name="cart" size={18} />
+          </Link>
+        }
+      />
+      <main id="main" className="site-main page" tabIndex={-1}>
         <Outlet />
       </main>
-      <footer>
-        <p>{site.operator}</p>
-        <p>{site.contactEmail}</p>
-        <p>Ships from: {site.shipsFrom}</p>
-        <nav aria-label="Store information">
-          <Link to="/about">About</Link> <Link to="/returns">Returns</Link> <Link to="/shipping">Shipping</Link>{' '}
-          <Link to="/privacy">Privacy</Link> <Link to="/terms">Terms</Link>
-        </nav>
+      <footer className="site-footer">
+        <div className="page site-footer-inner">
+          <div className="site-footer-who">
+            <p>{site.operator}</p>
+            <p>{site.contactEmail}</p>
+            <p>Ships from: {site.shipsFrom}</p>
+          </div>
+          <nav aria-label="Store information" className="site-footer-nav">
+            <Link to="/about">About</Link>
+            <Link to="/returns">Returns</Link>
+            <Link to="/shipping">Shipping</Link>
+            <Link to="/privacy">Privacy</Link>
+            <Link to="/terms">Terms</Link>
+          </nav>
+        </div>
       </footer>
       <ScrollRestoration />
-    </>
+    </div>
   )
 }

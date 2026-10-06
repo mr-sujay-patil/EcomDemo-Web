@@ -2,7 +2,7 @@ import { Todo } from '@/components/Todo'
 
 export function TermsPage() {
   return (
-    <>
+    <div className="stack">
       <h1>Terms</h1>
       <h2>Using the store</h2>
       <Todo>write the "Using the store" section.</Todo>
@@ -12,6 +12,6 @@ export function TermsPage() {
       <Todo>write the "Returns and refunds" section.</Todo>
       <h2>Changes to these terms</h2>
       <Todo>write the "Changes to these terms" section.</Todo>
-    </>
+    </div>
   )
 }

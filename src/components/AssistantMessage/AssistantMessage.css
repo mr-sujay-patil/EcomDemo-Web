@@ -1,0 +1,60 @@
+/* Ported from design-system/components/components.css. Every value is a token. */
+.ed-msg {
+  display: flex;
+  font-family: var(--font-sans);
+  max-width: 520px;
+}
+.ed-msg.is-user {
+  justify-content: flex-end;
+  margin-left: auto;
+}
+.ed-msg-bubble {
+  min-width: 0;
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-lg);
+  font: 400 var(--fs-body)/var(--lh-body) var(--font-sans);
+  color: var(--ink-strong);
+}
+.ed-msg.is-assistant .ed-msg-bubble {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+}
+.ed-msg.is-user .ed-msg-bubble {
+  background: var(--surface-alt);
+}
+.ed-msg-who {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 var(--space-1);
+  font: 600 var(--fs-overline)/var(--lh-overline) var(--font-sans);
+  color: var(--brand);
+}
+.ed-msg-text p {
+  margin: 0 0 var(--space-2);
+}
+.ed-msg-text p:last-child {
+  margin: 0;
+}
+.ed-proposal {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-top: var(--space-3);
+  padding-top: var(--space-3);
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+.ed-proposal-main {
+  flex: 1;
+  min-width: 140px;
+}
+.ed-proposal-actions {
+  display: flex;
+  gap: var(--space-1);
+}
+.ed-msg-sources {
+  margin: var(--space-2) 0 0;
+  font: 400 var(--fs-overline)/var(--lh-overline) var(--font-mono);
+  color: var(--ink-muted);
+}

@@ -1,0 +1,13 @@
+/* Ported from design-system/components/components.css. Every value is a token. */
+.ed-logo {
+  display: block;
+}
+.ed-logo-ink {
+  fill: var(--ink-strong);
+}
+.ed-logo-brand {
+  fill: var(--brand);
+}
+.ed-logo-string {
+  stroke: var(--ink-strong);
+}

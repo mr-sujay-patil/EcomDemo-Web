@@ -2,7 +2,7 @@ import { Todo } from '@/components/Todo'
 
 export function PrivacyPage() {
   return (
-    <>
+    <div className="stack">
       <h1>Privacy</h1>
       <h2>What we collect</h2>
       <Todo>write the "What we collect" section.</Todo>
@@ -12,6 +12,6 @@ export function PrivacyPage() {
       <Todo>write the "Your choices" section.</Todo>
       <h2>Contact</h2>
       <Todo>write the "Contact" section.</Todo>
-    </>
+    </div>
   )
 }
