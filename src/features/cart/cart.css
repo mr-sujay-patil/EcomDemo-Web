@@ -39,3 +39,17 @@
   justify-items: start;
   gap: var(--space-3);
 }
+
+.cart-refusal {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: 1px solid var(--danger);
+  border-radius: var(--radius-md);
+  color: var(--ink-strong);
+}
+
+.cart-refusal p {
+  margin: 0;
+}

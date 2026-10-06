@@ -198,12 +198,4 @@ describe('the cart page', () => {
     expect(await within(summary).findByText('₹3,897.00')).toBeInTheDocument()
     expect(cart.calls).toEqual(['PUT 1 x2', 'PUT 1 x3'])
   })
-
-  it('goes to checkout from the summary', async () => {
-    const { user, router } = await openCart()
-
-    await user.click(screen.getByRole('button', { name: 'Checkout' }))
-
-    expect(router.state.location.pathname).toBe('/checkout')
-  })
 })

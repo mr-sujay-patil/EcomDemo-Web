@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import { formatPrice } from '@/lib/money'
 import { Button } from '../Button'
 import { ProductTile } from '../ProductTile'
@@ -14,6 +15,8 @@ export type CartLineProps = {
   quantity: number
   /** A second small line under the price, for example "price when added". */
   priceNote?: string
+  /** Something to say about this line, full width under it (for example why the order was refused). */
+  notice?: ReactNode
   max?: number
   onQuantity?: (next: number) => void
   onRemove?: () => void
@@ -27,6 +30,7 @@ export function CartLine({
   lineTotal,
   quantity,
   priceNote,
+  notice,
   max,
   onQuantity,
   onRemove,
@@ -43,6 +47,7 @@ export function CartLine({
         <QuantityStepper value={quantity} onChange={onQuantity} max={max} label={`Quantity of ${name}`} />
         <span className="ed-cartline-total">{formatPrice(lineTotal)}</span>
         <Button variant="ghost" size="sm" icon="trash" aria-label={`Remove ${name}`} onClick={onRemove} />
+        {notice ? <div className="ed-cartline-notice">{notice}</div> : null}
       </div>
     </div>
   )
