@@ -1,4 +1,4 @@
-import { createBrowserRouter, type RouteObject } from 'react-router'
+import { createBrowserRouter, Navigate, type RouteObject } from 'react-router'
 import { PlaceholderPage } from '@/components/PlaceholderPage'
 import { RegisterPage } from '@/features/accounts/RegisterPage'
 import { RequireRole } from '@/features/auth/RequireRole'
@@ -52,13 +52,14 @@ export const routes: RouteObject[] = [
             handle: { title: 'Your cart' } satisfies RouteHandle,
             lazy: async () => ({ Component: (await import('@/features/cart/CartPage')).CartPage }),
           },
-          {
-            path: 'checkout',
-            handle: { title: 'Checkout' } satisfies RouteHandle,
-            lazy: async () => ({ Component: (await import('@/features/checkout/CheckoutPage')).CheckoutPage }),
-          },
+          // Placing the order is the cart's button (one click, no address, web KI-008): /checkout is only an old address.
+          { path: 'checkout', element: <Navigate to="/cart" replace /> },
           route('orders', 'Your orders', <PlaceholderPage title="Your orders" phase={14} />),
-          route('orders/:id', 'Order', <PlaceholderPage title="Order" phase={13} />),
+          {
+            path: 'orders/:id',
+            handle: { title: 'Order' } satisfies RouteHandle,
+            lazy: async () => ({ Component: (await import('@/features/checkout/OrderPage')).OrderPage }),
+          },
           route('account', 'Your account', <PlaceholderPage title="Your account" phase={14} />),
         ],
       },

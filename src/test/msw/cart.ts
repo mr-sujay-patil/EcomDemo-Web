@@ -83,5 +83,9 @@ export function fakeCart({
       return HttpResponse.json(view())
     }),
   ]
-  return { handlers, calls, view }
+  /** What checkout does on the server: the cart is emptied. */
+  const clear = () => {
+    items.length = 0
+  }
+  return { handlers, calls, view, clear }
 }

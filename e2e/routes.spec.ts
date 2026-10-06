@@ -127,10 +127,10 @@ test.describe('the skip link', () => {
 })
 
 test.describe('code splitting', () => {
-  test('the admin and checkout code is downloaded only when its route is opened', async ({ page }) => {
+  test('the admin and order code is downloaded only when its route is opened', async ({ page }) => {
     const chunks: string[] = []
     page.on('request', (request) => {
-      const name = /\/assets\/(AdminPage|CheckoutPage)-[\w-]+\.js$/.exec(request.url())?.[1]
+      const name = /\/assets\/(AdminPage|OrderPage)-[\w-]+\.js$/.exec(request.url())?.[1]
       if (name) chunks.push(name)
     })
 
@@ -138,12 +138,12 @@ test.describe('code splitting', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Everything for the desk' })).toBeVisible()
     expect(chunks, 'the home page must not download them').toEqual([])
 
-    await visit(page, '/checkout', 'CUSTOMER')
-    await expect(page.getByRole('heading', { level: 1, name: 'Checkout' })).toBeVisible()
-    expect(chunks).toEqual(['CheckoutPage'])
+    await visit(page, '/orders/42', 'CUSTOMER')
+    await expect(page.getByRole('heading', { level: 1, name: 'Order #42' })).toBeVisible()
+    expect(chunks).toEqual(['OrderPage'])
 
     await visit(page, '/admin', 'ADMIN')
     await expect(page.getByRole('heading', { level: 1, name: 'Admin' })).toBeVisible()
-    expect(chunks).toEqual(['CheckoutPage', 'AdminPage'])
+    expect(chunks).toEqual(['OrderPage', 'AdminPage'])
   })
 })

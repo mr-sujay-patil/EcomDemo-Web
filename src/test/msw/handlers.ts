@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import type { components } from '@/api/generated/catalog'
+import { orderFixture } from './orders'
 
 type ProductResponse = components['schemas']['ProductResponse']
 type ApiError = components['schemas']['ApiError']
@@ -79,4 +80,9 @@ export const handlers = [
   productHandlers.detail,
   // A signed-in customer's header asks for the cart on every page; most tests do not care what is in it.
   http.get('/api/cart', () => HttpResponse.json({ id: 1, items: [], totalAmount: 0 })),
+  // The order page asks for the order and its status: by default, order 42 is waiting to be settled.
+  http.get('/api/orders/:id', ({ params }) => HttpResponse.json({ ...orderFixture(), id: Number(params.id) })),
+  http.get('/api/orders/:id/status', ({ params }) =>
+    HttpResponse.json({ orderId: Number(params.id), status: 'PENDING', reason: '', changedAt: '2026-10-06T10:00:00Z' }),
+  ),
 ]

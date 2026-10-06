@@ -44,3 +44,7 @@
     margin-left: auto;
   }
 }
+
+.ed-cartline-notice {
+  flex-basis: 100%;
+}
