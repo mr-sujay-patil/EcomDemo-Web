@@ -62,12 +62,12 @@ test.describe('sign in and out', () => {
   test('a protected page opened signed out keeps its query when it comes back', async ({ page, request }) => {
     const username = await createAccount(request)
 
-    await page.goto('/orders/42?tab=items')
-    await expect(page).toHaveURL('/sign-in?next=%2Forders%2F42%3Ftab%3Ditems')
+    await page.goto('/account?tab=items')
+    await expect(page).toHaveURL('/sign-in?next=%2Faccount%3Ftab%3Ditems')
     await signIn(page, username)
 
-    await expect(page).toHaveURL('/orders/42?tab=items')
-    await expect(page.getByRole('heading', { level: 1, name: 'Order' })).toBeVisible()
+    await expect(page).toHaveURL('/account?tab=items')
+    await expect(page.getByRole('heading', { level: 1, name: 'Your account' })).toBeVisible()
   })
 
   test('a reload signs the person out, and the sign-in page says it is so', async ({ page, request }) => {

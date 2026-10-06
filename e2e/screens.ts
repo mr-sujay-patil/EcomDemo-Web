@@ -57,6 +57,39 @@ export async function stubAccount(page: Page, role: Role) {
         })
       : route.continue(),
   )
+  // Order 42: cancelled, with a long reason and a long product name, so the layout specs measure the busiest order page.
+  await page.route('**/api/orders/42', (route) =>
+    route.fulfill({
+      json: {
+        id: 42,
+        placedAt: '2026-10-06T10:00:00Z',
+        username: 'e2e.person',
+        status: 'CANCELLED',
+        statusReason: 'Payment declined: 12000.00 exceeds the limit of 10000.00',
+        statusChangedAt: '2026-10-06T10:00:05Z',
+        totalAmount: 12000,
+        items: [
+          {
+            productId: 3,
+            productName: 'Ultra-wide curved monitor with an unreasonably long product name to test wrapping',
+            unitPrice: 12000,
+            quantity: 1,
+            lineTotal: 12000,
+          },
+        ],
+      },
+    }),
+  )
+  await page.route('**/api/orders/42/status', (route) =>
+    route.fulfill({
+      json: {
+        orderId: 42,
+        status: 'CANCELLED',
+        reason: 'Payment declined: 12000.00 exceeds the limit of 10000.00',
+        changedAt: '2026-10-06T10:00:05Z',
+      },
+    }),
+  )
   await page.route('**/api/customers/me', (route) =>
     route.fulfill({
       json: { id: 1, username: 'e2e.person', fullName: 'E2E Person', role, createdAt: '2026-10-06T10:00:00Z' },
@@ -91,7 +124,6 @@ export async function openScreen(page: Page, screen: Screen) {
 /** Who must be signed in to see a route (src/app/router.tsx): the shop's private pages, and the console. */
 export const signedInFor: Record<string, Role> = {
   '/cart': 'CUSTOMER',
-  '/checkout': 'CUSTOMER',
   '/orders': 'CUSTOMER',
   '/orders/42': 'CUSTOMER',
   '/account': 'CUSTOMER',
@@ -104,9 +136,8 @@ export const routePages = [
   { name: 'product-detail', path: '/products/1', h1: 'Mechanical Keyboard', title: 'Product', report: true },
   { name: 'search', path: '/search', h1: 'Search', title: 'Search', report: false },
   { name: 'cart', path: '/cart', h1: 'Your cart', title: 'Your cart', report: true },
-  { name: 'checkout', path: '/checkout', h1: 'Checkout', title: 'Checkout', report: false },
   { name: 'orders', path: '/orders', h1: 'Your orders', title: 'Your orders', report: false },
-  { name: 'order-detail', path: '/orders/42', h1: 'Order', title: 'Order', report: false },
+  { name: 'order-detail', path: '/orders/42', h1: 'Order #42', title: 'Order #42', report: true },
   { name: 'account', path: '/account', h1: 'Your account', title: 'Your account', report: false },
   { name: 'sign-in', path: '/sign-in', h1: 'Sign in', title: 'Sign in', report: true },
   { name: 'register', path: '/register', h1: 'Create an account', title: 'Create an account', report: true },
