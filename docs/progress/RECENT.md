@@ -15,7 +15,7 @@
 **Follow-ups (not done, out of scope):** <suggestions deferred to later phases>
 -->
 
-## Phase 11: Authentication (tag: phase-11-complete, PR: see `gh pr list`)
+## Phase 11: Authentication (tag: phase-11-complete, PR #14)
 **What exists now:** A signed-in customer stays signed in while they shop. The session (token, `expiresAt`, profile) lives in memory only: a reload signs out. `/cart`, `/checkout`, `/orders`, `/orders/:id`, `/account` need a CUSTOMER, `/admin/*` an ADMIN; signed out goes to `/sign-in?next=…` and comes back, the wrong role sees "Not permitted" in place. A notice appears a minute before expiry; at expiry or on any 401 (with a token) the session ends, the person's cached data goes, and unsent form text is kept. The header shows Sign in, or the first name with a menu (My orders, Account, Sign out) and an Admin link for ADMIN. A throttled login shows a countdown.
 **Key code:** `src/features/auth/` (`session.ts`, `SessionProvider.tsx`, `useSession.ts`, `RequireRole.tsx`, `nextPath.ts`, `AccountMenu.tsx`, `ExpiryNotice.tsx`, `useFormDraft.ts`), `src/features/accounts/SignInPage.tsx` (+ `wait.ts`), `src/api/client.ts` (`setAccessTokenProvider`, `setTokenRejectedHandler`, both take `null`), `src/app/pageTitle.ts`, `docs/architecture/auth-flow.md`, `docs/modules/auth.md`.
 **Config & infrastructure:** no new dependencies. `renderRoute(path, { signedInAs })` renders the app signed in; `e2e/screens.ts` has `visit(page, path, role)` (signs in with stubbed answers, no reload) and `stubAccount`. Coverage floor 99.83 / 96.78 / 100 / 100. `eslint` knows `openScreen` asserts.

@@ -7,7 +7,7 @@
 - **Branch:** `feature/phase-11-auth`
 - **Step:** WAITING_FOR_USER
   (NOT_STARTED | PREFLIGHT | BRANCHED | PLANNING | IMPLEMENTING | TESTING | PR_OPEN | VERIFYING | WAITING_FOR_USER)
-- **PR:** open to `main` (number: `gh pr list`; CI running on the head)
+- **PR:** #14 (CI running on the head)
 - **Backend pinned at:** `phase-34-complete`. No stack runs now (I started one from the clone for this phase and stopped it, no `-v`): start it from `../ecomdemo-backend-readonly` for the merge verification.
 - **Waiting for user:** YES: review of the Phase 11 PR (no manual steps)
 
