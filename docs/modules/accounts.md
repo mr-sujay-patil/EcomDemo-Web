@@ -7,16 +7,16 @@ Registration and sign-in forms. Concepts (schemas, server errors, focus, double 
 | Route | Component | What it does |
 |---|---|---|
 | `/register` | `RegisterPage` | username, password (Show/Hide), full name; `POST /api/customers/register`; on `201` goes to `/sign-in` |
-| `/sign-in` | `SignInPage` | username and password; `POST /api/auth/login`; on `200` says "Signed in. Sessions arrive in the next phase." (the token is **discarded**; Phase 11 keeps the session and removes this note) |
+| `/sign-in` | `SignInPage` | username and password; signs in through the session (`docs/modules/auth.md`), then goes on to `?next=` (the shelf by default); counts down a throttled login |
 
 ## API calls
 
 | Call | Used by | Answers the page handles |
 |---|---|---|
 | `POST /api/customers/register` | `registerCustomer` | `201` → sign-in; `400` → each rejected field on its field (`applyServerErrors`); `409` → the message on the username field; other → `FormError` (with the reference for a 5xx or network failure) |
-| `POST /api/auth/login` | `checkCredentials` | `200` → the note; `401` → "Wrong username or password." (the same for a wrong password and an unknown username, on purpose); `429` and the rest → the server's message (the countdown is Phase 11); 5xx and network → message plus reference |
+| `POST /api/auth/login`, then `GET /api/customers/me` | `signIn` (`src/features/auth`) | `200` → signed in, on to `next`; `401` → "Wrong username or password." (the same for a wrong password and an unknown username, on purpose); `429` → a countdown on the button (`Retry-After`; a second without it); the rest → the server's message; 5xx and network → message plus reference |
 
-Both are mutations (`useMutation`), never retried: a lost reply is not a failed request.
+Registration is a mutation (`useMutation`), never retried: a lost reply is not a failed request. Signing in goes through `useSession().signIn`, which is not retried either (the API client never retries a POST).
 
 ## The rules (`schemas.ts`, from the guide and the backend DTOs)
 
@@ -30,7 +30,7 @@ Both are mutations (`useMutation`), never retried: a lost reply is not a failed 
 
 ## Flow
 
-Register → on `201` `navigate('/sign-in', { state: { registered: username } })` (`signInState.ts`). Sign-in reads the state: the username is filled in, a note says "Your account is ready. Sign in to start.", and the cursor is on the password. The state lives in the router's history entry only: reloading the page keeps the form but not the note. Registration does **not** sign anyone in (the guide).
+Register → on `201` `navigate('/sign-in', { state: { registered: username } })` (`signInState.ts`). Sign-in reads the state (and `?next=`): the username is filled in, a note says "Your account is ready. Sign in to start.", and the cursor is on the password. The state lives in the router's history entry only: reloading the page keeps the form but not the note. Registration does **not** sign anyone in (the guide).
 
 ## Edge cases handled
 

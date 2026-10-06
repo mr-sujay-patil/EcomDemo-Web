@@ -25,6 +25,6 @@ Source: the backend team's update document "EcomDemo Backend Update for the Fron
 ## Checklist
 
 - [x] Pin and read-only clone moved to `phase-33-complete`; CI `.env` generation updated (chore `chore/pin-backend-phase-33`)
-- [ ] Phase 7: regenerate the types from `/v3/api-docs/customer` and confirm login documents `429`
-- [ ] Phase 11: the throttled login state, the API client's `429`-without-`Retry-After` rule, and the two tests above
+- [x] Phase 7: regenerate the types from `/v3/api-docs/customer` and confirm login documents `429`
+- [x] Phase 11: the throttled login state (a countdown on the button, no auto-retry; `429` without `Retry-After` waits a second) and a component test and an E2E test for it. **Not done, on purpose:** the E2E that the sixth wrong password in a row shows the wait: it would burn the machine's 20 failed logins per 15 minutes, so the E2E stubs the `429` and the unit tests cover the rest
 - [ ] Fold this into the integration guide's authentication and error sections when that guide is next updated

@@ -32,7 +32,7 @@ The skip link focuses `<main>` itself (the browser scrolls to `#main` on its own
 | `/orders` | Your orders | 14 | the customer's order history |
 | `/orders/:id` | Order | 13, 14 | one order and its status |
 | `/account` | Your account | 14 | profile |
-| `/sign-in` | Sign in | 10 (form), 11 (session) | the sign-in form; keeping the token and guards are Phase 11 |
+| `/sign-in` | Sign in | 10, 11 | the sign-in form; signs in through the session and goes on to `?next=` |
 | `/register` | Create an account | 10 | registration form, then on to `/sign-in` |
 | `/admin/*` | Admin | 17 | the console; **lazy**; sub-routes arrive with the phase |
 | `/about`, `/returns`, `/shipping`, `/privacy`, `/terms` | their names | 6 (structure), owner (words) | the human surfaces a store needs from day one; every paragraph is a `TODO(owner)` |
@@ -51,3 +51,7 @@ Placeholders show their final `h1` and one line naming the phase that builds the
 ## The owner's content
 
 `src/content/site.ts` holds the store's operator, contact email and ship-from city, shown in the footer. Everything is a visible `TODO(owner): …` until the owner replaces it.
+
+## Guards (Phase 11)
+
+Routes that need an account sit inside a `RequireRole` element (`src/features/auth/RequireRole.tsx`) in the route table: `/cart`, `/checkout`, `/orders`, `/orders/:id` and `/account` for a CUSTOMER, `/admin/*` for an ADMIN. Signed out, the guard redirects to `/sign-in?next=<address>`; signed in as the other role, it shows "Not permitted" where the page would be. The layout lets a page name itself (`usePageTitle`), which is how that page gets its own tab title. `docs/architecture/auth-flow.md` has the whole picture.

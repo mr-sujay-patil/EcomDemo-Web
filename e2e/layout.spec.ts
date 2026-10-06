@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 import { expect, test } from './fixtures'
-import { colorSchemes, screens, widths } from './screens'
+import { colorSchemes, openScreen, screens, widths } from './screens'
 
 /** Elements that cut off their own text: `overflow: hidden` (or `clip`) with content larger than the box. */
 async function clippedTextElements(page: Page): Promise<string[]> {
@@ -37,9 +37,7 @@ for (const screen of screens) {
         })
 
         test('has no sideways scroll and no clipped text', async ({ page }) => {
-          await screen.prepare?.(page)
-          await page.goto(screen.path)
-          await screen.ready(page)
+          await openScreen(page, screen)
 
           const { scrollWidth, clientWidth } = await page.evaluate(() => ({
             scrollWidth: document.documentElement.scrollWidth,

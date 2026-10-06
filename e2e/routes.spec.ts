@@ -1,13 +1,26 @@
 import { expect, test } from './fixtures'
-import { routePages } from './screens'
+import { routePages, signedInFor, visit } from './screens'
 
 test.describe('every route, by direct URL', () => {
   // The same URL a user pastes or reloads: the preview server must answer it with the app, not a 404.
-  for (const { path, h1, title } of routePages) {
+  // The pages anyone may see.
+  for (const { path, h1, title } of routePages.filter((page) => !(page.path in signedInFor))) {
     test(`${path} shows "${h1}"`, async ({ page }) => {
       const response = await page.goto(path)
 
       expect(response?.status()).toBe(200)
+      await expect(page.getByRole('heading', { level: 1, name: h1 })).toBeVisible()
+      await expect(page).toHaveTitle(`EcomDemo · ${title}`)
+    })
+  }
+
+  // The guarded pages are opened the way a person gets there: signed in (answers stubbed), without a reload in between.
+  for (const { path, h1, title } of routePages.filter((page) => page.path in signedInFor)) {
+    const role = signedInFor[path] ?? 'CUSTOMER'
+
+    test(`${path} shows "${h1}" to a signed-in ${role.toLowerCase()}`, async ({ page }) => {
+      await visit(page, path, role)
+
       await expect(page.getByRole('heading', { level: 1, name: h1 })).toBeVisible()
       await expect(page).toHaveTitle(`EcomDemo · ${title}`)
     })
@@ -21,7 +34,7 @@ test.describe('every route, by direct URL', () => {
   })
 
   test('an admin sub-path loads the admin area', async ({ page }) => {
-    await page.goto('/admin/products/new')
+    await visit(page, '/admin/products/new', 'ADMIN')
 
     await expect(page.getByRole('heading', { level: 1, name: 'Admin' })).toBeVisible()
   })
@@ -39,7 +52,8 @@ test.describe('by navigation', () => {
     const header = page.getByRole('banner')
     const footer = page.getByRole('contentinfo')
     const steps = [
-      [header.getByRole('link', { name: 'Cart' }), 'Your cart', '/cart'],
+      // Signed out, the cart asks to sign in and remembers where the person was going.
+      [header.getByRole('link', { name: 'Cart' }), 'Sign in', '/sign-in?next=%2Fcart'],
       [header.getByRole('link', { name: 'Sign in' }), 'Sign in', '/sign-in'],
       [footer.getByRole('link', { name: 'Returns' }), 'Returns', '/returns'],
       [footer.getByRole('link', { name: 'Shipping' }), 'Shipping', '/shipping'],
@@ -124,11 +138,11 @@ test.describe('code splitting', () => {
     await expect(page.getByRole('heading', { level: 1, name: 'Everything for the desk' })).toBeVisible()
     expect(chunks, 'the home page must not download them').toEqual([])
 
-    await page.goto('/checkout')
+    await visit(page, '/checkout', 'CUSTOMER')
     await expect(page.getByRole('heading', { level: 1, name: 'Checkout' })).toBeVisible()
     expect(chunks).toEqual(['CheckoutPage'])
 
-    await page.goto('/admin')
+    await visit(page, '/admin', 'ADMIN')
     await expect(page.getByRole('heading', { level: 1, name: 'Admin' })).toBeVisible()
     expect(chunks).toEqual(['CheckoutPage', 'AdminPage'])
   })

@@ -1,6 +1,7 @@
 import { createBrowserRouter, type RouteObject } from 'react-router'
 import { PlaceholderPage } from '@/components/PlaceholderPage'
 import { RegisterPage } from '@/features/accounts/RegisterPage'
+import { RequireRole } from '@/features/auth/RequireRole'
 import { SignInPage } from '@/features/accounts/SignInPage'
 import { AboutPage } from '@/features/content/AboutPage'
 import { PrivacyPage } from '@/features/content/PrivacyPage'
@@ -42,21 +43,33 @@ export const routes: RouteObject[] = [
       { index: true, element: <ProductListPage />, handle: { title: 'Products' } satisfies RouteHandle },
       route('products/:id', 'Product', <ProductPage />),
       route('search', 'Search', <PlaceholderPage title="Search" phase={15} />),
-      route('cart', 'Your cart', <PlaceholderPage title="Your cart" phase={12} />),
+      // Signed in as a customer: the cart, checkout and orders. Signed out they go to /sign-in?next=…
       {
-        path: 'checkout',
-        handle: { title: 'Checkout' } satisfies RouteHandle,
-        lazy: async () => ({ Component: (await import('@/features/checkout/CheckoutPage')).CheckoutPage }),
+        element: <RequireRole role="CUSTOMER" />,
+        children: [
+          route('cart', 'Your cart', <PlaceholderPage title="Your cart" phase={12} />),
+          {
+            path: 'checkout',
+            handle: { title: 'Checkout' } satisfies RouteHandle,
+            lazy: async () => ({ Component: (await import('@/features/checkout/CheckoutPage')).CheckoutPage }),
+          },
+          route('orders', 'Your orders', <PlaceholderPage title="Your orders" phase={14} />),
+          route('orders/:id', 'Order', <PlaceholderPage title="Order" phase={13} />),
+          route('account', 'Your account', <PlaceholderPage title="Your account" phase={14} />),
+        ],
       },
-      route('orders', 'Your orders', <PlaceholderPage title="Your orders" phase={14} />),
-      route('orders/:id', 'Order', <PlaceholderPage title="Order" phase={13} />),
-      route('account', 'Your account', <PlaceholderPage title="Your account" phase={14} />),
       route('sign-in', 'Sign in', <SignInPage />),
       route('register', 'Create an account', <RegisterPage />),
+      // Signed in as an admin: the console.
       {
-        path: 'admin/*',
-        handle: { title: 'Admin' } satisfies RouteHandle,
-        lazy: async () => ({ Component: (await import('@/features/admin/AdminPage')).AdminPage }),
+        element: <RequireRole role="ADMIN" />,
+        children: [
+          {
+            path: 'admin/*',
+            handle: { title: 'Admin' } satisfies RouteHandle,
+            lazy: async () => ({ Component: (await import('@/features/admin/AdminPage')).AdminPage }),
+          },
+        ],
       },
       route('about', 'About', <AboutPage />),
       route('returns', 'Returns', <ReturnsPage />),

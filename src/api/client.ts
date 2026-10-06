@@ -9,12 +9,26 @@ import { createRetryingFetch } from './retry'
 
 type TokenProvider = () => string | null
 
-// Phase 11 injects the session here; until then nobody is signed in. The token itself stays in
-// the session's memory, never in this module.
-let currentToken: TokenProvider = () => null
+// The session (src/features/auth) injects the token here; with none, nobody is signed in. The token itself
+// stays in the session's memory, never in this module.
+const noToken: TokenProvider = () => null
+let currentToken: TokenProvider = noToken
 
-export function setAccessTokenProvider(provider: TokenProvider) {
-  currentToken = provider
+/** `null` takes the provider away: nobody is signed in as far as the client knows. */
+export function setAccessTokenProvider(provider: TokenProvider | null) {
+  currentToken = provider ?? noToken
+}
+
+type RejectedTokenHandler = (rejectedToken: string) => void
+
+// The session injects this too: a 401 to a request that carried a token means that token is no good, and the
+// session ends. It is told which token, so a late 401 for an old token cannot end a newer session.
+const ignoreRejection: RejectedTokenHandler = () => undefined
+let onTokenRejected: RejectedTokenHandler = ignoreRejection
+
+/** `null` takes the handler away: a refused token is then just an error. */
+export function setTokenRejectedHandler(handler: RejectedTokenHandler | null) {
+  onTokenRejected = handler ?? ignoreRejection
 }
 
 // The gateway reuses a caller's id that matches [A-Za-z0-9_-]{8,64}, so a UUID sent here is the
@@ -44,6 +58,10 @@ function createMiddleware(getToken: TokenProvider): Middleware {
     },
     async onResponse({ request, response }) {
       if (response.ok) return undefined
+      if (response.status === 401) {
+        const sent = request.headers.get('Authorization')
+        if (sent?.startsWith('Bearer ')) onTokenRejected(sent.slice('Bearer '.length))
+      }
       throw await apiErrorFromResponse(response, request.headers.get(CORRELATION_HEADER))
     },
     onError({ request, error }) {
