@@ -120,10 +120,10 @@ describe('an order that is cancelled', () => {
 
     await waitFor(() => expect(router.state.location.pathname).toBe('/cart'))
     expect(cart.calls).toContain('POST 1 x2')
-    expect(await screen.findByText('Test Kettle')).toBeInTheDocument()
-    expect(
-      within(screen.getByRole('group', { name: 'Quantity of Test Kettle' })).getByRole('status'),
-    ).toHaveTextContent('2')
+    // Wait for the cart page itself: the order page also names the kettle, and is still there for a moment.
+    await screen.findByRole('heading', { level: 1, name: 'Your cart' })
+    const group = await screen.findByRole('group', { name: 'Quantity of Test Kettle' })
+    expect(within(group).getByRole('status')).toHaveTextContent('2')
   })
 
   it('says which items could not be added, and stays', async () => {
