@@ -35,6 +35,28 @@ export async function stubAccount(page: Page, role: Role) {
       },
     }),
   )
+  // A signed-in customer's header asks for the cart on every page; the stubbed token would be refused by the real one.
+  // Two lines, one with a long name, so the layout specs measure a cart that could clip.
+  await page.route('**/api/cart', (route) =>
+    route.request().method() === 'GET'
+      ? route.fulfill({
+          json: {
+            id: 1,
+            totalAmount: 1000.5,
+            items: [
+              { productId: 1, productName: 'Mechanical Keyboard', unitPrice: 250.25, quantity: 2, lineTotal: 500.5 },
+              {
+                productId: 2,
+                productName: 'Ultra-wide curved monitor with an unreasonably long product name to test wrapping',
+                unitPrice: 500,
+                quantity: 1,
+                lineTotal: 500,
+              },
+            ],
+          },
+        })
+      : route.continue(),
+  )
   await page.route('**/api/customers/me', (route) =>
     route.fulfill({
       json: { id: 1, username: 'e2e.person', fullName: 'E2E Person', role, createdAt: '2026-10-06T10:00:00Z' },

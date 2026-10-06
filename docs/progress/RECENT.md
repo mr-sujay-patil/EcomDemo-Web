@@ -15,6 +15,17 @@
 **Follow-ups (not done, out of scope):** <suggestions deferred to later phases>
 -->
 
+## Phase 12: Cart (tag: phase-12-complete, PR pending)
+**What exists now:** A signed-in customer adds products from the shelf or a product page, sees "In your cart (n)" and a count on the header's cart link, and manages the cart at `/cart`: change quantity (the stepper moves at once, rolls back with an Alert if refused), remove with a five-second Undo, "price when added" on every line, the server's `lineTotal` and `totalAmount`, an empty state, Checkout to `/checkout`. Signed out, Add to cart goes to `/sign-in?next=<page>` and back; an ADMIN is offered no button.
+**Key code:** `src/features/cart/` (`cart.ts` calls, `api.ts` keys and hooks, `useAddAction.ts`, `CartPage.tsx`, `cart.css`), `src/test/msw/cart.ts` (`fakeCart`), `docs/modules/cart.md`, decisions [Phase 12].
+**Config & infrastructure:** no new dependencies. Coverage floor 99.85 / 97.06 / 100 / 100. `stubAccount` in `e2e/screens.ts` now also stubs `GET /api/cart` (two lines, one with a long name).
+**Tests:** 607 unit and component (was 578), 312 E2E (was 310); `e2e/cart.spec.ts` runs against the real backend.
+**Backend tested against:** `phase-34-complete`, stack started from the clone by me (stopped at the end, no `-v`); backend `origin/main` is 18 commits past the pin, none touch the cart.
+**Gotchas:** Every cart write ends in `setQueryData(['cart'], answer)`; all writes share the mutation scope `{ id: 'cart' }`. A CartLine sits in a container query, so a grid around it needs an explicit `width: 100%` (the layout matrix cannot see a squeezed layout: look at the screenshots). Undo re-adds at the CURRENT catalogue price (backend snapshots at add time). Any page that asks for the cart with a stubbed token needs `GET /api/cart` stubbed, or the real 401 ends the session. The OpenAPI text for `unitPrice` is stale (web KI-019).
+**Owner TODOs open:** `src/content/site.ts`; every paragraph of About, Returns, Shipping, Privacy, Terms; no `StaffNote` on the shelf or product page until the owner writes one.
+**Backend asks:** web KI-019: the app's OpenAPI says the cart `unitPrice` is "the catalogue price right now, not a snapshot"; the code snapshots it (backend decisions [Phase 20a]). Cosmetic; to report to the owner.
+**Follow-ups (not done, out of scope):** a guest cart (web KI-012); an E2E for a 401 in the middle of a real cart session; the checkout and the stock check (Phase 13); load the account pages lazily (main bundle 518 kB).
+
 ## Phase 11: Authentication (tag: phase-11-complete, PR #14)
 **What exists now:** A signed-in customer stays signed in while they shop. The session (token, `expiresAt`, profile) lives in memory only: a reload signs out. `/cart`, `/checkout`, `/orders`, `/orders/:id`, `/account` need a CUSTOMER, `/admin/*` an ADMIN; signed out goes to `/sign-in?next=…` and comes back, the wrong role sees "Not permitted" in place. A notice appears a minute before expiry; at expiry or on any 401 (with a token) the session ends, the person's cached data goes, and unsent form text is kept. The header shows Sign in, or the first name with a menu (My orders, Account, Sign out) and an Admin link for ADMIN. A throttled login shows a countdown.
 **Key code:** `src/features/auth/` (`session.ts`, `SessionProvider.tsx`, `useSession.ts`, `RequireRole.tsx`, `nextPath.ts`, `AccountMenu.tsx`, `ExpiryNotice.tsx`, `useFormDraft.ts`), `src/features/accounts/SignInPage.tsx` (+ `wait.ts`), `src/api/client.ts` (`setAccessTokenProvider`, `setTokenRejectedHandler`, both take `null`), `src/app/pageTitle.ts`, `docs/architecture/auth-flow.md`, `docs/modules/auth.md`.
@@ -26,13 +37,3 @@
 **Backend asks:** none (the backend team's stack ran an unreleased `dltTimestamp` field on an admin response before this phase; additive, not used here).
 **Follow-ups (not done, out of scope):** load the account pages lazily (the main bundle is 515 kB); an E2E for a 401 mid-session once a page makes an authenticated call (Phase 12); the profile form (Phase 14, `profileSchema` is ready).
 
-## Phase 10: Forms and Validation (tag: phase-10-complete, PR #13)
-**What exists now:** `/register` and `/sign-in` work against the real backend. Register creates the account and goes to `/sign-in` with the username filled in and a note; sign-in checks the credentials and says "Signed in. Sessions arrive in the next phase." (the token is dropped: Phase 11). Every backend 400 lands on its own field; 409 on the username field; 401 reads "Wrong username or password."
-**Key code:** `src/components/forms/` (`Form`, `Field`, `FormError`, `SubmitButton`, `applyServerErrors`), `src/features/accounts/` (`schemas.ts`: register, login, profile; `api.ts`; `RegisterPage`; `SignInPage`; `signInState.ts`), `TextField`'s `ref` and `trailing`, `supportReference` in `src/api/errors.ts`, `docs/architecture/forms.md`.
-**Config & infrastructure:** `react-hook-form` 7.89.0, `zod` 4.6.5, `@hookform/resolvers` 5.9.1. **The dev and preview proxy keeps `Host`** (web KI-017: otherwise every browser write is a 403). Coverage floor 99.53 / 96.11 / 100 / 100.
-**Tests:** 450 unit and component (was 362), 273 E2E (was 247).
-**Backend tested against:** `phase-34-complete` (the backend team's running stack).
-**Gotchas:** A new form: schema, `useForm` with `zodResolver` and `mode: 'onTouched'`, `Form` + `Field`s + `SubmitButton`, a `useMutation`, `applyServerErrors` then `FormError`. A 400 lists fields alphabetically; the mapper focuses the top-most in the form's order. Login failures are throttled per client address (20 per 15 min on this machine): the E2E suite fails one real sign-in per run; never loop wrong-password tests. E2E creates real accounts (`e2e-…`), about three per run; the API has no delete. The 429 countdown is Phase 11. The nginx image (Phase 21) and ingress (Phase 22) must keep `Host` when proxying `/api` (KI-017).
-**Owner TODOs open:** `src/content/site.ts`; every paragraph of About, Returns, Shipping, Privacy, Terms; no `StaffNote` on the shelf or product page until the owner writes one.
-**Backend asks:** none.
-**Follow-ups (not done, out of scope):** load the account pages lazily (the main bundle grew ~121 kB); the throttled-login countdown and the session (Phase 11); the profile form (Phase 14, `profileSchema` is ready).

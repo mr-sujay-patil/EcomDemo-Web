@@ -74,6 +74,25 @@ describe('the product page', () => {
     expect(screen.getByRole('link', { name: 'Cart, 1 item' })).toBeInTheDocument()
   })
 
+  it('shows the button busy while the add is on its way', async () => {
+    let release: () => void = () => undefined
+    const held = new Promise<void>((resolve) => (release = resolve))
+    server.use(
+      http.post('/api/cart/items', async () => {
+        await held
+        return HttpResponse.json({ id: 1, items: [], totalAmount: 0 })
+      }),
+    )
+    const user = userEvent.setup()
+    renderRoute('/products/1', { signedInAs: 'CUSTOMER' })
+    await screen.findByRole('heading', { level: 1, name: 'Test Kettle' })
+
+    await user.click(screen.getByRole('button', { name: 'Add to cart' }))
+
+    expect(screen.getByRole('button', { name: 'Add to cart' })).toHaveAttribute('aria-busy', 'true')
+    release()
+  })
+
   it('shows why the server refused an add', async () => {
     server.use(...fakeCart({ refuse: { status: 404, message: 'Product 1 not found' } }).handlers)
     const user = userEvent.setup()

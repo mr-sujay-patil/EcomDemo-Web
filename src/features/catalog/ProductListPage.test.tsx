@@ -2,6 +2,7 @@ import { createEvent, fireEvent, screen, waitFor, within } from '@testing-librar
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
+import { fakeCart } from '@/test/msw/cart'
 import { manyProducts, productHandlers, SERVER_ERROR_CORRELATION_ID } from '@/test/msw/handlers'
 import { server } from '@/test/msw/server'
 import { renderRoute } from '@/test/render'
@@ -338,5 +339,51 @@ describe('prefetching', () => {
     await waitFor(() => {
       expect(requested).toContain('1')
     })
+  })
+})
+
+describe('adding to the cart from the shelf', () => {
+  it('adds a product for a customer, and the card then says how many are in the cart', async () => {
+    const cart = fakeCart()
+    server.use(...cart.handlers)
+    const user = userEvent.setup()
+    renderRoute('/', { signedInAs: 'CUSTOMER' })
+    await screen.findByRole('heading', { level: 2, name: 'Test Kettle' })
+
+    await user.click(screen.getAllByRole('button', { name: 'Add to cart' })[0]!)
+
+    expect(await screen.findByRole('button', { name: 'In your cart (1)' })).toBeInTheDocument()
+    expect(cart.calls).toEqual(['POST 3 x1'])
+  })
+
+  it('sends someone who is signed out to sign in, and back to the shelf', async () => {
+    const user = userEvent.setup()
+    const { router } = renderRoute('/')
+    await screen.findByRole('heading', { level: 2, name: 'Test Kettle' })
+
+    await user.click(screen.getAllByRole('button', { name: 'Add to cart' })[0]!)
+
+    expect(router.state.location.pathname).toBe('/sign-in')
+    expect(router.state.location.search).toBe('?next=%2F')
+  })
+
+  it('shows why an add was refused, and lets the message go', async () => {
+    server.use(...fakeCart({ refuse: { status: 404, message: 'Product 1 not found' } }).handlers)
+    const user = userEvent.setup()
+    renderRoute('/', { signedInAs: 'CUSTOMER' })
+    await screen.findByRole('heading', { level: 2, name: 'Test Kettle' })
+
+    await user.click(screen.getAllByRole('button', { name: 'Add to cart' })[0]!)
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Product 1 not found')
+    await user.click(screen.getByRole('button', { name: 'Dismiss' }))
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('offers an admin no Add to cart', async () => {
+    renderRoute('/', { signedInAs: 'ADMIN' })
+    await screen.findByRole('heading', { level: 2, name: 'Test Kettle' })
+
+    expect(screen.queryByRole('button', { name: 'Add to cart' })).not.toBeInTheDocument()
   })
 })

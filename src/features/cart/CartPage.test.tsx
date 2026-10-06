@@ -146,6 +146,59 @@ describe('the cart page', () => {
     expect(screen.getByRole('button', { name: 'Retry' })).toBeInTheDocument()
   })
 
+  it('retries loading the cart', async () => {
+    let answered = false
+    const cart = fakeCart({ initial: [{ productId: 1, quantity: 1 }] })
+    server.use(
+      http.get('/api/cart', () => {
+        if (answered) return HttpResponse.json(cart.view())
+        answered = true
+        return HttpResponse.json({ status: 503, message: 'Cart is unavailable' }, { status: 503 })
+      }),
+    )
+    const user = userEvent.setup()
+    renderRoute('/cart', { signedInAs: 'CUSTOMER' })
+    await user.click(await screen.findByRole('button', { name: 'Retry' }))
+
+    expect(await screen.findByText('Test Kettle')).toBeInTheDocument()
+  })
+
+  it('lets the refusal message go', async () => {
+    const { user } = await openCart()
+    server.use(
+      http.put('/api/cart/items/:id', () => HttpResponse.json({ status: 400, message: 'Nope' }, { status: 400 })),
+    )
+    await user.click(screen.getByRole('button', { name: 'Increase' }))
+    await screen.findByRole('alert')
+
+    await user.click(screen.getByRole('button', { name: 'Dismiss' }))
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('shows why a removal failed', async () => {
+    const { user } = await openCart()
+    server.use(
+      http.delete('/api/cart/items/:id', () => HttpResponse.json({ status: 404, message: 'Gone' }, { status: 404 })),
+    )
+
+    await user.click(screen.getByRole('button', { name: 'Remove Test Kettle' }))
+
+    expect(await screen.findByRole('alert')).toHaveTextContent('Gone')
+    expect(screen.queryByText('Test Kettle removed.')).not.toBeInTheDocument()
+  })
+
+  it('keeps the quantities in order when the stepper is clicked twice quickly', async () => {
+    const { cart, user } = await openCart()
+
+    await user.click(screen.getByRole('button', { name: 'Increase' }))
+    await user.click(screen.getByRole('button', { name: 'Increase' }))
+
+    const summary = screen.getByRole('region', { name: 'Order summary' })
+    expect(await within(summary).findByText('₹3,897.00')).toBeInTheDocument()
+    expect(cart.calls).toEqual(['PUT 1 x2', 'PUT 1 x3'])
+  })
+
   it('goes to checkout from the summary', async () => {
     const { user, router } = await openCart()
 

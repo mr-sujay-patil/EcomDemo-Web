@@ -33,10 +33,9 @@ export function CartPage() {
     })
   }
 
-  function undo() {
-    if (!removed) return
+  function undo(line: Removed) {
     clearTimeout(timer.current)
-    add.mutate({ productId: removed.productId, quantity: removed.quantity })
+    add.mutate({ productId: line.productId, quantity: line.quantity })
     setRemoved(null)
   }
 
@@ -81,7 +80,11 @@ export function CartPage() {
         <Alert tone="success">
           <div className="cart-undo">
             <span>{`${removed.name} removed.`}</span>
-            <button type="button" className={buttonClass({ variant: 'ghost', size: 'sm' })} onClick={undo}>
+            <button
+              type="button"
+              className={buttonClass({ variant: 'ghost', size: 'sm' })}
+              onClick={() => undo(removed)}
+            >
               Undo
             </button>
           </div>

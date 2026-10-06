@@ -1,6 +1,8 @@
 /* The cart page. Tokens only. */
 
 .cart-layout {
+  /* CartLine measures its own container, so it has no intrinsic width: without this the grid shrinks to nothing. */
+  width: 100%;
   display: grid;
   gap: var(--space-6);
   align-items: start;
