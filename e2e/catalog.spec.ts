@@ -19,7 +19,7 @@ const seededProducts = [
 test('the product list shows the seeded products with rupee prices', async ({ page }) => {
   await page.goto('/')
 
-  await expect(page.getByRole('heading', { level: 1, name: 'Products' })).toBeVisible()
+  await expect(page.getByRole('heading', { level: 1, name: 'Everything for the desk' })).toBeVisible()
   for (const name of seededProducts) {
     const item = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name, exact: true }) })
     await expect(item).toBeVisible()

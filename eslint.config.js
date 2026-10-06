@@ -41,6 +41,8 @@ export default defineConfig([
     rules: {
       // Named here, although recommended already sets it, because it is the rule that finds stale effects.
       'react-hooks/exhaustive-deps': 'error',
+      // A component may have its own `role` prop (AssistantMessage's "assistant" | "user"); only real elements need a valid ARIA role.
+      'jsx-a11y/aria-role': ['error', { ignoreNonDOM: true }],
     },
   },
 
@@ -74,9 +76,9 @@ export default defineConfig([
     languageOptions: { globals: globals.node },
   },
 
-  // This file is plain JavaScript outside every tsconfig, so it gets no type information.
+  // Plain JavaScript outside every tsconfig (the config files, scripts/check-tokens.mjs): no type information.
   {
-    files: ['**/*.js'],
+    files: ['**/*.js', '**/*.mjs'],
     extends: [tseslint.configs.disableTypeChecked],
   },
 

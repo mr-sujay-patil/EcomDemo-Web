@@ -1,0 +1,35 @@
+/* Ported from design-system/components/components.css. Every value is a token. */
+.ed-stepper {
+  display: inline-flex;
+  align-items: stretch;
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+  height: 32px;
+}
+.ed-stepper button {
+  width: 30px;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.ed-stepper button:hover:not(:disabled) {
+  background: var(--surface-alt);
+  color: var(--ink-strong);
+}
+.ed-stepper button:disabled {
+  color: var(--border-strong);
+  cursor: not-allowed;
+}
+.ed-stepper output {
+  min-width: 30px;
+  display: grid;
+  place-items: center;
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+  font: 500 var(--fs-label)/var(--lh-label) var(--font-mono);
+  color: var(--ink-strong);
+}

@@ -70,6 +70,10 @@ Routing is React Router's data router: the table is in `src/app/router.tsx` and 
 
 The shelf (`/`) loads the product list once and filters, sorts and pages it in the browser; category, sort and page are in the URL (`/?category=AUDIO&sort=price&page=2`), so a reload or a shared link keeps them. A product opens at `/products/:id`. Server data is cached by TanStack Query: how, and why the defaults are what they are, is in [`docs/architecture/state.md`](docs/architecture/state.md), and the feature is described in [`docs/modules/catalog.md`](docs/modules/catalog.md).
 
+## Design system
+
+The look comes from the approved design in [`design-system/`](design-system/), ported in Phase 9: tokens and self-hosted fonts in `src/styles/`, seventeen components in `src/components/<Name>/`, plain CSS on tokens only (no Tailwind, no component library, no icon library, no gradients, no emoji). Light and dark follow the system until you press the **Theme** button in the header (Auto, Light, Dark); the choice is kept in this browser. `npm run check:tokens` (part of `npm run verify`) fails on a hex colour, a px font size or a banned import in `src/`. To see every component in its states run `npm run dev` and open `/styleguide`. How it fits together: [`docs/architecture/design-system.md`](docs/architecture/design-system.md).
+
 ## API contract
 
 The backend's OpenAPI documents are the contract. Three commands keep the types honest (details: [`docs/architecture/api-layer.md`](docs/architecture/api-layer.md)); they need the backend running at the pinned tag:

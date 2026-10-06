@@ -1,0 +1,32 @@
+/* Ported from design-system/components/components.css. Every value is a token. */
+.ed-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  font: 400 var(--fs-label)/var(--lh-label) var(--font-sans);
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  color: var(--ink-strong);
+}
+.ed-alert-body {
+  flex: 1;
+  min-width: 0;
+}
+.ed-alert-title {
+  margin: 0;
+  font-weight: 600;
+}
+.ed-alert--success {
+  background: var(--success-soft);
+  border-color: transparent;
+}
+.ed-alert--warning {
+  background: var(--accent-soft);
+  border-color: transparent;
+}
+.ed-alert--danger {
+  background: var(--danger-soft);
+  border-color: transparent;
+}

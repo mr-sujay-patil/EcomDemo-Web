@@ -33,6 +33,8 @@ export const routePages = [
   { name: 'shipping', path: '/shipping', h1: 'Shipping', title: 'Shipping', report: false },
   { name: 'privacy', path: '/privacy', h1: 'Privacy', title: 'Privacy', report: false },
   { name: 'terms', path: '/terms', h1: 'Terms', title: 'Terms', report: false },
+  // Only in the build the E2E suite previews (VITE_STYLEGUIDE=true, see playwright.config.ts); the production build has no such route.
+  { name: 'styleguide', path: '/styleguide', h1: 'Style guide', title: 'Style guide', report: true },
   { name: 'not-found', path: '/no/such/page', h1: 'Page not found', title: 'Page not found', report: true },
 ] as const
 

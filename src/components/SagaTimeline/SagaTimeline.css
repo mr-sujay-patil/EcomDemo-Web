@@ -1,0 +1,97 @@
+/* Ported from design-system/components/components.css. Every value is a token. */
+.ed-saga {
+  font-family: var(--font-sans);
+  max-width: 420px;
+}
+.ed-saga-head {
+  flex-wrap: wrap;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 1px solid var(--border);
+}
+.ed-id {
+  font: 400 var(--fs-caption)/var(--lh-caption) var(--font-mono);
+  color: var(--ink-muted);
+}
+.ed-saga-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.ed-step {
+  position: relative;
+  display: flex;
+  gap: var(--space-3);
+  padding-bottom: var(--space-4);
+}
+.ed-step:last-child {
+  padding-bottom: 0;
+}
+.ed-step:not(:last-child)::before {
+  content: '';
+  position: absolute;
+  left: 11px;
+  top: 26px;
+  bottom: 2px;
+  border-left: 1px dashed var(--border-strong);
+}
+.ed-step.is-done:not(:last-child)::before {
+  border-left-style: solid;
+  border-color: var(--success);
+}
+.ed-step-dot {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  margin-top: 1px;
+  border-radius: var(--radius-sm);
+  display: grid;
+  place-items: center;
+  background: var(--surface-card);
+  color: var(--ink-muted);
+  border: 1px solid var(--border-strong);
+}
+.ed-step.is-done .ed-step-dot {
+  background: var(--success);
+  color: var(--surface-card);
+  border-color: var(--success);
+}
+.ed-step.is-current .ed-step-dot {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent);
+}
+.ed-step.is-failed .ed-step-dot {
+  background: var(--danger);
+  color: var(--surface-card);
+  border-color: var(--danger);
+}
+.ed-step-text {
+  display: flex;
+  flex-direction: column;
+}
+.ed-step-label {
+  font: 600 var(--fs-body)/var(--lh-price) var(--font-sans);
+  color: var(--ink-strong);
+}
+.ed-step.is-todo .ed-step-label,
+.ed-step.is-skipped .ed-step-label {
+  color: var(--ink-muted);
+  font-weight: 400;
+}
+.ed-step-note {
+  font: 400 var(--fs-caption)/var(--lh-caption) var(--font-mono);
+  color: var(--ink-muted);
+}
+.ed-step.is-current .ed-step-note {
+  color: var(--accent);
+  font-family: var(--font-sans);
+}
+.ed-step.is-failed .ed-step-note {
+  color: var(--danger);
+  font-family: var(--font-sans);
+}

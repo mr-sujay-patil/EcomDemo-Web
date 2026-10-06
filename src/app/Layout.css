@@ -1,0 +1,39 @@
+/* The shell around every page: the logo link, and the footer on its own sheet of paper. */
+.site-brand {
+  display: inline-flex;
+  color: inherit;
+}
+
+.site-brand:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 4px;
+}
+
+.site-footer {
+  margin-top: var(--space-16);
+  background: var(--surface-alt);
+  border-top: 1px solid var(--border);
+  font: 400 var(--fs-caption) / var(--lh-caption) var(--font-sans);
+  color: var(--ink);
+}
+
+.site-footer-inner {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--space-4) var(--space-10);
+  padding-block: var(--space-6);
+}
+
+.site-footer-who {
+  display: grid;
+  gap: var(--space-1);
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.site-footer-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+}

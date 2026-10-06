@@ -1,0 +1,159 @@
+/* Global styles: the page, headings, links, focus. Tokens only (scripts/check-tokens.mjs enforces it). */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  background: var(--surface);
+}
+
+body {
+  margin: 0;
+  background: var(--surface);
+  color: var(--ink);
+  font: 400 var(--fs-body) / var(--lh-body) var(--font-sans);
+}
+
+h1,
+h2,
+h3 {
+  margin: 0;
+  color: var(--ink-strong);
+  font-family: var(--font-serif);
+}
+
+h1 {
+  font-size: var(--fs-heading);
+  line-height: var(--lh-heading);
+  font-weight: 600;
+}
+
+h2 {
+  font-size: var(--fs-title);
+  line-height: var(--lh-title);
+  font-weight: 500;
+}
+
+p {
+  margin: 0;
+}
+
+a {
+  color: var(--brand);
+  text-underline-offset: 3px;
+}
+
+/* A link styled as a button keeps the button's colours. */
+a:not(.ed-btn):hover {
+  color: var(--brand-hover);
+}
+
+:where(a, select, summary):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+code {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+
+/* The page: a column that keeps the footer at the bottom, and a content width that reads well. */
+.site {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.page {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding: var(--space-6) var(--space-4);
+}
+
+.site-main {
+  flex: 1;
+}
+
+.stack {
+  display: grid;
+  gap: var(--space-4);
+  justify-items: start;
+}
+
+/* Where something loads, the space is kept so the page below does not jump when it arrives. */
+.reserve {
+  min-height: calc(var(--space-16) * 5);
+}
+
+.reserve-sm {
+  min-height: calc(var(--space-16) * 3);
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--space-2);
+  top: var(--space-2);
+  z-index: 10;
+  padding: var(--space-2) var(--space-4);
+  background: var(--surface-card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  transform: translateY(-200%);
+}
+
+.skip-link:focus {
+  transform: none;
+}
+
+/* A paragraph the owner still has to write: visible, and marked, until they do. */
+.todo {
+  padding: var(--space-3) var(--space-4);
+  border-left: 2px solid var(--accent);
+  background: var(--accent-soft);
+  color: var(--ink-strong);
+  max-width: 60ch;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    scroll-behavior: auto;
+  }
+}
+
+.ed-mono {
+  font-family: var(--font-mono);
+}
+.ed-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+.ed-panel {
+  background: var(--surface-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
+}
+.ed-caption {
+  margin: 0;
+  font: 400 var(--fs-caption)/var(--lh-caption) var(--font-sans);
+  color: var(--ink-muted);
+}
+:where(.ed-btn, .ed-chip, .ed-stepper button, .ed-field-input):focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+/* Page text: a longer page breathes between sections, and the rhythm is deliberately uneven. */
+.stack > h2 {
+  margin-top: var(--space-4);
+}
+
+.stack > h2:first-of-type {
+  margin-top: var(--space-6);
+}

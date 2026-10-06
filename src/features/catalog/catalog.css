@@ -1,0 +1,90 @@
+/* The shelf and the product page. Tokens only. */
+
+.shelf {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.shelf-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-3) var(--space-6);
+}
+
+.shelf-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.shelf-sort {
+  display: grid;
+  gap: 6px;
+}
+
+.select {
+  min-height: 40px;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+  color: var(--ink-strong);
+  font: 400 var(--fs-body) / var(--lh-body) var(--font-sans);
+}
+
+.shelf-count {
+  margin-bottom: var(--space-4);
+}
+
+/* Four columns from 1200 px, three from 900, two from 600, one below: whatever fits 16 rem. */
+.shelf-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 16rem), 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.shelf-pages {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+/* The product page: the photo takes 7 of 12 columns, the rest 5; one column when the page is narrow. */
+.product-wrap {
+  container-type: inline-size;
+}
+
+.product-layout {
+  display: grid;
+  grid-template-columns: 7fr 5fr;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.product-details {
+  display: grid;
+  gap: var(--space-3);
+  justify-items: start;
+  min-width: 0;
+}
+
+.product-details > * {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.product-details .ed-btn--block {
+  justify-self: stretch;
+}
+
+@container (max-width: 719px) {
+  .product-layout {
+    grid-template-columns: 1fr;
+  }
+}

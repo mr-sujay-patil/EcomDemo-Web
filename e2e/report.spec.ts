@@ -24,6 +24,8 @@ test.describe('@report screenshots', () => {
             viewport: { width, height: 800 },
             colorScheme,
             allowedConsoleErrors: screen.allowedConsoleErrors ?? [],
+            // The report shows the shop as a customer sees it: the real photos from the backend.
+            realImages: true,
           })
 
           test('screenshot', async ({ page }) => {

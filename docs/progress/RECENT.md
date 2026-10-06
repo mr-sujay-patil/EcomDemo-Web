@@ -15,6 +15,17 @@
 **Follow-ups (not done, out of scope):** <suggestions deferred to later phases>
 -->
 
+## Phase 09: Design System (tag: phase-09-complete, PR #12)
+**What exists now:** The approved look is code. Paper-coloured pages, self-hosted fonts, light and dark (follows the system until the header's **Theme** button is used; the choice is kept in `localStorage`), seventeen components, every existing page restyled, `/styleguide` (dev and E2E preview only), and a token check in `verify`. Product photos come from the API's `imageUrl` (backend `phase-34-complete`), with a "Photo to come" well for `null` or a failed load. The shelf filters with category `Chip`s; its h1 is "Everything for the desk".
+**Key code:** `src/styles/tokens.css` (tokens, `--fs-*`/`--lh-*` type scale), `src/styles/base.css`, `src/components/<Name>/` (Icon, Logo, Button + `buttonClass`, StatusBadge, Chip, TextField, QuantityStepper, Price, ProductTile, ProductCard, CartLine, OrderSummary, SagaTimeline, AssistantMessage, StaffNote, Alert, Header), `src/app/{useTheme,ThemeToggle,Layout}`, `scripts/check-tokens.mjs`, `docs/architecture/design-system.md`.
+**Config & infrastructure:** `npm run check:tokens` (in `verify`); `VITE_STYLEGUIDE=true` adds `/styleguide` to a build (Playwright sets it); coverage floor 99.39 / 95.77 / 100 / 100; `eslint` `jsx-a11y/aria-role` ignores non-DOM; E2E stubs product images unless `realImages: true` (gateway rate limit 50 req/s).
+**Tests:** 362 unit and component (was 188; includes `scripts/`), 247 E2E (was 229).
+**Backend tested against:** `phase-34-complete` (the backend team's running stack, two docs-only commits past it).
+**Gotchas:** Style new UI with tokens only: `npm run check:tokens` fails on hex, `rgb(`, a px font size, a gradient, an emoji, or an import of Tailwind/Radix/shadcn/Lucide/Heroicons. A router link that must look like a button uses `buttonClass()`. A component takes server numbers (`lineTotal`, `total`); never add prices. `ProductCard` has no button unless `onAdd` is passed. Tab order now has ~10 stops before the first card (header, chips, sort). A new screen goes in `e2e/screens.ts` (the matrix covers it); keep E2E requests per page low (429).
+**Owner TODOs open:** `src/content/site.ts`; every paragraph of About, Returns, Shipping, Privacy, Terms; no `StaffNote` is rendered on the shelf or product page until the owner writes one (design `patterns.md`).
+**Backend asks:** images (web KI-002) delivered in `phase-34-complete` and used here. Nothing open.
+**Follow-ups (not done, out of scope):** the About page photo and real store photography; per-product tab titles; an `<h1>`-aware search page (Phase 15); Add to cart (Phases 11 and 12).
+
 ## Phase 08: Server State (tag: phase-08-complete, PR #10)
 **What exists now:** The catalogue is real: a shelf with a category filter, sort (name, price either way) and 24 to a page, all in the URL (`?category=&sort=&page=`), and a product page (`/products/:id`) with a stock hint, a disabled Add to cart and "No longer available" for a missing product. Server data lives in the TanStack Query cache.
 **Key code:** `src/app/providers.tsx` (`createQueryClient`, `AppProviders`), `src/features/catalog/api.ts` (`catalogKeys`, `productsQuery`, `productQuery`, `useProducts`, `useProduct`, `usePrefetchProduct`), `shelf.ts` (the pure filter, sort, page and URL functions; `stockHint`), `ProductListPage.tsx`, `ProductPage.tsx`, `src/components/ErrorPanel.tsx` (message, correlation id on 5xx and network, Retry), `src/lib/money.ts` (`formatPrice`). Docs: `docs/architecture/state.md`, `docs/modules/catalog.md`.
@@ -25,15 +36,3 @@
 **Owner TODOs open:** `src/content/site.ts`; every paragraph of About, Returns, Shipping, Privacy, Terms
 **Backend asks:** none
 **Follow-ups (not done, out of scope):** per-product tab titles; styling (Phase 9); Add to cart (Phase 12); search (Phase 15).
-
-## Phase 07: Typed API Client (tag: phase-07-complete, PR #9)
-**What exists now:** Every backend call is typed from the backend's OpenAPI documents: a committed snapshot per service, generated types, one `openapi-fetch` client per service, one `ApiError`. The product list now loads through it.
-**Key code:** `scripts/api.ts` + `scripts/openapi.ts` (`api:snapshot`, `api:generate`, `api:check`), `api/openapi/*.json`, `src/api/generated/*.ts` (never edited), `src/api/client.ts` (`catalogApi`, `customerApi`, `appApi`, `assistantApi`, `inventoryApi`, `createApiClient`, `setAccessTokenProvider` for Phase 11), `src/api/errors.ts` (`ApiError`), `retry.ts` (the only retry policy), `fieldErrors.ts` (`splitFieldErrors` for Phase 10), `access.ts` (`accessFor`, from the guide's tables). Architecture: `docs/architecture/api-layer.md`.
-**Config & infrastructure:** `openapi-fetch` 0.17.0, `openapi-typescript` 7.13.0 (npm `overrides` for its TypeScript peer). `npm run e2e` starts with `api:check`. Coverage floor 98.02 / 89.77 / 100 / 99.21. Backend pin `phase-33-complete`.
-**Tests:** 137 unit and component (was 38), 208 E2E (was 206).
-**Backend tested against:** `phase-33-complete`
-**Gotchas:** Failures reject with `ApiError` (status 0 = no response); aborts stay `AbortError`. Only GETs retry, once. The base URL is the page's origin because the documents' paths already include `/api`. Types are generated with response properties as required (web KI-016). A pin move = `api:snapshot`, `api:generate`, review, commit alone. The login `429` has `retryAfter`: the countdown is Phase 11 (`docs/backend/phase-33-delta.md`). The 429 retry waits at most 5 s; a longer `Retry-After` reaches the caller.
-**Owner TODOs open:** `src/content/site.ts`; every paragraph of About, Returns, Shipping, Privacy, Terms
-**Backend asks:** none (cosmetic: response properties marked required, KI-016; who may call `DELETE /api/inventory/{productId}`)
-**Follow-ups (not done, out of scope):** caching and loading states (Phase 8); the login countdown and token provider (Phase 11); `@types/node` 26 against Node 24 (Dependabot PR #6, still not investigated).
-

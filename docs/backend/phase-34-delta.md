@@ -23,5 +23,5 @@ Seen on the wire (the live stack): `GET /api/products/1/image` with no token giv
 ## Checklist
 
 - [x] Pin and read-only clone moved to `phase-34-complete` (chore `chore/pin-backend-phase-34`); snapshots and generated types refreshed (only `imageUrl` and the image path were added)
-- [ ] Phase 9: feed `image` from `imageUrl`; component tests for the image, the null and the load-error states; E2E that a seeded product shows its image
+- [x] Phase 9: `image` is fed from `imageUrl`; component tests for the image, the null and the load-error states; E2E (`e2e/design.spec.ts`) that a seeded product shows its image fetched without a token, one without shows the well, and a failed image falls back
 - [ ] Fold the `ProductResponse` change into the integration guide's catalogue section (its one-line shape is updated here; the headers above are not yet in it)

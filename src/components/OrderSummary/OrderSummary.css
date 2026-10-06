@@ -1,0 +1,47 @@
+/* Ported from design-system/components/components.css. Every value is a token. */
+.ed-summary {
+  font-family: var(--font-sans);
+  max-width: 360px;
+}
+.ed-summary-title {
+  margin: 0 0 var(--space-4);
+  font: 600 var(--fs-title)/var(--lh-title) var(--font-serif);
+  color: var(--ink-strong);
+}
+.ed-summary dl {
+  margin: 0 0 var(--space-4);
+}
+.ed-sum-row {
+  display: flex;
+  justify-content: space-between;
+  padding: var(--space-1) 0;
+  font: 400 var(--fs-body)/var(--lh-price) var(--font-sans);
+  color: var(--ink);
+}
+.ed-sum-row dt,
+.ed-sum-row dd {
+  margin: 0;
+}
+.ed-sum-row dd {
+  font-family: var(--font-mono);
+  font-size: var(--fs-label);
+}
+.ed-sum-row.is-free dd {
+  color: var(--success);
+}
+.ed-sum-row.is-total {
+  margin-top: var(--space-2);
+  padding-top: var(--space-3);
+  border-top: 1px dashed var(--border-strong);
+}
+.ed-sum-row.is-total dt {
+  font-weight: 600;
+  color: var(--ink-strong);
+}
+.ed-sum-row.is-total dd {
+  font: 500 var(--fs-title)/var(--lh-title) var(--font-mono);
+  color: var(--ink-strong);
+}
+.ed-summary-note {
+  margin-top: var(--space-3);
+}

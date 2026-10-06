@@ -2,7 +2,7 @@ import { Todo } from '@/components/Todo'
 
 export function AboutPage() {
   return (
-    <>
+    <div className="stack">
       <h1>About</h1>
       <h2>Who we are</h2>
       <Todo>write the "Who we are" section.</Todo>
@@ -10,6 +10,6 @@ export function AboutPage() {
       <Todo>write the "What we sell" section.</Todo>
       <h2>Contact</h2>
       <Todo>write the "Contact" section.</Todo>
-    </>
+    </div>
   )
 }

@@ -1,0 +1,40 @@
+/* The style guide page: specimens laid out in rows. Tokens only. */
+.sg {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.sg-section {
+  display: grid;
+  gap: var(--space-3);
+  padding-top: var(--space-6);
+  border-top: 1px solid var(--border);
+}
+
+.sg-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-6) var(--space-6);
+}
+
+.sg-case {
+  display: grid;
+  gap: var(--space-2);
+  justify-items: start;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.sg-card {
+  width: min(100%, 17rem);
+}
+
+.sg-tile {
+  width: min(100%, 14rem);
+}
+
+/* A container wide enough to see the layout, and a narrow one is the viewport itself at 360px. */
+.sg-wide {
+  width: min(100%, 44rem);
+}

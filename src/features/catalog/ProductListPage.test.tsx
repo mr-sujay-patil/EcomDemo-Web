@@ -14,6 +14,10 @@ async function findProductItem(name: string) {
   return item
 }
 
+/** The category chips: toggle buttons named "Kitchen 1" (label and count). */
+const categoryGroup = () => within(screen.getByRole('group', { name: 'Category' }))
+const chip = (label: string) => categoryGroup().getByRole('button', { name: new RegExp(`^${label}\\b`) })
+
 const itemNames = () => screen.getAllByRole('heading', { level: 2 }).map((heading) => heading.textContent)
 
 describe('the product list', () => {
@@ -37,8 +41,8 @@ describe('the product list', () => {
   it('shows "Other" for a product without a category', async () => {
     renderRoute('/')
 
-    expect(within(await findProductItem('Test Gift Card')).getByText('Category: Other')).toBeInTheDocument()
-    expect(within(await findProductItem('Test Kettle')).getByText('Category: Kitchen')).toBeInTheDocument()
+    expect(within(await findProductItem('Test Gift Card')).getByText('Other')).toBeInTheDocument()
+    expect(within(await findProductItem('Test Kettle')).getByText('Kitchen')).toBeInTheDocument()
   })
 
   it('says so when there are no products', async () => {
@@ -131,17 +135,31 @@ describe('filter and sort, kept in the URL', () => {
     const { router } = renderRoute('/')
     await screen.findByRole('heading', { name: 'Test Kettle' })
 
-    const select = screen.getByRole('combobox', { name: 'Category' })
     expect(
-      within(select)
-        .getAllByRole('option')
-        .map((option) => option.textContent),
-    ).toEqual(['All categories', 'Furniture', 'Kitchen', 'Other'])
-    await user.selectOptions(select, 'Kitchen')
+      categoryGroup()
+        .getAllByRole('button')
+        .map((button) => button.textContent),
+    ).toEqual(['Everything 3', 'Furniture 1', 'Kitchen 1', 'Other 1'])
+    expect(chip('Everything')).toHaveAttribute('aria-pressed', 'true')
+    await user.click(chip('Kitchen'))
 
     expect(itemNames()).toEqual(['Test Kettle'])
+    expect(chip('Kitchen')).toHaveAttribute('aria-pressed', 'true')
+    expect(chip('Everything')).toHaveAttribute('aria-pressed', 'false')
     expect(router.state.location.search).toBe('?category=Kitchen')
     expect(screen.getByText('Showing 1–1 of 1 products')).toBeInTheDocument()
+  })
+
+  it('goes back to every product from the Everything chip, and drops the category from the URL', async () => {
+    const user = userEvent.setup()
+    const { router } = renderRoute('/?category=Kitchen')
+    await screen.findByRole('heading', { name: 'Test Kettle' })
+    expect(itemNames()).toEqual(['Test Kettle'])
+
+    await user.click(chip('Everything'))
+
+    expect(itemNames()).toEqual(['Test Gift Card', 'Test Kettle', 'Test Sofa'])
+    expect(router.state.location.search).toBe('')
   })
 
   it('groups products without a category under "Other"', async () => {
@@ -149,7 +167,7 @@ describe('filter and sort, kept in the URL', () => {
     renderRoute('/')
     await screen.findByRole('heading', { name: 'Test Kettle' })
 
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Category' }), 'Other')
+    await user.click(chip('Other'))
 
     expect(itemNames()).toEqual(['Test Gift Card'])
   })
@@ -174,7 +192,7 @@ describe('filter and sort, kept in the URL', () => {
 
     expect(await screen.findByRole('heading', { name: 'Test Kettle' })).toBeInTheDocument()
     expect(itemNames()).toEqual(['Test Kettle'])
-    expect(screen.getByRole('combobox', { name: 'Category' })).toHaveValue('Kitchen')
+    expect(chip('Kitchen')).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('combobox', { name: 'Sort by' })).toHaveValue('price-desc')
   })
 
@@ -182,7 +200,7 @@ describe('filter and sort, kept in the URL', () => {
     renderRoute('/?category=Gone')
 
     expect(await screen.findByText('No products match.')).toBeInTheDocument()
-    expect(screen.getByRole('combobox', { name: 'Category' })).toHaveValue('Gone')
+    expect(chip('Gone')).toHaveAttribute('aria-pressed', 'true')
     expect(screen.getByRole('link', { name: 'Show all products' })).toHaveAttribute('href', '/')
   })
 
@@ -201,7 +219,7 @@ describe('filter and sort, kept in the URL', () => {
     const user = userEvent.setup()
     const { router } = renderRoute('/')
     await screen.findByRole('heading', { name: 'Test Kettle' })
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Category' }), 'Kitchen')
+    await user.click(chip('Kitchen'))
     expect(itemNames()).toEqual(['Test Kettle'])
 
     await router.navigate(-1)
@@ -209,7 +227,7 @@ describe('filter and sort, kept in the URL', () => {
     await waitFor(() => {
       expect(itemNames()).toEqual(['Test Gift Card', 'Test Kettle', 'Test Sofa'])
     })
-    expect(screen.getByRole('combobox', { name: 'Category' })).toHaveValue('')
+    expect(chip('Everything')).toHaveAttribute('aria-pressed', 'true')
   })
 })
 
@@ -263,7 +281,7 @@ describe('pagination', () => {
     const { router } = renderRoute('/?page=2&sort=price-desc')
     await screen.findByText('Showing 25–30 of 30 products')
 
-    await user.selectOptions(screen.getByRole('combobox', { name: 'Category' }), 'Audio')
+    await user.click(chip('Audio'))
 
     expect(await screen.findByText('Showing 1–15 of 15 products')).toBeInTheDocument()
     expect(router.state.location.search).toBe('?category=Audio&sort=price-desc')
@@ -313,7 +331,7 @@ describe('prefetching', () => {
     const link = within(await findProductItem('Test Kettle')).getByRole('link', { name: 'Test Kettle' })
 
     // Tab until the product link has focus, as a keyboard user would.
-    for (let step = 0; step < 10 && link !== document.activeElement; step++) await user.tab()
+    for (let step = 0; step < 30 && link !== document.activeElement; step++) await user.tab()
 
     expect(link).toHaveFocus()
     // Tabbing past the products before it prefetched those too; the focused one is among them.

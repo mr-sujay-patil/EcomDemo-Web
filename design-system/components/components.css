@@ -10,7 +10,7 @@
 :where(.ed-btn, .ed-chip, .ed-stepper button, .ed-field-input):focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 
 /* Button */
-.ed-btn { display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); border: 1px solid transparent; border-radius: var(--radius-md); font: 600 14px/20px var(--font-sans); padding: var(--space-2) var(--space-4); min-height: 40px; cursor: pointer; white-space: nowrap; }
+.ed-btn { text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-2); border: 1px solid transparent; border-radius: var(--radius-md); font: 600 14px/20px var(--font-sans); padding: var(--space-2) var(--space-4); min-height: 40px; cursor: pointer; white-space: nowrap; }
 .ed-btn--sm { min-height: 32px; padding: var(--space-1) var(--space-3); font-size: 13px; }
 .ed-btn--icon { padding: 0; width: 40px; }
 .ed-btn--sm.ed-btn--icon { width: 32px; }
@@ -94,7 +94,7 @@
 .ed-cartline { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-3); padding: var(--space-3) 0; border-bottom: 1px solid var(--border); font-family: var(--font-sans); }
 
 .ed-cartline-main { flex: 1; min-width: 0; }
-.ed-cartline-name { margin: 0; font: 600 15px/22px var(--font-sans); color: var(--ink-strong); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ed-cartline-name { margin: 0; font: 600 15px/22px var(--font-sans); color: var(--ink-strong); overflow-wrap: anywhere; }
 .ed-cartline .ed-caption { font-family: var(--font-mono); font-size: 12px; }
 .ed-cartline-total { min-width: 104px; text-align: right; font: 500 15px/20px var(--font-mono); color: var(--ink-strong); }
 
@@ -187,3 +187,12 @@
   .ed-cartline .ed-stepper { margin-left: 60px; }
   .ed-cartline .ed-cartline-total { min-width: 0; margin-left: auto; }
 }
+
+/* Added in the Phase 9 port (src/components/ProductCard): the name can be a link that covers the whole card. */
+.ed-product { position: relative; }
+.ed-product-name a { color: inherit; text-decoration: none; }
+.ed-product-name a::after { content: ""; position: absolute; inset: 0; }
+.ed-product-name a:hover { text-decoration: underline; text-underline-offset: 3px; }
+.ed-product-name a:focus-visible { outline: none; }
+.ed-product-name a:focus-visible::after { outline: 2px solid var(--focus); outline-offset: -2px; }
+.ed-product .ed-btn { position: relative; z-index: 1; }

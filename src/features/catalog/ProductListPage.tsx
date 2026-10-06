@@ -1,13 +1,21 @@
 import { Link, useSearchParams } from 'react-router'
+import { buttonClass } from '@/components/Button'
+import { Chip } from '@/components/Chip'
 import { ErrorPanel } from '@/components/ErrorPanel'
-import { formatPrice } from '@/lib/money'
+import { ProductCard } from '@/components/ProductCard'
 import { usePrefetchProduct, useProducts } from './api'
-import { applyShelf, categoriesOf, categoryOf, parseShelf, sortOptions, toSearchParams, type ShelfState } from './shelf'
+import {
+  applyShelf,
+  categoriesOf,
+  categoryLabel,
+  categoryOf,
+  parseShelf,
+  sortOptions,
+  toSearchParams,
+  type ShelfState,
+} from './shelf'
 import type { ProductResponse } from './products'
-
-// The results area keeps this height while loading and after, so the footer does not jump when the
-// products arrive. Phase 9 replaces it with a token-based class.
-const reserveResults = { minHeight: '24rem' }
+import './catalog.css'
 
 export function ProductListPage() {
   const [params, setParams] = useSearchParams()
@@ -19,10 +27,11 @@ export function ProductListPage() {
   }
 
   return (
-    <>
-      <h1>Products</h1>
+    <div className="shelf">
+      <h1>Everything for the desk</h1>
       {products.isPending && (
-        <div style={reserveResults}>
+        // The results area keeps its height while loading and after, so the footer does not jump when the products arrive.
+        <div className="reserve">
           <p role="status">Loading products…</p>
         </div>
       )}
@@ -33,7 +42,7 @@ export function ProductListPage() {
         ) : (
           <Shelf products={products.data} shelf={shelf} show={show} />
         ))}
-    </>
+    </div>
   )
 }
 
@@ -55,28 +64,35 @@ function Shelf({
   return (
     <>
       <form
+        className="shelf-controls"
         aria-label="Filter and sort the products"
         onSubmit={(event) => {
           event.preventDefault()
         }}
       >
-        <label>
-          Category{' '}
-          <select
-            value={shelf.category ?? ''}
-            onChange={(event) => show({ category: event.target.value || null, page: 1 })}
+        <div className="shelf-chips" role="group" aria-label="Category">
+          <Chip
+            selected={shelf.category === null}
+            count={products.length}
+            onClick={() => show({ category: null, page: 1 })}
           >
-            <option value="">All categories</option>
-            {categories.map((category) => (
-              <option key={category} value={category}>
-                {category}
-              </option>
-            ))}
-          </select>
-        </label>{' '}
-        <label>
-          Sort by{' '}
+            Everything
+          </Chip>
+          {categories.map((category) => (
+            <Chip
+              key={category}
+              selected={shelf.category === category}
+              count={products.filter((product) => categoryOf(product) === category).length}
+              onClick={() => show({ category, page: 1 })}
+            >
+              {categoryLabel(category)}
+            </Chip>
+          ))}
+        </div>
+        <label className="shelf-sort">
+          <span className="ed-field-label">Sort by</span>
           <select
+            className="select"
             value={shelf.sort}
             onChange={(event) =>
               show({ sort: parseShelf(new URLSearchParams({ sort: event.target.value })).sort, page: 1 })
@@ -91,32 +107,39 @@ function Shelf({
         </label>
       </form>
 
-      <div style={reserveResults}>
+      <div className="reserve">
         {/* aria-live, not role="status": it announces a changed count without being a loading message. */}
-        <p aria-live="polite">
+        <p className="ed-caption shelf-count" aria-live="polite">
           {result.total === 0
             ? 'No products match.'
             : `Showing ${result.first}–${result.last} of ${result.total} products`}
         </p>
         {result.total === 0 ? (
-          <p>
-            <Link to="/">Show all products</Link>
-          </p>
+          <Link to="/" className={buttonClass({ variant: 'secondary' })}>
+            <span>Show all products</span>
+          </Link>
         ) : (
-          <ul>
+          <ul className="shelf-grid">
             {result.items.map((product) => (
               <li key={product.id}>
-                <h2>
-                  <Link
-                    to={`/products/${product.id}`}
-                    onMouseEnter={() => prefetch(product.id)}
-                    onFocus={() => prefetch(product.id)}
-                  >
-                    {product.name}
-                  </Link>
-                </h2>
-                <p>{formatPrice(product.price)}</p>
-                <p>Category: {categoryOf(product)}</p>
+                <ProductCard
+                  headingLevel={2}
+                  name={product.name}
+                  description={product.description}
+                  price={product.price}
+                  category={categoryOf(product)}
+                  image={product.imageUrl}
+                  stock={product.stockQuantity}
+                  renderName={(name) => (
+                    <Link
+                      to={`/products/${product.id}`}
+                      onMouseEnter={() => prefetch(product.id)}
+                      onFocus={() => prefetch(product.id)}
+                    >
+                      {name}
+                    </Link>
+                  )}
+                />
               </li>
             ))}
           </ul>
@@ -124,15 +147,25 @@ function Shelf({
       </div>
 
       {result.pageCount > 1 && (
-        <nav aria-label="Pagination">
+        <nav className="shelf-pages" aria-label="Pagination">
           {result.page > 1 && (
-            <Link to={{ search: toSearchParams({ ...shelf, page: result.page - 1 }).toString() }}>Previous page</Link>
-          )}{' '}
-          <span>
+            <Link
+              className={buttonClass({ variant: 'secondary', size: 'sm' })}
+              to={{ search: toSearchParams({ ...shelf, page: result.page - 1 }).toString() }}
+            >
+              <span>Previous page</span>
+            </Link>
+          )}
+          <span className="ed-caption">
             Page {result.page} of {result.pageCount}
-          </span>{' '}
+          </span>
           {result.page < result.pageCount && (
-            <Link to={{ search: toSearchParams({ ...shelf, page: result.page + 1 }).toString() }}>Next page</Link>
+            <Link
+              className={buttonClass({ variant: 'secondary', size: 'sm' })}
+              to={{ search: toSearchParams({ ...shelf, page: result.page + 1 }).toString() }}
+            >
+              <span>Next page</span>
+            </Link>
           )}
         </nav>
       )}

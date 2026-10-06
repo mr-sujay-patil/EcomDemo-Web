@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { renderRoute } from '@/test/render'
@@ -6,7 +6,8 @@ import { createAppRouter } from './router'
 
 // One row per route in src/app/router.tsx: the path to visit, its h1 and its document title.
 const pages = [
-  ['/', 'Products', 'EcomDemo · Products'],
+  ['/', 'Everything for the desk', 'EcomDemo · Products'],
+  ['/styleguide', 'Style guide', 'EcomDemo · Style guide'],
   ['/products/1', 'Test Kettle', 'EcomDemo · Product'],
   ['/products/7', 'No longer available', 'EcomDemo · Product'],
   ['/search', 'Search', 'EcomDemo · Search'],
@@ -33,7 +34,10 @@ describe('routes', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument()
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
-    expect(document.title).toBe(title)
+    // The layout sets the title in an effect, which can land just after the h1 shows (on a lazy route, under load).
+    await waitFor(() => {
+      expect(document.title).toBe(title)
+    })
   })
 
   it('names the phase that builds a placeholder page', async () => {
@@ -116,10 +120,46 @@ describe('layout', () => {
 
     await user.click(header.getByRole('link', { name: 'Cart' }))
     expect(await screen.findByRole('heading', { level: 1, name: 'Your cart' })).toBeInTheDocument()
-    await user.click(header.getByRole('link', { name: 'Search' }))
-    expect(await screen.findByRole('heading', { level: 1, name: 'Search' })).toBeInTheDocument()
+    await user.click(header.getByRole('link', { name: 'Sign in' }))
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument()
     await user.click(header.getByRole('link', { name: 'EcomDemo' }))
-    expect(await screen.findByRole('heading', { level: 1, name: 'Products' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Everything for the desk' })).toBeInTheDocument()
+  })
+
+  it('sends an empty search to /search without a query', async () => {
+    const user = userEvent.setup()
+    const { router } = renderRoute('/about')
+    await screen.findByRole('heading', { level: 1, name: 'About' })
+
+    await user.type(within(screen.getByRole('banner')).getByRole('textbox', { name: 'Search products' }), '   {Enter}')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Search' })).toBeInTheDocument()
+    expect(router.state.location.search).toBe('')
+  })
+
+  it('moves focus to the main area from the skip link', async () => {
+    const user = userEvent.setup()
+    renderRoute('/about')
+    await screen.findByRole('heading', { level: 1, name: 'About' })
+
+    await user.click(screen.getByRole('link', { name: 'Skip to content' }))
+
+    expect(screen.getByRole('main')).toHaveFocus()
+  })
+
+  it('sends a search from the header to /search with the words in the URL', async () => {
+    const user = userEvent.setup()
+    const { router } = renderRoute('/about')
+    await screen.findByRole('heading', { level: 1, name: 'About' })
+
+    await user.type(
+      within(screen.getByRole('banner')).getByRole('textbox', { name: 'Search products' }),
+      'something to type on{Enter}',
+    )
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Search' })).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/search')
+    expect(new URLSearchParams(router.state.location.search).get('q')).toBe('something to type on')
   })
 
   it('shows the owner placeholders from site.ts in the footer', async () => {

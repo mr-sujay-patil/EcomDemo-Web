@@ -15,6 +15,21 @@ function route(path: string, title: string, element: RouteObject['element']): Ro
   return { path, element, handle }
 }
 
+// The style guide ships only where a person looks at it: `npm run dev`, and the build the E2E suite previews
+// (VITE_STYLEGUIDE=true in playwright.config.ts). The production build leaves the route and its code out.
+const styleguide: RouteObject[] =
+  import.meta.env.DEV || import.meta.env.VITE_STYLEGUIDE === 'true'
+    ? [
+        {
+          path: 'styleguide',
+          handle: { title: 'Style guide' } satisfies RouteHandle,
+          lazy: async () => ({
+            Component: (await import('@/features/styleguide/StyleguidePage')).StyleguidePage,
+          }),
+        },
+      ]
+    : []
+
 // The route table. docs/architecture/routing.md says why each route exists.
 export const routes: RouteObject[] = [
   {
@@ -46,6 +61,7 @@ export const routes: RouteObject[] = [
       route('shipping', 'Shipping', <ShippingPage />),
       route('privacy', 'Privacy', <PrivacyPage />),
       route('terms', 'Terms', <TermsPage />),
+      ...styleguide,
       route('*', 'Page not found', <NotFoundPage />),
     ],
   },

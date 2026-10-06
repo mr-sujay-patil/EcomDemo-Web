@@ -1,0 +1,29 @@
+/* Ported from design-system/components/components.css. Every value is a token. */
+.ed-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+  font: 500 var(--fs-overline)/var(--lh-caption) var(--font-mono);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  background: var(--surface-alt);
+  color: var(--ink);
+}
+.ed-badge--accent {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.ed-badge--success {
+  background: var(--success-soft);
+  color: var(--success);
+}
+.ed-badge--danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+.ed-badge--brand {
+  background: var(--brand-soft);
+  color: var(--brand);
+}

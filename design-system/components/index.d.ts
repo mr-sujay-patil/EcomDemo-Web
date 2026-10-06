@@ -4,6 +4,7 @@ import type { ReactNode, ButtonHTMLAttributes, InputHTMLAttributes } from 'react
 export type IconName = 'cart' | 'search' | 'user' | 'package' | 'truck' | 'check' | 'x' | 'clock' | 'plus' | 'minus' | 'trash' | 'chevron-right' | 'alert' | 'info' | 'keyboard' | 'monitor' | 'headphones' | 'drive' | 'plug' | 'chat' | 'tag';
 /** Product categories, exactly as the catalogue stores them. */
 export type Category = 'PERIPHERALS' | 'DISPLAYS' | 'AUDIO' | 'STORAGE' | 'ACCESSORIES';
+/* In the app, `category` props are plain strings (the API sends free text or null; an unknown one gets the package icon) and `image` is the product's `imageUrl`, string or null. src/components/ is the implementation: its props are the current ones. */
 /** Order statuses, exactly as the order API returns them. */
 export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'CANCELLED';
 export type SagaStep = 'placed' | 'stock' | 'payment' | 'confirmed';
@@ -20,9 +21,9 @@ export interface ChipProps { selected?: boolean; count?: number; onClick?: () =>
 export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> { label?: string; hint?: string; error?: string; icon?: IconName; }
 export interface QuantityStepperProps { value?: number; defaultValue?: number; /** default 1 */ min?: number; /** default 99 */ max?: number; onChange?: (n: number) => void; label?: string; }
 export interface PriceProps { /** rupees */ amount: number; compareAt?: number; size?: 'sm' | 'md' | 'lg'; }
-export interface ProductCardProps { name: string; description?: string; price: number; compareAt?: number; category?: Category; sku?: string; /** a real photo URL; without one the well says "Photo to come" */ image?: string; /** 0 = out of stock, 1–5 = low */ stock?: number; inCart?: number; onAdd?: () => void; }
-export interface CartLineProps { name: string; category?: Category; unitPrice: number; quantity: number; max?: number; onQuantity?: (n: number) => void; onRemove?: () => void; }
-export interface OrderSummaryProps { subtotal: number; shipping?: number; discount?: number; itemCount?: number; loading?: boolean; cta?: string; onCheckout?: () => void; }
+export interface ProductCardProps { name: string; description?: string; price: number; compareAt?: number; category?: Category; /** a real photo URL; without one the well says "Photo to come" */ image?: string; /** 0 = out of stock, 1–5 = low */ stock?: number; inCart?: number; onAdd?: () => void; }
+export interface CartLineProps { name: string; category?: Category; unitPrice: number; /** the server's lineTotal; never unitPrice x quantity */ lineTotal: number; quantity: number; max?: number; onQuantity?: (n: number) => void; onRemove?: () => void; }
+export interface OrderSummaryProps { /** the server's totalAmount */ total: number; subtotal?: number; shipping?: number; discount?: number; itemCount?: number; loading?: boolean; cta?: string; onCheckout?: () => void; }
 export interface SagaTimelineProps { status?: OrderStatus; /** the step in progress while PENDING */ current?: SagaStep; /** the step that failed when CANCELLED */ failedAt?: SagaStep; /** the reason the order API keeps */ reason?: string; orderId?: string | number; times?: Partial<Record<SagaStep, string>>; }
 export interface AssistantMessageProps { role?: 'assistant' | 'user'; children: ReactNode; proposal?: { name: string; category?: Category; image?: string; price: number; quantity?: number }; sources?: string[]; onConfirm?: () => void; onDismiss?: () => void; }
 export interface AlertProps { tone?: 'info' | 'success' | 'warning' | 'danger'; title?: string; children?: ReactNode; onClose?: () => void; }
