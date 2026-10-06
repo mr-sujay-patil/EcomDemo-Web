@@ -13,7 +13,10 @@ export default defineConfig(({ mode }) => {
   // The browser only talks to its own origin; /api is forwarded to the gateway, so no CORS
   // preflight is ever sent (web KI-001, backend KI-041). Used by both dev and preview.
   const proxy: Record<string, ProxyOptions> = {
-    '/api': { target: apiTarget, changeOrigin: true },
+    // `changeOrigin` stays off on purpose: the gateway lets a browser write (POST, PUT, DELETE: the request carries an
+    // `Origin`) only when `Host` matches that `Origin`, and rewriting `Host` to the target made every write a 403
+    // (found in Phase 10, registration). Reads carry no `Origin`, so they never showed it.
+    '/api': { target: apiTarget },
   }
 
   return {
@@ -33,7 +36,7 @@ export default defineConfig(({ mode }) => {
         include: ['src/**/*.{ts,tsx}'],
         exclude: ['src/test/**', 'src/**/*.test.{ts,tsx}', 'src/main.tsx'],
         // A floor, not a target: set to the measured values; later phases raise them, never lower them.
-        thresholds: { statements: 99.39, branches: 95.77, functions: 100, lines: 100 },
+        thresholds: { statements: 99.53, branches: 96.11, functions: 100, lines: 100 },
       },
     },
   }

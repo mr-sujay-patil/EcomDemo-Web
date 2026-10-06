@@ -1,0 +1,6 @@
+/* The form kit: fields stacked with room between them. Tokens only. */
+.ed-form {
+  display: grid;
+  gap: var(--space-4);
+  width: 100%;
+}

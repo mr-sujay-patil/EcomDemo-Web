@@ -167,6 +167,18 @@ export function StyleguidePage() {
         <Case label="with icon">
           <TextField label="Search" icon="search" placeholder="Search, or describe what you need" />
         </Case>
+        <Case label="with a trailing action">
+          <TextField
+            label="Password"
+            type="password"
+            defaultValue="correct horse"
+            trailing={
+              <Button variant="ghost" size="sm" aria-label="Show password">
+                Show
+              </Button>
+            }
+          />
+        </Case>
         <Case label="disabled">
           <TextField label="Username" defaultValue="locked" disabled />
         </Case>

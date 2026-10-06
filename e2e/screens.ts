@@ -25,8 +25,8 @@ export const routePages = [
   { name: 'orders', path: '/orders', h1: 'Your orders', title: 'Your orders', report: false },
   { name: 'order-detail', path: '/orders/42', h1: 'Order', title: 'Order', report: false },
   { name: 'account', path: '/account', h1: 'Your account', title: 'Your account', report: false },
-  { name: 'sign-in', path: '/sign-in', h1: 'Sign in', title: 'Sign in', report: false },
-  { name: 'register', path: '/register', h1: 'Create an account', title: 'Create an account', report: false },
+  { name: 'sign-in', path: '/sign-in', h1: 'Sign in', title: 'Sign in', report: true },
+  { name: 'register', path: '/register', h1: 'Create an account', title: 'Create an account', report: true },
   { name: 'admin', path: '/admin', h1: 'Admin', title: 'Admin', report: false },
   { name: 'about', path: '/about', h1: 'About', title: 'About', report: true },
   { name: 'returns', path: '/returns', h1: 'Returns', title: 'Returns', report: false },
@@ -77,6 +77,33 @@ export const screens: Screen[] = [
       await expect(page.getByRole('heading', { level: 1, name: 'No longer available' })).toBeVisible()
     },
     allowedConsoleErrors: [notFoundResponseError],
+  },
+  {
+    // The form with every error showing: the longest the page ever gets.
+    name: 'register-errors',
+    path: '/register',
+    ready: async (page) => {
+      await page.getByRole('button', { name: 'Create account' }).click()
+      await expect(page.getByText('Choose a username.')).toBeVisible()
+      await expect(page.getByText('Enter your name.')).toBeVisible()
+    },
+  },
+  {
+    // A 401 is stubbed: one real wrong password costs a slot of the backend's login throttle (see accounts.spec.ts).
+    name: 'sign-in-error',
+    path: '/sign-in',
+    prepare: async (page) => {
+      await page.route('**/api/auth/login', (route) =>
+        route.fulfill({ status: 401, json: { status: 401, message: 'Bad credentials' } }),
+      )
+    },
+    ready: async (page) => {
+      await page.getByLabel('Username').fill('someone')
+      await page.getByLabel('Password', { exact: true }).fill('not the password')
+      await page.getByRole('button', { name: 'Sign in' }).click()
+      await expect(page.getByRole('alert')).toContainText('Wrong username or password.')
+    },
+    allowedConsoleErrors: [/Failed to load resource: the server responded with a status of 401/],
   },
   ...routePages.map(({ name, path, h1, report }): Screen => ({
     name,

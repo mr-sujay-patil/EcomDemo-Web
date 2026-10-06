@@ -44,6 +44,10 @@ A component takes data and callbacks. It never imports a route, a query or the A
 
 Server numbers are shown, never made: `Price` formats an `amount`, `CartLine` takes the server's `lineTotal`, `OrderSummary` takes the server's `total`. No component multiplies or adds prices.
 
+## Fields and focus
+
+`TextField` shows focus on its **box** (`:focus-within`, a green ring; red when the field has an error), never on the input inside it, so a field has one ring, not two. It forwards `ref` to the `<input>` (React 19 passes `ref` as a prop) and has a `trailing` slot after the input for a control such as Show/Hide password. Forms are built from it by `src/components/forms/` (`docs/architecture/forms.md`).
+
 ## Images
 
 `ProductTile` shows `image` (the product's `imageUrl`, a path on this origin, fetched by an `<img>` with no token). With no image, or if the image fails to load (`onError`), it shows the "Photo to come" well with the category's icon. `imageUrl` is `null` for products without one: that is normal, not an error.

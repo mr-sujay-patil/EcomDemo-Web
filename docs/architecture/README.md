@@ -9,6 +9,7 @@ How EcomDemo Web is put together. Each page is written by the phase that builds 
 | `api-layer.md` | Phase 7 |
 | `state.md` | Phase 8 |
 | `design-system.md` | Phase 9 |
+| `forms.md` | Phase 10 |
 | `auth-flow.md` | Phase 11 |
 
 ## Target (after Phase 23)

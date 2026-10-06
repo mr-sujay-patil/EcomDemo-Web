@@ -50,3 +50,14 @@
 .ed-field.has-error .ed-field-note {
   color: var(--danger);
 }
+
+.ed-field-trailing {
+  display: inline-flex;
+  flex: none;
+  margin-right: calc(var(--space-2) * -1);
+}
+
+/* A field shows focus on its box (:focus-within), never on the input inside it; in error the ring is red. */
+.ed-field.has-error .ed-field-box:focus-within {
+  box-shadow: 0 0 0 1px var(--danger);
+}
