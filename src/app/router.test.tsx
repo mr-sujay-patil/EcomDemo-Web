@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { renderRoute } from '@/test/render'
@@ -34,7 +34,10 @@ describe('routes', () => {
 
     expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument()
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
-    expect(document.title).toBe(title)
+    // The layout sets the title in an effect, which can land just after the h1 shows (on a lazy route, under load).
+    await waitFor(() => {
+      expect(document.title).toBe(title)
+    })
   })
 
   it('names the phase that builds a placeholder page', async () => {
