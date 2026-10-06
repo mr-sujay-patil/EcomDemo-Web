@@ -6,8 +6,8 @@
 - **Phase:** 12 — Cart
 - **Branch:** `feature/phase-12-cart`
 - **Step:** PR_OPEN
-- **PR:** raised next (see `gh pr list`)
-- **Backend pinned at:** `phase-34-complete`. Stack started from the clone on 2026-10-06 (by me) and left RUNNING until this PR is open; stop it with `docker compose --profile tools down` (no `-v`) when done.
+- **PR:** #15 (CI running on the head)
+- **Backend pinned at:** `phase-34-complete`. Stack started from the clone on 2026-10-06 (by me) and stopped after the PR was opened (no `-v`); start it again from the clone for the merge verification. To stop:  `docker compose --profile tools down` (no `-v`) when done.
 - **Waiting for user:** YES: review of the Phase 12 PR (no manual steps)
 
 ## Merge verification before this phase
