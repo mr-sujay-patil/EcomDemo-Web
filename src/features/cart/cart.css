@@ -1,0 +1,39 @@
+/* The cart page. Tokens only. */
+
+.cart-layout {
+  display: grid;
+  gap: var(--space-6);
+  align-items: start;
+}
+
+@media (min-width: 900px) {
+  .cart-layout {
+    grid-template-columns: minmax(0, 1fr) 360px;
+  }
+}
+
+.cart-lines {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cart-summary {
+  position: sticky;
+  top: var(--space-6);
+}
+
+.cart-undo {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2) var(--space-4);
+}
+
+.cart-empty {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-3);
+}

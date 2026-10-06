@@ -47,7 +47,11 @@ export const routes: RouteObject[] = [
       {
         element: <RequireRole role="CUSTOMER" />,
         children: [
-          route('cart', 'Your cart', <PlaceholderPage title="Your cart" phase={12} />),
+          {
+            path: 'cart',
+            handle: { title: 'Your cart' } satisfies RouteHandle,
+            lazy: async () => ({ Component: (await import('@/features/cart/CartPage')).CartPage }),
+          },
           {
             path: 'checkout',
             handle: { title: 'Checkout' } satisfies RouteHandle,

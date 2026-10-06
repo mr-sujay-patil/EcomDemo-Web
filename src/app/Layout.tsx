@@ -8,6 +8,7 @@ import { site } from '@/content/site'
 import { AccountMenu } from '@/features/auth/AccountMenu'
 import { ExpiryNotice } from '@/features/auth/ExpiryNotice'
 import { useSession } from '@/features/auth/useSession'
+import { countItems, useCart } from '@/features/cart/api'
 import { PageTitleContext } from './pageTitle'
 import { ThemeToggle } from './ThemeToggle'
 import './Layout.css'
@@ -27,6 +28,7 @@ export function Layout() {
   // A page may name itself (a "Not permitted" standing in for the admin console); otherwise the route does.
   const [pageTitle, setPageTitle] = useState<string | null>(null)
   const { session, role } = useSession()
+  const cartCount = countItems(useCart().data)
   const name = pageTitle ?? handle?.title
   const title = name ? `${site.storeName} · ${name}` : site.storeName
 
@@ -91,8 +93,13 @@ export function Layout() {
             </Link>
           )
         }
+        cartCount={cartCount}
         cart={
-          <Link to="/cart" className={buttonClass({ variant: 'secondary', iconOnly: true })} aria-label="Cart">
+          <Link
+            to="/cart"
+            className={buttonClass({ variant: 'secondary', iconOnly: true })}
+            aria-label={cartCount ? `Cart, ${cartCount} ${cartCount === 1 ? 'item' : 'items'}` : 'Cart'}
+          >
             <Icon name="cart" size={18} />
           </Link>
         }

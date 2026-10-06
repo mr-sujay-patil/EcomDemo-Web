@@ -49,9 +49,9 @@ describe('routes', () => {
   })
 
   it('names the phase that builds a placeholder page', async () => {
-    renderRoute('/cart', { signedInAs: 'CUSTOMER' })
+    renderRoute('/orders', { signedInAs: 'CUSTOMER' })
 
-    expect(await screen.findByText('This page is built in Phase 12.')).toBeInTheDocument()
+    expect(await screen.findByText('This page is built in Phase 14.')).toBeInTheDocument()
   })
 
   it('leaves every owner-written paragraph marked TODO(owner)', async () => {

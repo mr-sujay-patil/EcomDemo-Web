@@ -74,4 +74,9 @@ export const productHandlers = {
 }
 
 /** The happy path for every endpoint; a test swaps one in with `server.use(...)`. */
-export const handlers = [productHandlers.success, productHandlers.detail]
+export const handlers = [
+  productHandlers.success,
+  productHandlers.detail,
+  // A signed-in customer's header asks for the cart on every page; most tests do not care what is in it.
+  http.get('/api/cart', () => HttpResponse.json({ id: 1, items: [], totalAmount: 0 })),
+]

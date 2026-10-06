@@ -2,7 +2,9 @@ import { Link, useSearchParams } from 'react-router'
 import { buttonClass } from '@/components/Button'
 import { Chip } from '@/components/Chip'
 import { ErrorPanel } from '@/components/ErrorPanel'
+import { Alert } from '@/components/Alert'
 import { ProductCard } from '@/components/ProductCard'
+import { useAddAction } from '@/features/cart/useAddAction'
 import { usePrefetchProduct, useProducts } from './api'
 import {
   applyShelf,
@@ -56,6 +58,7 @@ function Shelf({
   show: (next: Partial<ShelfState>) => void
 }) {
   const prefetch = usePrefetchProduct()
+  const cart = useAddAction()
   const result = applyShelf(products, shelf)
   // A shared link may name a category that no longer exists: keep it in the list so the control still says what is filtered.
   const categories = categoriesOf(products)
@@ -107,6 +110,12 @@ function Shelf({
         </label>
       </form>
 
+      {cart.error ? (
+        <Alert tone="danger" title="Could not add it to your cart" onClose={cart.dismiss}>
+          {cart.error.message}
+        </Alert>
+      ) : null}
+
       <div className="reserve">
         {/* aria-live, not role="status": it announces a changed count without being a loading message. */}
         <p className="ed-caption shelf-count" aria-live="polite">
@@ -130,6 +139,8 @@ function Shelf({
                   category={categoryOf(product)}
                   image={product.imageUrl}
                   stock={product.stockQuantity}
+                  inCart={cart.inCart(product.id)}
+                  onAdd={cart.canAdd ? () => cart.add(product.id) : undefined}
                   renderName={(name) => (
                     <Link
                       to={`/products/${product.id}`}
