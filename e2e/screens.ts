@@ -13,6 +13,67 @@ export type Screen = {
   allowedConsoleErrors?: RegExp[]
   /** False for screens that look like another one (the placeholders): the report skips their screenshots. */
   report?: boolean
+  /** Reached signed in as this role: the helper signs in (with stubbed answers) and arrives here without a reload. */
+  signedInAs?: Role
+}
+
+export type Role = 'CUSTOMER' | 'ADMIN'
+
+/**
+ * Makes the backend accept any sign-in as `role`, with a token that lasts 15 minutes. For specs about layout and
+ * screens, where who is signed in matters and the backend's own sign-in does not. The specs about signing in itself
+ * (auth.spec.ts, accounts.spec.ts) use real accounts.
+ */
+export async function stubAccount(page: Page, role: Role) {
+  await page.route('**/api/auth/login', (route) =>
+    route.fulfill({
+      json: {
+        accessToken: 'e2e-stub-token',
+        tokenType: 'Bearer',
+        expiresIn: 900,
+        expiresAt: new Date(Date.now() + 900_000).toISOString(),
+      },
+    }),
+  )
+  await page.route('**/api/customers/me', (route) =>
+    route.fulfill({
+      json: { id: 1, username: 'e2e.person', fullName: 'E2E Person', role, createdAt: '2026-10-06T10:00:00Z' },
+    }),
+  )
+}
+
+/**
+ * Opens `path` as a person who may see it. A session lives in memory, so a plain `page.goto` of a guarded page
+ * would bounce to sign-in: this goes to the sign-in page with `?next=`, signs in, and arrives at `path` the way a
+ * person would, with no reload in between.
+ */
+export async function visit(page: Page, path: string, signedInAs?: Role) {
+  if (!signedInAs) {
+    await page.goto(path)
+    return
+  }
+  await stubAccount(page, signedInAs)
+  await page.goto(`/sign-in?next=${encodeURIComponent(path)}`)
+  await page.getByLabel('Username').fill('e2e.person')
+  await page.getByLabel('Password', { exact: true }).fill('not checked: the answer is stubbed')
+  await page.getByRole('button', { name: 'Sign in' }).click()
+}
+
+/** Prepares, opens and waits for a screen: the one way the matrix and the report reach it. */
+export async function openScreen(page: Page, screen: Screen) {
+  await screen.prepare?.(page)
+  await visit(page, screen.path, screen.signedInAs)
+  await screen.ready(page)
+}
+
+/** Who must be signed in to see a route (src/app/router.tsx): the shop's private pages, and the console. */
+export const signedInFor: Record<string, Role> = {
+  '/cart': 'CUSTOMER',
+  '/checkout': 'CUSTOMER',
+  '/orders': 'CUSTOMER',
+  '/orders/42': 'CUSTOMER',
+  '/account': 'CUSTOMER',
+  '/admin': 'ADMIN',
 }
 
 /** Every route of src/app/router.tsx, as a user would reach it: the path, the h1 and the document title. */
@@ -105,10 +166,52 @@ export const screens: Screen[] = [
     },
     allowedConsoleErrors: [/Failed to load resource: the server responded with a status of 401/],
   },
+  {
+    // The header's menu, open: the signed-in header at its widest use.
+    name: 'account-menu',
+    path: '/about',
+    signedInAs: 'CUSTOMER',
+    ready: async (page) => {
+      await page.getByRole('button', { name: 'Account: E2E' }).click()
+      await expect(page.getByRole('link', { name: 'My orders' })).toBeVisible()
+    },
+  },
+  {
+    // A customer on the console: the 403 in words.
+    name: 'not-permitted',
+    path: '/admin',
+    signedInAs: 'CUSTOMER',
+    report: true,
+    ready: async (page) => {
+      await expect(page.getByRole('heading', { level: 1, name: 'Not permitted' })).toBeVisible()
+    },
+  },
+  {
+    // A throttled login is stubbed: a real one costs slots of the backend's login throttle (see accounts.spec.ts).
+    name: 'sign-in-throttled',
+    path: '/sign-in',
+    prepare: async (page) => {
+      await page.route('**/api/auth/login', (route) =>
+        route.fulfill({
+          status: 429,
+          headers: { 'Retry-After': '30' },
+          json: { status: 429, message: 'Too many failed sign-ins.' },
+        }),
+      )
+    },
+    ready: async (page) => {
+      await page.getByLabel('Username').fill('someone')
+      await page.getByLabel('Password', { exact: true }).fill('not the password')
+      await page.getByRole('button', { name: 'Sign in' }).click()
+      await expect(page.getByRole('button', { name: /^Try again in \d+ s$/ })).toBeDisabled()
+    },
+    allowedConsoleErrors: [/Failed to load resource: the server responded with a status of 429/],
+  },
   ...routePages.map(({ name, path, h1, report }): Screen => ({
     name,
     path,
     report,
+    signedInAs: signedInFor[path],
     ready: async (page) => {
       await expect(page.getByRole('heading', { level: 1, name: h1 })).toBeVisible()
     },

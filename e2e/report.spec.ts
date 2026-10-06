@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process'
 import { test } from './fixtures'
-import { colorSchemes, screens } from './screens'
+import { colorSchemes, openScreen, screens } from './screens'
 
 /** docs/test-reports/phase-XX/, from REPORT_PHASE (e.g. `phase-03`) or the current `feature/phase-XX-*` branch. */
 function reportDirectory(): string {
@@ -29,9 +29,7 @@ test.describe('@report screenshots', () => {
           })
 
           test('screenshot', async ({ page }) => {
-            await screen.prepare?.(page)
-            await page.goto(screen.path)
-            await screen.ready(page)
+            await openScreen(page, screen)
             // Resolved here, not at load time: every project loads this file, even on branches with no report.
             await page.screenshot({
               path: `${reportDirectory()}/${screen.name}-${width}-${colorScheme}.png`,

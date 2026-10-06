@@ -6,7 +6,7 @@ The app keeps three kinds of state, in three places, and never mixes them.
 |---|---|---|
 | **Server state**: data the backend owns, which this app only holds a copy of | the product list, one product | the TanStack Query cache (`@tanstack/react-query` 5.104.0) |
 | **URL state**: what the user is looking at, which should survive a reload and be shareable | the shelf's category, sort and page | the address bar (`useSearchParams`) |
-| **Client state**: things only this browser tab knows | a form's unsent text, the session token (Phase 11) | component state; the token in memory only |
+| **Client state**: things only this browser tab knows | a form's unsent text, the session token | component state; the session in `src/features/auth/session.ts` (memory only, `useSession`); unsent text that must outlive a session in `useFormDraft` |
 
 Server state is not component state. A copy fetched in `useEffect` has no owner: two components that need the same product fetch it twice, a retry is hand-written each time, and nothing says when the copy is too old. The cache gives every copy a key, an age and an owner.
 
@@ -50,3 +50,7 @@ The backend returns the whole catalogue, unsorted and unpaginated (web KI-003), 
 ## Loading and error states
 
 A loading state says what is loading (`role="status"`) and sits in a box that keeps its height, so the footer does not jump when the data arrives (an inline `min-height` until Phase 9's tokens). An error state (`src/components/ErrorPanel.tsx`) shows `ApiError.message`, the correlation id when the cause is the server (5xx) or the network (status 0), and a Retry button that calls `refetch()`. There is no shimmer.
+
+## The session and the cache (Phase 11)
+
+The signed-in person's data lives in the query cache like any server state, and is **removed whenever a session ends** (sign-out, expiry, a refused token): every query whose key does not start with `'catalog'`. So a new feature's keys are safe by default, and a catalogue key must start with `catalog` to survive (`catalogKeys` does). The session itself is not in the cache: it is a small external store (`docs/architecture/auth-flow.md`).

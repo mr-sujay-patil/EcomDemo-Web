@@ -9,8 +9,8 @@ import { createRetryingFetch } from './retry'
 
 type TokenProvider = () => string | null
 
-// Phase 11 injects the session here; until then nobody is signed in. The token itself stays in
-// the session's memory, never in this module.
+// The session (src/features/auth) injects the token here; with none, nobody is signed in. The token itself
+// stays in the session's memory, never in this module.
 const noToken: TokenProvider = () => null
 let currentToken: TokenProvider = noToken
 
@@ -21,7 +21,7 @@ export function setAccessTokenProvider(provider: TokenProvider | null) {
 
 type RejectedTokenHandler = (rejectedToken: string) => void
 
-// Phase 11 injects this too: a 401 to a request that carried a token means that token is no good, and the
+// The session injects this too: a 401 to a request that carried a token means that token is no good, and the
 // session ends. It is told which token, so a late 401 for an old token cannot end a newer session.
 const ignoreRejection: RejectedTokenHandler = () => undefined
 let onTokenRejected: RejectedTokenHandler = ignoreRejection

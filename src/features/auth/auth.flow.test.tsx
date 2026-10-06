@@ -343,6 +343,20 @@ describe('the clock: one minute of warning, then the end', () => {
     expect(notice()).not.toBeInTheDocument()
   })
 
+  it('takes the warning away when the session ends, on a page with the layout around it', () => {
+    fakeClock()
+    const s = store(90)
+    renderRoute('/about', { store: s })
+    advance(70_000)
+    expect(notice()).toBeInTheDocument()
+
+    advance(21_000)
+
+    expect(s.getSnapshot().endedBy).toBe('expired')
+    expect(notice()).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 1, name: 'About' })).toBeInTheDocument()
+  })
+
   it('keeps the draft through the expiry, and gives it back after signing in again', async () => {
     fakeClock()
     renderRoute('/draft', { store: store(90) }, table)

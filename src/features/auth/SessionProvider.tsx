@@ -110,9 +110,11 @@ export function SessionProvider({ store: given, children }: { store?: SessionSto
     store.end('signed-out')
   }, [store, drafts])
 
+  // `expiring` is only meaningful while someone is signed in: once the session ends, so does the warning.
+  const warning = expiring && session !== null
   const value = useMemo(
-    () => ({ store, drafts, signIn, signOut, expiring }),
-    [store, drafts, signIn, signOut, expiring],
+    () => ({ store, drafts, signIn, signOut, expiring: warning }),
+    [store, drafts, signIn, signOut, warning],
   )
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
 }

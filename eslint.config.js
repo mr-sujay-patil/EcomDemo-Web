@@ -59,7 +59,7 @@ export default defineConfig([
     languageOptions: { globals: globals.node },
     rules: {
       // A screen's `ready(page)` (e2e/screens.ts) is made of `expect` calls, so a test that awaits it asserts.
-      'playwright/expect-expect': ['error', { assertFunctionNames: ['ready'] }],
+      'playwright/expect-expect': ['error', { assertFunctionNames: ['ready', 'openScreen'] }],
     },
   },
 

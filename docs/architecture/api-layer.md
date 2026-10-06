@@ -40,7 +40,7 @@ Every call passes through one middleware:
 | Step | Rule |
 |---|---|
 | Request | `X-Correlation-Id` (a new UUID per call, when `crypto.randomUUID` exists) and `Accept: application/json`; `Authorization: Bearer <token>` on **every** call while someone is signed in (web KI-011: the assistant and inventory documents mark no call as protected). The token comes from `setAccessTokenProvider(fn)`, injected by Phase 11; until then it is `null` |
-| Response, non-2xx | rejects with an `ApiError` |
+| Response, non-2xx | rejects with an `ApiError`. A `401` to a request that **carried a token** first tells the session which token was refused (`setTokenRejectedHandler`), so the session can end; a 401 without a token (the login's wrong password), a 403, a 5xx are not session events (`docs/architecture/auth-flow.md`) |
 | Network failure | rejects with an `ApiError` of status 0 and the id it sent |
 | Aborted request | the browser's own `AbortError`, untouched, so callers can tell cancelling from failing |
 

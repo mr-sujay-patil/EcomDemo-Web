@@ -5,30 +5,30 @@
 - **Updated:** 2026-10-06
 - **Phase:** 11 — Authentication
 - **Branch:** `feature/phase-11-auth`
-- **Step:** BRANCHED
+- **Step:** WAITING_FOR_USER
   (NOT_STARTED | PREFLIGHT | BRANCHED | PLANNING | IMPLEMENTING | TESTING | PR_OPEN | VERIFYING | WAITING_FOR_USER)
-- **PR:** none yet
-- **Backend pinned at:** `phase-34-complete`. Use a running `ecomdemo-gateway-service` if there is one.
-- **Waiting for user:** no
+- **PR:** open to `main` (number: `gh pr list`; CI running on the head)
+- **Backend pinned at:** `phase-34-complete`. No stack runs now (I started one from the clone for this phase and stopped it, no `-v`): start it from `../ecomdemo-backend-readonly` for the merge verification.
+- **Waiting for user:** YES: review of the Phase 11 PR (no manual steps)
 
 ## Merge verification before this phase
-Phase 10 (PR #13, merge `b04eb29`): PASS on 2026-10-06. PR MERGED; branch tip `3d4d7ff` is an ancestor of `origin/main`; diff empty; branch kept; `npm ci && npm run verify` 450/450; browser E2E 273/273 against the running gateway; CI green on the PR head and on `main` (exact tag, `api:check` included); tag `phase-10-complete` pushed. ⚠️ `npm run e2e` locally stops at `api:check`: the backend team's running stack serves a `dltTimestamp` field on an admin dead-letter response that is not in `phase-34-complete` or on backend `origin/main` (their unreleased work); the snapshot was not changed. The tag was pushed before that was seen: a process slip, the verification above is what stands.
-Backend sync (standing rule): `origin/main` unchanged (6 test/line-ending commits past the pin), no newer tag; pin unchanged.
+Phase 10 (PR #13, merge `b04eb29`): PASS on 2026-10-06 (first commit of this branch; the `dltTimestamp` mismatch seen then was the backend team's unreleased work, and `api:check` matched on the pinned stack in this phase).
 
 ## Checklist (from the phase file's "What you'll implement")
-- [ ] `src/features/auth/session.ts`: in-memory session (token, `expiresAt`, profile), context, `useSession`; the API client reads it; decide and record reload behaviour (default: signs out, sign-in page says so); never `localStorage`
-- [ ] JWT decoded for display only
-- [ ] Expiry: warning one minute before; at expiry or any 401: clear, keep route and drafts, go to `/sign-in?next=…`, return after sign-in
-- [ ] 403: "Not permitted" page, never a login prompt
-- [ ] Guards: `/cart`, `/checkout`, `/orders`, `/orders/:id`, `/account` (CUSTOMER); `/admin/*` (ADMIN)
-- [ ] Header: Sign in / first name + menu (My orders, Account, Sign out) / Admin link for ADMIN
-- [ ] Sign out: client-side, clears customer data from the query cache
-- [ ] Login 429 + `Retry-After`: the sign-in form shows the wait (countdown, no auto-retry)
-- [ ] Remove Phase 10's placeholder message; `docs/architecture/auth-flow.md`, `docs/modules/auth.md`
-- [ ] Tests (guards with `next`, 401 mid-session keeps the draft, expiry warning with fake timers, 403 page, sign-out clears cache, 429 wait); E2E; docs, test report, `RECENT.md` rotated (Phase 09 archived), tracker 🔵
+- [x] In-memory session behind a context and `useSession`; the API client reads it; reload signs out (decided and recorded); never storage
+- [x] JWT not decoded: `expiresAt` and `/api/customers/me`
+- [x] Expiry: warning at -60 s; at expiry or any 401 (with a token): clear, keep route and drafts, `/sign-in?next=…`, return
+- [x] 403 "Not permitted", never a login prompt
+- [x] Guards: customer routes and `/admin/*`
+- [x] Header: Sign in / first name + menu / Admin for ADMIN
+- [x] Sign out: client-side, clears cached customer data
+- [x] Login 429 + `Retry-After`: countdown on the button
+- [x] Phase 10's placeholder removed; `auth-flow.md`, `modules/auth.md`
+- [x] Tests (guards with `next`, 401 keeps the draft, expiry with fake timers, 403 page, sign-out clears cache, 429 wait); E2E; docs, test report + screenshots, `RECENT.md` rotated (Phase 09 archived), tracker 🔵
+- [x] `npm run verify` 578 tests, coverage 99.84 / 96.8 / 100 / 100, `npm run e2e` 310/310 (`api:check` green, exact tag)
 
 ## Next action
-Read `docs/architecture/{routing,state,api-layer}.md`, the guide's authentication section, `src/api/client.ts` (`setAccessTokenProvider`), `src/api/access.ts`, then plan (tests first) and build the session. Login failures are throttled per client address (20 per 15 min on this machine): never loop wrong-password E2E; the 429 E2E is stubbed.
+Confirm CI is green on the PR head. Then wait for the owner's review. On `approved, merge it`: `gh pr merge <n> --merge` (no `--delete-branch`); start the backend stack from the clone; merge verification on `main` (`npm ci && npm run verify`, `npm run e2e`, **read the E2E result before tagging**); tag `phase-11-complete`; stop the stack (no `-v`). Before the next phase: `git fetch` the backend clone and compare `origin/main` and tags with the pin; backend doubts go to the owner as a forwardable message. Next phase only on `continue`: Phase 12 (read its file first; it is the first with authenticated API calls).
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.

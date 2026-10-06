@@ -44,7 +44,9 @@ test.describe('register', () => {
     await page.getByLabel('Password', { exact: true }).fill(password)
     await page.getByRole('button', { name: 'Sign in' }).click()
 
-    await expect(page.getByRole('status')).toContainText('Signed in. Sessions arrive in the next phase.')
+    await expect(page).toHaveURL('/')
+    await expect(page.getByRole('heading', { level: 1, name: 'Everything for the desk' })).toBeVisible()
+    await expect(page.getByRole('button', { name: 'Account: E2E' })).toBeVisible()
   })
 
   test.describe('with a 409 the browser logs', () => {
