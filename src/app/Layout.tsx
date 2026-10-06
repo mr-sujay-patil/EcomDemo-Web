@@ -1,10 +1,14 @@
-import { useEffect, useRef, type MouseEvent } from 'react'
+import { useEffect, useRef, useState, type MouseEvent } from 'react'
 import { createSearchParams, Link, Outlet, ScrollRestoration, useLocation, useMatches, useNavigate } from 'react-router'
 import { buttonClass } from '@/components/Button'
 import { Header } from '@/components/Header'
 import { Icon } from '@/components/Icon'
 import { Logo } from '@/components/Logo'
 import { site } from '@/content/site'
+import { AccountMenu } from '@/features/auth/AccountMenu'
+import { ExpiryNotice } from '@/features/auth/ExpiryNotice'
+import { useSession } from '@/features/auth/useSession'
+import { PageTitleContext } from './pageTitle'
 import { ThemeToggle } from './ThemeToggle'
 import './Layout.css'
 
@@ -20,7 +24,11 @@ export function Layout() {
   const navigate = useNavigate()
   const matches = useMatches()
   const handle = matches.map((match) => match.handle).findLast(isRouteHandle)
-  const title = handle ? `${site.storeName} · ${handle.title}` : site.storeName
+  // A page may name itself (a "Not permitted" standing in for the admin console); otherwise the route does.
+  const [pageTitle, setPageTitle] = useState<string | null>(null)
+  const { session, role } = useSession()
+  const name = pageTitle ?? handle?.title
+  const title = name ? `${site.storeName} · ${name}` : site.storeName
 
   useEffect(() => {
     document.title = title
@@ -63,12 +71,25 @@ export function Layout() {
           </Link>
         }
         onSearch={search}
-        tools={<ThemeToggle />}
+        tools={
+          <>
+            {role === 'ADMIN' && (
+              <Link to="/admin" className={buttonClass({ variant: 'ghost' })}>
+                <span>Admin</span>
+              </Link>
+            )}
+            <ThemeToggle />
+          </>
+        }
         account={
-          <Link to="/sign-in" className={buttonClass({ variant: 'ghost' })}>
-            <Icon name="user" size={18} />
-            <span>Sign in</span>
-          </Link>
+          session ? (
+            <AccountMenu />
+          ) : (
+            <Link to="/sign-in" className={buttonClass({ variant: 'ghost' })}>
+              <Icon name="user" size={18} />
+              <span>Sign in</span>
+            </Link>
+          )
         }
         cart={
           <Link to="/cart" className={buttonClass({ variant: 'secondary', iconOnly: true })} aria-label="Cart">
@@ -76,8 +97,11 @@ export function Layout() {
           </Link>
         }
       />
+      <ExpiryNotice />
       <main id="main" className="site-main page" tabIndex={-1}>
-        <Outlet />
+        <PageTitleContext.Provider value={setPageTitle}>
+          <Outlet />
+        </PageTitleContext.Provider>
       </main>
       <footer className="site-footer">
         <div className="page site-footer-inner">

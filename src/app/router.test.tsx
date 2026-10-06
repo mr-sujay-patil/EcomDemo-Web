@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
+import type { Role } from '@/features/auth/session'
 import { renderRoute } from '@/test/render'
 import { createAppRouter } from './router'
 
@@ -28,9 +29,16 @@ const pages = [
   ['/no/such/page', 'Page not found', 'EcomDemo · Page not found'],
 ] as const
 
+/** Who must be signed in to see a path (src/app/router.tsx): customers for the shop's private pages, an admin for the console. */
+function viewerOf(path: string): Role | undefined {
+  if (path.startsWith('/admin')) return 'ADMIN'
+  const customerOnly = ['/cart', '/checkout', '/orders', '/account']
+  return customerOnly.some((prefix) => path === prefix || path.startsWith(`${prefix}/`)) ? 'CUSTOMER' : undefined
+}
+
 describe('routes', () => {
   it.each(pages)('%s renders its h1 and sets the document title', async (path, heading, title) => {
-    renderRoute(path)
+    renderRoute(path, { signedInAs: viewerOf(path) })
 
     expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument()
     expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1)
@@ -41,7 +49,7 @@ describe('routes', () => {
   })
 
   it('names the phase that builds a placeholder page', async () => {
-    renderRoute('/cart')
+    renderRoute('/cart', { signedInAs: 'CUSTOMER' })
 
     expect(await screen.findByText('This page is built in Phase 12.')).toBeInTheDocument()
   })
@@ -104,22 +112,22 @@ describe('layout', () => {
     ['Terms', 'Terms'],
   ])('the footer link "%s" opens the %s page', async (link, heading) => {
     const user = userEvent.setup()
-    renderRoute('/cart')
-    await screen.findByRole('heading', { level: 1, name: 'Your cart' })
+    renderRoute('/search')
+    await screen.findByRole('heading', { level: 1, name: 'Search' })
 
     await user.click(within(screen.getByRole('contentinfo')).getByRole('link', { name: link }))
 
     expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument()
   })
 
-  it('links the store name to the product list and the header to search and cart', async () => {
+  it('links the store name to the product list, and signed out the cart link leads to sign-in', async () => {
     const user = userEvent.setup()
     renderRoute('/about')
     await screen.findByRole('heading', { level: 1, name: 'About' })
     const header = within(screen.getByRole('banner'))
 
     await user.click(header.getByRole('link', { name: 'Cart' }))
-    expect(await screen.findByRole('heading', { level: 1, name: 'Your cart' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument()
     await user.click(header.getByRole('link', { name: 'Sign in' }))
     expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument()
     await user.click(header.getByRole('link', { name: 'EcomDemo' }))

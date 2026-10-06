@@ -1,9 +1,10 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react'
+import type { ComponentPropsWithRef, ReactNode } from 'react'
 import { Icon, type IconName } from '../Icon'
 import { buttonClass, type ButtonSize, type ButtonVariant } from './buttonClass'
 import './Button.css'
 
-export type ButtonProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children'> & {
+// `ref` is a plain prop in React 19: it reaches the <button> (a menu returns focus to its button with it).
+export type ButtonProps = Omit<ComponentPropsWithRef<'button'>, 'children'> & {
   /** default 'primary'. One primary per view. */
   variant?: ButtonVariant
   /** default 'md' (40px); 'sm' is 32px */

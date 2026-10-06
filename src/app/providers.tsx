@@ -1,6 +1,8 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import type { ReactNode } from 'react'
 import type { ApiError } from '@/api/errors'
+import { SessionProvider } from '@/features/auth/SessionProvider'
+import type { SessionStore } from '@/features/auth/session'
 
 declare module '@tanstack/react-query' {
   // Every failed query reaches `error` as the one error type the API client produces.
@@ -21,6 +23,19 @@ export function createQueryClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } })
 }
 
-export function AppProviders({ client, children }: { client: QueryClient; children: ReactNode }) {
-  return <QueryClientProvider client={client}>{children}</QueryClientProvider>
+/** The query cache, and inside it the session (which clears that cache when it ends). `session` is for tests that start signed in. */
+export function AppProviders({
+  client,
+  session,
+  children,
+}: {
+  client: QueryClient
+  session?: SessionStore
+  children: ReactNode
+}) {
+  return (
+    <QueryClientProvider client={client}>
+      <SessionProvider store={session}>{children}</SessionProvider>
+    </QueryClientProvider>
+  )
 }

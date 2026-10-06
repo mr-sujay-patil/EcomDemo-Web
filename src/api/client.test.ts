@@ -1,7 +1,7 @@
 import { http, HttpResponse } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from 'vitest'
 import { server } from '@/test/msw/server'
-import { createApiClient } from './client'
+import { createApiClient, setAccessTokenProvider, setTokenRejectedHandler } from './client'
 import { ApiError, NETWORK_ERROR_MESSAGE } from './errors'
 import type { paths as AppPaths } from './generated/app'
 import type { paths as CatalogPaths } from './generated/catalog'
@@ -167,6 +167,97 @@ describe('error mapping', () => {
     expect(error.retryAfter).toBe(30)
     expect(error.message).toBe('Too many failed logins. Try again in 30 seconds.')
     expect(sleeps).toEqual([])
+  })
+})
+
+describe('a refused token (401)', () => {
+  const refuse = (status: number) =>
+    server.use(http.get('/api/products', () => HttpResponse.json({ status, message: 'No.' }, { status })))
+
+  function watch() {
+    const rejected: string[] = []
+    setTokenRejectedHandler((token) => {
+      rejected.push(token)
+    })
+    return rejected
+  }
+
+  afterEach(() => {
+    setTokenRejectedHandler(null)
+    setAccessTokenProvider(null)
+  })
+
+  it('tells the session which token was refused, so it can end', async () => {
+    const rejected = watch()
+    refuse(401)
+    const { catalog } = setup(() => 'tok-1')
+
+    await failure(catalog.GET('/api/products'))
+
+    expect(rejected).toEqual(['tok-1'])
+  })
+
+  it('is just an error when no session is listening', async () => {
+    setTokenRejectedHandler(null)
+    refuse(401)
+    const { catalog } = setup(() => 'tok-1')
+
+    expect((await failure(catalog.GET('/api/products'))).status).toBe(401)
+  })
+
+  it('says nothing when the request carried no token: a 401 from the login is a wrong password, not an ended session', async () => {
+    const rejected = watch()
+    refuse(401)
+    const { catalog } = setup(() => null)
+
+    await failure(catalog.GET('/api/products'))
+
+    expect(rejected).toEqual([])
+  })
+
+  it.each([403, 404, 500])('says nothing for a %s: only a refused identity ends a session', async (status) => {
+    const rejected = watch()
+    refuse(status)
+    const { catalog } = setup(() => 'tok-1')
+
+    await failure(catalog.GET('/api/products'))
+
+    expect(rejected).toEqual([])
+  })
+
+  it('tells the token the request actually carried, even when the session has moved on since', async () => {
+    const rejected = watch()
+    let current = 'tok-old'
+    server.use(
+      http.get('/api/products', () => {
+        current = 'tok-new'
+        return HttpResponse.json({ status: 401, message: 'No.' }, { status: 401 })
+      }),
+    )
+    const { catalog } = setup(() => current)
+
+    await failure(catalog.GET('/api/products'))
+
+    expect(rejected).toEqual(['tok-old'])
+  })
+
+  it('uses the injected token provider for the shared clients, and stops when it is taken away', async () => {
+    let seen: string | null = null
+    server.use(
+      http.get('/api/products', ({ request }) => {
+        seen = request.headers.get('Authorization')
+        return HttpResponse.json([])
+      }),
+    )
+    const client = createApiClient<CatalogPaths>()
+
+    setAccessTokenProvider(() => 'tok-injected')
+    await client.GET('/api/products')
+    expect(seen).toBe('Bearer tok-injected')
+
+    setAccessTokenProvider(() => null)
+    await client.GET('/api/products')
+    expect(seen).toBeNull()
   })
 })
 
