@@ -20,6 +20,7 @@ const product = (id: number, name: string, price: number, category: string | nul
   price,
   stockQuantity: 1,
   category,
+  imageUrl: null,
 })
 
 const products = [

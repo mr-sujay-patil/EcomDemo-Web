@@ -151,6 +151,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/products/{id}/image": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get a product's image
+         * @description The image named by the product's imageUrl. Formats: SVG, PNG, WebP, JPEG. No size variants. Cached publicly for a day and revalidated by ETag (If-None-Match gives 304). Sent with X-Content-Type-Options: nosniff and Cross-Origin-Resource-Policy: cross-origin, so a storefront on another origin may embed it; an <img> needs no CORS. SVGs also carry a Content-Security-Policy that forbids everything.
+         */
+        get: operations["image"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -279,6 +299,11 @@ export interface components {
              * @example 1
              */
             id: number;
+            /**
+             * @description Where to fetch this product's image: a path relative to the gateway origin, to be requested by a browser <img> with no Authorization header. Null when the product has no image, which is valid and must be handled (show a placeholder).
+             * @example /api/products/1/image
+             */
+            imageUrl: string | null;
             /** @example Mechanical Keyboard */
             name: string;
             /**
@@ -743,6 +768,48 @@ export interface operations {
             };
             /** @description No model configured, the model failed or timed out, or its answer was unusable. The product is unchanged; Retry-After says when to try again. */
             503: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
+                };
+            };
+        };
+    };
+    image: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                /**
+                 * @description Id of the product
+                 * @example 1
+                 */
+                id: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description The image */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/*": string;
+                };
+            };
+            /** @description The image has not changed since the ETag in If-None-Match */
+            304: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description No such product, or the product has no image */
+            404: {
                 headers: {
                     [name: string]: unknown;
                 };

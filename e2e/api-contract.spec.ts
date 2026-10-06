@@ -3,7 +3,7 @@ import { expect, test } from './fixtures'
 // The generated types (src/api/generated) say every response property is present, because the
 // backend's documents mark none required but its JSON always includes them (web KI-016). This is
 // the runtime check that keeps that assumption honest: if the backend ever omits one, it fails here.
-const productKeys = ['category', 'description', 'id', 'name', 'price', 'stockQuantity']
+const productKeys = ['category', 'description', 'id', 'imageUrl', 'name', 'price', 'stockQuantity']
 
 test('every product the live backend returns has every property the generated type promises', async ({ request }) => {
   const response = await request.get('/api/products')

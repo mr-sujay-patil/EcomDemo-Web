@@ -2,35 +2,30 @@
 
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
-- **Updated:** 2026-10-01
-- **Phase:** 8 — Server State
-- **Branch:** `feature/phase-08-server-state`
+- **Updated:** 2026-10-06
+- **Phase:** none — chore `chore/pin-backend-phase-34` (re-pin the backend; requested by the user)
+- **Branch:** `chore/pin-backend-phase-34`
 - **Step:** WAITING_FOR_USER
-  (NOT_STARTED | PREFLIGHT | BRANCHED | PLANNING | IMPLEMENTING | TESTING | PR_OPEN | VERIFYING | WAITING_FOR_USER)
-- **PR:** #10 (CI running on the head)
-- **Backend pinned at:** `phase-33-complete`. Start the stack from the clone if `ecomdemo-gateway-service` is not running; stop it after (never `-v`).
-- **Waiting for user:** YES: review of PR #10
+- **PR:** (number in the PR itself; see `gh pr list`)
+- **Backend pinned at:** `phase-34-complete` (backend PR #59). Use a running `ecomdemo-gateway-service` if there is one.
+- **Waiting for user:** YES: review of the chore PR
 
-## Merge verification before this phase
-Phase 7 (PR #9, merge `58c20ae`): PASS on 2026-10-01. PR MERGED; branch tip `3a1ded7` is an ancestor of `origin/main`; `git log` and `git diff --stat` empty; branch kept; `npm ci && npm run verify` 137/137 and `npm run e2e` 208/208 (`api:check` green) on `main` against `phase-33-complete`; CI green on `main`; tag `phase-07-complete` pushed. Tracker ✅ is this branch's first commit.
+## Merge verification before this chore
+Phase 8 (PR #10, merge `878fdff`): PASS on 2026-10-06. Branch tip `286c698` is an ancestor of `origin/main`; diff empty; branch kept; `npm run verify` 187/187 and `npm run e2e` 229/229 (`api:check` green) on `main` against `phase-33-complete`; CI green; tag `phase-08-complete` pushed.
 
-## Checklist (from the phase file's "What you'll implement")
-- [x] TanStack Query (latest stable): `QueryClient` in `src/app/providers.tsx`, defaults recorded in `docs/decisions.md`
-- [x] Key factory + hooks in `src/features/catalog/api.ts` (`catalogKeys.list()`, `catalogKeys.detail(id)`)
-- [x] Catalogue page: one `GET /api/products`; client-side category filter (`null` = "Other"), sort (name, price), 24 per page; filter, sort, page in the URL
-- [x] Product page `/products/:id`: name, category, price, description, stock hint; 404 → "No longer available" + link back; disabled Add to cart ("Sign in to add to your cart")
-- [x] Prefetch a product on card hover or focus
-- [x] Loading states reserve space and say what loads; error states: `ApiError.message` / correlation id + Retry
-- [x] Tests with MSW: filter and sort update URL and list; pagination; 404 page; error and retry
-- [x] `docs/modules/catalog.md`
-- [x] E2E: filter → URL → reload keeps it; sort by price; next page; open a product; unknown id → "No longer available"
-- [x] Done when (real backend): shelf shows seeded products, filter/sort/pages survive reload, product page by link and deep URL
-- [x] Testing protocol → `docs/test-reports/phase-08.md`; README, `decisions.md`, `RECENT.md` rotated (Phase 06 to archive), tracker 🔵 → PR → STOP
+## Checklist
+- [x] CI `BACKEND_TAG` default, README, `development-environment.md` moved to `phase-34-complete`
+- [x] `api:snapshot` + `api:generate`: only `imageUrl` and `GET /api/products/{id}/image` added
+- [x] Fixtures, the contract test's key list and the access rule (`anyone`) updated for them
+- [x] `docs/backend/phase-34-delta.md`, `decisions.md`, KI-002 row, integration-guide `ProductResponse` line
+- [x] `npm run verify` 188/188 (twice); `npm run e2e` 229/229, `api:check` green, against the backend team's stack (`phase-34-complete` + 2 commits, see below)
+- [ ] CI green on the PR head; owner's review
 
 ## Next action
-Confirm CI is green on the head of PR #10. Then wait for the owner's review. On `approved, merge it`: `gh pr merge 10 --merge` (no `--delete-branch`), merge verification on `main` (start the stack from the clone, stop it after), tag `phase-08-complete`. Next phase only on `continue` (Phase 9: design system; read its file and `design-system/` first: styling rules change from Phase 9).
+Confirm CI is green on the chore PR, then wait for the owner. On `approved, merge it`: `gh pr merge <n> --merge` (no `--delete-branch`), verify on `main` (verify + e2e), tag `chore-pin-backend-phase-34-complete` only if the owner wants one (the Phase 33 chore had none; check `git tag`). Then Phase 9 only on `continue`: read `docs/phases/phase-09-design-system.md` and `design-system/` first; its Requires (KI-002 decision) is now met: use `imageUrl` per `docs/backend/phase-34-delta.md`.
 
 ## ⚠️ Environment notes (this machine)
+- The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.
 - One backend stack at a time: if `ecomdemo-gateway-service` is running, use it.
 - The repo folder is `~/projects/ecomdemo-web` (lowercase), not `~/projects/EcomDemo-Web` as the docs say; relative paths still work.
 - Node v24.21.0 via nvm in WSL, loaded only by interactive shells (`~/.bashrc`). Non-interactive commands must `. ~/.nvm/nvm.sh` first, or `npm` resolves to the Windows install under `/mnt/c`.

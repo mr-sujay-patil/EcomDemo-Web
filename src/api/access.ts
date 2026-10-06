@@ -19,6 +19,7 @@ const rules: readonly Rule[] = [
   { method: 'GET', path: '/api/products', access: 'anyone' },
   { method: 'GET', path: '/api/products/{id}', access: 'anyone' },
   { method: 'GET', path: '/api/products/search', access: 'anyone' },
+  { method: 'GET', path: '/api/products/{id}/image', access: 'anyone' },
   { method: 'POST', path: '/api/customers/register', access: 'anyone' },
   { method: 'POST', path: '/api/auth/login', access: 'anyone' },
   { method: 'GET', path: '/api/customers/me', access: 'signed-in' },

@@ -122,7 +122,7 @@ These are the 17 endpoints a storefront uses, as the gateway enforces them; read
 | `GET /api/products/{id}` | anyone | none | `200` `ProductResponse` | `404` |
 | `GET /api/products/search?q=&category=&minPrice=&maxPrice=&limit=` | anyone | `q`\* up to 200 chars; `category` up to 50; prices >= 0; `limit` 1-20, default 5 | `200` `ProductSearchResponse` | `400`; `503` when semantic search is not configured |
 
-`ProductResponse` = `{id, name, description, price, stockQuantity, category|null}`. `ProductSearchResponse` = `{query, results: [{product: ProductResponse, similarity}]}`, ranked by meaning, not keywords: "something to type on" finds keyboards. `stockQuantity` is a display hint; the real check happens at checkout.
+`ProductResponse` = `{id, name, description, price, stockQuantity, category|null, imageUrl|null}` (`imageUrl`: a path relative to the gateway origin, fetched by an `<img>` with no token; `null` = no image; see `phase-34-delta.md`). `ProductSearchResponse` = `{query, results: [{product: ProductResponse, similarity}]}`, ranked by meaning, not keywords: "something to type on" finds keyboards. `stockQuantity` is a display hint; the real check happens at checkout.
 
 ### Accounts (customer-service)
 

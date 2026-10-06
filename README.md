@@ -87,7 +87,7 @@ Every pull request, and every push to `main`, runs [`.github/workflows/ci.yml`](
 | Job | What it does |
 |---|---|
 | `verify` | `npm ci`, `npm run verify` and `npm run test:coverage` on the Node version in `.nvmrc`; the coverage report is saved as the run's `coverage` artifact |
-| `e2e` | Checks out the backend at `BACKEND_TAG` (default `phase-33-complete`), builds and starts its compose stack with a generated, masked signing key and client secrets, then runs `npm run e2e`. On failure it saves the Playwright report and traces (`playwright-report`) and the backend's logs (`backend-logs`) |
+| `e2e` | Checks out the backend at `BACKEND_TAG` (default `phase-34-complete`), builds and starts its compose stack with a generated, masked signing key and client secrets, then runs `npm run e2e`. On failure it saves the Playwright report and traces (`playwright-report`) and the backend's logs (`backend-logs`) |
 
 The job builds the backend from source because its per-service images are not published yet ([web KI-015](docs/KNOWN_ISSUES.md)), so it takes a while. The runner's memory and each container's use are printed on the run's summary page. To test against a newer backend, set the repository variable `BACKEND_TAG` (Settings → Secrets and variables → Actions → Variables). Nothing secret is stored in this repository.
 
