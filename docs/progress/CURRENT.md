@@ -6,7 +6,7 @@
 - **Phase:** 13 — Checkout and Order Tracking
 - **Branch:** `feature/phase-13-checkout`
 - **Step:** PR_OPEN
-- **PR:** raised next (see `gh pr list`)
+- **PR:** #16 (CI running on the head)
 - **Backend pinned at:** `phase-34-complete`. No stack runs now: start it from `../ecomdemo-backend-readonly` (`docker compose up --build --wait`) and stop it at the end with `docker compose --profile tools down` (no `-v`).
 - **Waiting for user:** YES: review of the Phase 13 PR; optional: write `orderConfirmedNote` in `src/content/notes.ts`
 
