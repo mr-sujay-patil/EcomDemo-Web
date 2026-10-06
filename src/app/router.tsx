@@ -1,5 +1,7 @@
 import { createBrowserRouter, type RouteObject } from 'react-router'
 import { PlaceholderPage } from '@/components/PlaceholderPage'
+import { RegisterPage } from '@/features/accounts/RegisterPage'
+import { SignInPage } from '@/features/accounts/SignInPage'
 import { AboutPage } from '@/features/content/AboutPage'
 import { PrivacyPage } from '@/features/content/PrivacyPage'
 import { ReturnsPage } from '@/features/content/ReturnsPage'
@@ -49,8 +51,8 @@ export const routes: RouteObject[] = [
       route('orders', 'Your orders', <PlaceholderPage title="Your orders" phase={14} />),
       route('orders/:id', 'Order', <PlaceholderPage title="Order" phase={13} />),
       route('account', 'Your account', <PlaceholderPage title="Your account" phase={14} />),
-      route('sign-in', 'Sign in', <PlaceholderPage title="Sign in" phase={11} />),
-      route('register', 'Create an account', <PlaceholderPage title="Create an account" phase={10} />),
+      route('sign-in', 'Sign in', <SignInPage />),
+      route('register', 'Create an account', <RegisterPage />),
       {
         path: 'admin/*',
         handle: { title: 'Admin' } satisfies RouteHandle,

@@ -47,3 +47,12 @@ export async function apiErrorFromResponse(response: Response, sentCorrelationId
     retryAfter: parseRetryAfter(response.headers.get('Retry-After')),
   })
 }
+
+/**
+ * The id to show beside an error so support can find it, or null when it would not help: a server or
+ * network failure has one worth quoting; for a 4xx the message already says enough.
+ */
+export function supportReference(error: unknown): string | null {
+  const shown = error instanceof ApiError && (error.status === 0 || error.status >= 500)
+  return shown ? (error.correlationId ?? null) : null
+}

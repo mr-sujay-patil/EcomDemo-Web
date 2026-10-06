@@ -1,6 +1,6 @@
 import { render, type RenderOptions } from '@testing-library/react'
 import { useState, type ReactElement, type ReactNode } from 'react'
-import { createMemoryRouter, RouterProvider } from 'react-router'
+import { createMemoryRouter, RouterProvider, type InitialEntry } from 'react-router'
 import { AppProviders, createQueryClient } from '@/app/providers'
 import { routes } from '@/app/router'
 
@@ -16,8 +16,8 @@ export function renderWithProviders(ui: ReactElement, options?: Omit<RenderOptio
   return render(ui, { wrapper: Providers, ...options })
 }
 
-/** Renders the real route table (layout included) as if the browser were at `path`. */
-export function renderRoute(path: string) {
+/** Renders the real route table (layout included) as if the browser were at `path` (or at a location with router `state`). */
+export function renderRoute(path: InitialEntry) {
   const router = createMemoryRouter(routes, { initialEntries: [path] })
   return { router, ...render(<RouterProvider router={router} />, { wrapper: Providers }) }
 }

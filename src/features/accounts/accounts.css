@@ -1,0 +1,20 @@
+/* Register and sign-in: one narrow column, so a form line is never longer than a person reads. Tokens only. */
+.auth {
+  display: grid;
+  gap: var(--space-4);
+  max-width: 28rem;
+  justify-items: start;
+}
+
+.auth > * {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.auth > .ed-alert {
+  width: 100%;
+}
+
+.auth-switch {
+  color: var(--ink);
+}

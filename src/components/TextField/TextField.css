@@ -50,3 +50,9 @@
 .ed-field.has-error .ed-field-note {
   color: var(--danger);
 }
+
+.ed-field-trailing {
+  display: inline-flex;
+  flex: none;
+  margin-right: calc(var(--space-2) * -1);
+}
