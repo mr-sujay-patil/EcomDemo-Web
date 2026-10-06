@@ -150,6 +150,18 @@ describe('filter and sort, kept in the URL', () => {
     expect(screen.getByText('Showing 1–1 of 1 products')).toBeInTheDocument()
   })
 
+  it('goes back to every product from the Everything chip, and drops the category from the URL', async () => {
+    const user = userEvent.setup()
+    const { router } = renderRoute('/?category=Kitchen')
+    await screen.findByRole('heading', { name: 'Test Kettle' })
+    expect(itemNames()).toEqual(['Test Kettle'])
+
+    await user.click(chip('Everything'))
+
+    expect(itemNames()).toEqual(['Test Gift Card', 'Test Kettle', 'Test Sofa'])
+    expect(router.state.location.search).toBe('')
+  })
+
   it('groups products without a category under "Other"', async () => {
     const user = userEvent.setup()
     renderRoute('/')

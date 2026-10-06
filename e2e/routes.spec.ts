@@ -16,7 +16,7 @@ test.describe('every route, by direct URL', () => {
   test('the product list is the home page', async ({ page }) => {
     await page.goto('/')
 
-    await expect(page.getByRole('heading', { level: 1, name: 'Products' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: 'Everything for the desk' })).toBeVisible()
     await expect(page).toHaveTitle('EcomDemo · Products')
   })
 
@@ -30,7 +30,7 @@ test.describe('every route, by direct URL', () => {
 test.describe('by navigation', () => {
   test('the header and footer links move between pages without reloading', async ({ page }) => {
     await page.goto('/')
-    await expect(page.getByRole('heading', { level: 1, name: 'Products' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: 'Everything for the desk' })).toBeVisible()
     // A full page load would drop this marker.
     await page.evaluate(() => {
       ;(window as unknown as { stayedInTheApp: boolean }).stayedInTheApp = true
@@ -40,13 +40,13 @@ test.describe('by navigation', () => {
     const footer = page.getByRole('contentinfo')
     const steps = [
       [header.getByRole('link', { name: 'Cart' }), 'Your cart', '/cart'],
-      [header.getByRole('link', { name: 'Search' }), 'Search', '/search'],
+      [header.getByRole('link', { name: 'Sign in' }), 'Sign in', '/sign-in'],
       [footer.getByRole('link', { name: 'Returns' }), 'Returns', '/returns'],
       [footer.getByRole('link', { name: 'Shipping' }), 'Shipping', '/shipping'],
       [footer.getByRole('link', { name: 'Privacy' }), 'Privacy', '/privacy'],
       [footer.getByRole('link', { name: 'Terms' }), 'Terms', '/terms'],
       [footer.getByRole('link', { name: 'About' }), 'About', '/about'],
-      [header.getByRole('link', { name: 'EcomDemo' }), 'Products', '/'],
+      [header.getByRole('link', { name: 'EcomDemo' }), 'Everything for the desk', '/'],
     ] as const
     for (const [link, h1, path] of steps) {
       await link.click()
@@ -76,13 +76,26 @@ test.describe('by navigation', () => {
   })
 })
 
+test.describe('the header search', () => {
+  test('sends what was typed to /search, in the URL', async ({ page }) => {
+    await page.goto('/about')
+    await expect(page.getByRole('heading', { level: 1, name: 'About' })).toBeVisible()
+
+    await page.getByRole('banner').getByRole('textbox', { name: 'Search products' }).fill('something to type on')
+    await page.keyboard.press('Enter')
+
+    await expect(page.getByRole('heading', { level: 1, name: 'Search' })).toBeVisible()
+    await expect(page).toHaveURL(/\/search\?q=something\+to\+type\+on$/)
+  })
+})
+
 test.describe('the 404 page', () => {
   test('explains itself and links home', async ({ page }) => {
     await page.goto('/no/such/page')
 
     await expect(page.getByRole('heading', { level: 1, name: 'Page not found' })).toBeVisible()
     await page.getByRole('link', { name: 'Back to the products' }).click()
-    await expect(page.getByRole('heading', { level: 1, name: 'Products' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: 'Everything for the desk' })).toBeVisible()
   })
 })
 
@@ -108,7 +121,7 @@ test.describe('code splitting', () => {
     })
 
     await page.goto('/')
-    await expect(page.getByRole('heading', { level: 1, name: 'Products' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: 'Everything for the desk' })).toBeVisible()
     expect(chunks, 'the home page must not download them').toEqual([])
 
     await page.goto('/checkout')

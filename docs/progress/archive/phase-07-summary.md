@@ -1,0 +1,10 @@
+## Phase 07: Typed API Client (tag: phase-07-complete, PR #9)
+**What exists now:** Every backend call is typed from the backend's OpenAPI documents: a committed snapshot per service, generated types, one `openapi-fetch` client per service, one `ApiError`. The product list now loads through it.
+**Key code:** `scripts/api.ts` + `scripts/openapi.ts` (`api:snapshot`, `api:generate`, `api:check`), `api/openapi/*.json`, `src/api/generated/*.ts` (never edited), `src/api/client.ts` (`catalogApi`, `customerApi`, `appApi`, `assistantApi`, `inventoryApi`, `createApiClient`, `setAccessTokenProvider` for Phase 11), `src/api/errors.ts` (`ApiError`), `retry.ts` (the only retry policy), `fieldErrors.ts` (`splitFieldErrors` for Phase 10), `access.ts` (`accessFor`, from the guide's tables). Architecture: `docs/architecture/api-layer.md`.
+**Config & infrastructure:** `openapi-fetch` 0.17.0, `openapi-typescript` 7.13.0 (npm `overrides` for its TypeScript peer). `npm run e2e` starts with `api:check`. Coverage floor 98.02 / 89.77 / 100 / 99.21. Backend pin `phase-33-complete`.
+**Tests:** 137 unit and component (was 38), 208 E2E (was 206).
+**Backend tested against:** `phase-33-complete`
+**Gotchas:** Failures reject with `ApiError` (status 0 = no response); aborts stay `AbortError`. Only GETs retry, once. The base URL is the page's origin because the documents' paths already include `/api`. Types are generated with response properties as required (web KI-016). A pin move = `api:snapshot`, `api:generate`, review, commit alone. The login `429` has `retryAfter`: the countdown is Phase 11 (`docs/backend/phase-33-delta.md`). The 429 retry waits at most 5 s; a longer `Retry-After` reaches the caller.
+**Owner TODOs open:** `src/content/site.ts`; every paragraph of About, Returns, Shipping, Privacy, Terms
+**Backend asks:** none (cosmetic: response properties marked required, KI-016; who may call `DELETE /api/inventory/{productId}`)
+**Follow-ups (not done, out of scope):** caching and loading states (Phase 8); the login countdown and token provider (Phase 11); `@types/node` 26 against Node 24 (Dependabot PR #6, still not investigated).

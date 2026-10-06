@@ -1,5 +1,6 @@
 /* Ported from design-system/components/components.css. Every value is a token. */
 .ed-btn {
+  text-decoration: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;

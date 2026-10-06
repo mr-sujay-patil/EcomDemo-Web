@@ -45,7 +45,8 @@ a {
   text-underline-offset: 3px;
 }
 
-a:hover {
+/* A link styled as a button keeps the button's colours. */
+a:not(.ed-btn):hover {
   color: var(--brand-hover);
 }
 

@@ -6,11 +6,15 @@ import { notFoundResponseError } from './screens'
 // Other rows may exist (backend smoke tests add some), so these specs pick seeded products and never assume a total.
 const accessories = ['USB-C Hub', 'Laptop Stand', 'Desk Mat', 'Laptop Sleeve 16"']
 
+/** A category chip, found by its words ("Accessories"); its count follows ("Accessories 4"). */
+const categoryChip = (page: Page, label: string) =>
+  page.getByRole('group', { name: 'Category' }).getByRole('button', { name: new RegExp(`^${label}\\b`) })
+
 const productNames = (page: Page) => page.getByRole('heading', { level: 2 }).allTextContents()
 
 /** The displayed prices, as numbers. Only the test reads them back; the app never does arithmetic on prices. */
 async function displayedPrices(page: Page): Promise<number[]> {
-  const texts = await page.getByRole('listitem').locator('p', { hasText: '₹' }).allTextContents()
+  const texts = await page.getByRole('listitem').locator('.ed-price-now').allTextContents()
   return texts.map((text) => Number(text.replace(/[^\d.]/g, '')))
 }
 
@@ -19,7 +23,7 @@ test.describe('filter, sort and pages live in the URL', () => {
     await page.goto('/')
     await expect(page.getByRole('listitem').first()).toBeVisible()
 
-    await page.getByRole('combobox', { name: 'Category' }).selectOption('ACCESSORIES')
+    await categoryChip(page, 'Accessories').click()
 
     await expect(page).toHaveURL(/\?category=ACCESSORIES$/)
     for (const name of accessories)
@@ -28,7 +32,7 @@ test.describe('filter, sort and pages live in the URL', () => {
 
     await page.reload()
 
-    await expect(page.getByRole('combobox', { name: 'Category' })).toHaveValue('ACCESSORIES')
+    await expect(categoryChip(page, 'Accessories')).toHaveAttribute('aria-pressed', 'true')
     for (const name of accessories)
       await expect(page.getByRole('heading', { level: 2, name, exact: true })).toBeVisible()
     await expect(page.getByRole('heading', { level: 2, name: 'Mechanical Keyboard' })).toHaveCount(0)
@@ -38,7 +42,7 @@ test.describe('filter, sort and pages live in the URL', () => {
     await page.goto('/?category=AUDIO&sort=price-desc')
 
     await expect(page.getByRole('heading', { level: 2, name: 'Noise-Cancelling Headphones' })).toBeVisible()
-    await expect(page.getByRole('combobox', { name: 'Category' })).toHaveValue('AUDIO')
+    await expect(categoryChip(page, 'Audio')).toHaveAttribute('aria-pressed', 'true')
     await expect(page.getByRole('combobox', { name: 'Sort by' })).toHaveValue('price-desc')
   })
 
@@ -85,6 +89,7 @@ test.describe('pages', () => {
       price: 100 + index,
       stockQuantity: 10,
       category: 'STUB',
+      imageUrl: null,
     }))
     await page.route('**/api/products', (route) => route.fulfill({ json: thirty }))
   })
@@ -116,7 +121,7 @@ test.describe('the product page', () => {
 
     await expect(page).toHaveURL('/products/1')
     await expect(page.getByRole('heading', { level: 1, name: 'Mechanical Keyboard' })).toBeVisible()
-    await expect(page.getByText('Category: PERIPHERALS')).toBeVisible()
+    await expect(page.getByText('PERIPHERALS', { exact: true })).toBeVisible()
     await expect(page.getByText(/₹8,999\.00/)).toBeVisible()
     await expect(page.getByText(/^(\d+ in stock|Only \d+ left|Out of stock)$/)).toBeVisible()
     await expect(page.getByRole('button', { name: 'Add to cart' })).toBeDisabled()
@@ -125,14 +130,14 @@ test.describe('the product page', () => {
     await page.goBack()
 
     await expect(page).toHaveURL(/\?category=PERIPHERALS$/)
-    await expect(page.getByRole('combobox', { name: 'Category' })).toHaveValue('PERIPHERALS')
+    await expect(categoryChip(page, 'Peripherals')).toHaveAttribute('aria-pressed', 'true')
   })
 
   test('opens by deep URL, with the product from the backend', async ({ page }) => {
     await page.goto('/products/4')
 
     await expect(page.getByRole('heading', { level: 1, name: 'Noise-Cancelling Headphones' })).toBeVisible()
-    await expect(page.getByText('Category: AUDIO')).toBeVisible()
+    await expect(page.getByText('AUDIO', { exact: true })).toBeVisible()
     await expect(page.getByText('₹14,999.00')).toBeVisible()
   })
 
@@ -157,7 +162,7 @@ test.describe('the product page', () => {
 
       await expect(page.getByRole('heading', { level: 1, name: 'No longer available' })).toBeVisible()
       await page.getByRole('link', { name: 'Back to all products' }).click()
-      await expect(page.getByRole('heading', { level: 1, name: 'Products' })).toBeVisible()
+      await expect(page.getByRole('heading', { level: 1, name: 'Everything for the desk' })).toBeVisible()
     })
   })
 

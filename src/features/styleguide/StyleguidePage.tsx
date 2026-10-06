@@ -45,6 +45,9 @@ const icons: IconName[] = [
   'tag',
 ]
 
+/** The samples do nothing when pressed: they are here to be looked at. */
+const noop = () => undefined
+
 function Specimen({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
   const id = `sg-${title.toLowerCase().replace(/\s+/g, '-')}`
   return (
@@ -224,30 +227,23 @@ export function StyleguidePage() {
               price={8999}
               category="PERIPHERALS"
               stock={25}
-              onAdd={() => undefined}
+              onAdd={noop}
             />
           </div>
         </Case>
         <Case label="low stock">
           <div className="sg-card">
-            <ProductCard name="Sample monitor" price={32999} category="DISPLAYS" stock={3} onAdd={() => undefined} />
+            <ProductCard name="Sample monitor" price={32999} category="DISPLAYS" stock={3} onAdd={noop} />
           </div>
         </Case>
         <Case label="out of stock">
           <div className="sg-card">
-            <ProductCard name="Sample sleeve" price={1799} category="ACCESSORIES" stock={0} onAdd={() => undefined} />
+            <ProductCard name="Sample sleeve" price={1799} category="ACCESSORIES" stock={0} onAdd={noop} />
           </div>
         </Case>
         <Case label="in the cart">
           <div className="sg-card">
-            <ProductCard
-              name="Sample drive"
-              price={9499}
-              category="STORAGE"
-              stock={12}
-              inCart={2}
-              onAdd={() => undefined}
-            />
+            <ProductCard name="Sample drive" price={9499} category="STORAGE" stock={12} inCart={2} onAdd={noop} />
           </div>
         </Case>
         <Case label="long name, no button">
@@ -312,8 +308,8 @@ export function StyleguidePage() {
           <AssistantMessage
             proposal={{ name: 'Sample keyboard', category: 'PERIPHERALS', price: 8999 }}
             sources={['catalogue']}
-            onConfirm={() => undefined}
-            onDismiss={() => undefined}
+            onConfirm={noop}
+            onDismiss={noop}
           >
             <p>A sample reply: it names the product and says why it fits.</p>
           </AssistantMessage>
@@ -341,7 +337,7 @@ export function StyleguidePage() {
           <Alert title="Prices include GST">A sample line of detail.</Alert>
         </Case>
         <Case label="success">
-          <Alert tone="success" title="Removed from your cart" onClose={() => undefined} />
+          <Alert tone="success" title="Removed from your cart" onClose={noop} />
         </Case>
         <Case label="warning">
           <Alert tone="warning" title="Only 2 left" />

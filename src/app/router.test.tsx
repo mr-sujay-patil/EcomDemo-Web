@@ -126,6 +126,27 @@ describe('layout', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Everything for the desk' })).toBeInTheDocument()
   })
 
+  it('sends an empty search to /search without a query', async () => {
+    const user = userEvent.setup()
+    const { router } = renderRoute('/about')
+    await screen.findByRole('heading', { level: 1, name: 'About' })
+
+    await user.type(within(screen.getByRole('banner')).getByRole('textbox', { name: 'Search products' }), '   {Enter}')
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Search' })).toBeInTheDocument()
+    expect(router.state.location.search).toBe('')
+  })
+
+  it('moves focus to the main area from the skip link', async () => {
+    const user = userEvent.setup()
+    renderRoute('/about')
+    await screen.findByRole('heading', { level: 1, name: 'About' })
+
+    await user.click(screen.getByRole('link', { name: 'Skip to content' }))
+
+    expect(screen.getByRole('main')).toHaveFocus()
+  })
+
   it('sends a search from the header to /search with the words in the URL', async () => {
     const user = userEvent.setup()
     const { router } = renderRoute('/about')

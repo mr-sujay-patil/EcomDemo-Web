@@ -5,29 +5,28 @@
 - **Updated:** 2026-10-06
 - **Phase:** 9 — Design System
 - **Branch:** `feature/phase-09-design-system`
-- **Step:** BRANCHED
+- **Step:** WAITING_FOR_USER
   (NOT_STARTED | PREFLIGHT | BRANCHED | PLANNING | IMPLEMENTING | TESTING | PR_OPEN | VERIFYING | WAITING_FOR_USER)
-- **PR:** none yet
+- **PR:** open to `main` (number: `gh pr list`; CI running on the head)
 - **Backend pinned at:** `phase-34-complete`. Use a running `ecomdemo-gateway-service` if there is one.
-- **Waiting for user:** no
+- **Waiting for user:** YES: review of the Phase 9 PR, and the manual check (`/styleguide`, both themes, laptop and phone)
 
 ## Merge verification before this phase
-Phase 8 (PR #10, merge `878fdff`) and the backend re-pin chore (PR #11, merge `ceb5220`): PASS on 2026-10-06. Both PRs MERGED and ancestors of `origin/main`, branches kept; `npm ci && npm run verify` 188/188 and `npm run e2e` 229/229 (`api:check` green) on `main` against `phase-34-complete`; CI green on both PR heads; tag `phase-08-complete` pushed. Tracker ✅ for Phase 8 is this branch's first commit.
-Backend sync (standing rule): `origin/main` is 3 docs-only commits past `phase-34-complete` (Phase 34 closeout, backend KI-046 flaky `LoginThrottleIT`); no API change, no newer tag; pin unchanged.
+Phase 8 (PR #10, merge `878fdff`) and the backend re-pin chore (PR #11, merge `ceb5220`): PASS on 2026-10-06 (see the first commit of this branch). Backend sync before the phase: `origin/main` three docs-only commits past `phase-34-complete`; pin unchanged.
 
 ## Checklist (from the phase file's "What you'll implement")
-- [ ] `src/styles/tokens.css` + `src/styles/fonts/` (self-hosted, `font-display: swap`, two faces preloaded)
-- [ ] Theme: `data-theme` on `<html>`, `useTheme`, toggle where `patterns.md` puts account controls; persisted in `localStorage`
-- [ ] Port the 17 components to `src/components/<Name>/` (tsx, css, index.ts, test); `ProductCard` has no SKU; `image` fed from `imageUrl` (KI-002 is fixed in `phase-34-complete`, see `docs/backend/phase-34-delta.md`)
-- [ ] Restyle every existing page with the components (catalogue, product, layout, footer, 404, placeholders)
-- [ ] `/styleguide` (dev and preview only), every component in its states, both themes
-- [ ] `scripts/check-tokens.mjs` in `verify`; a hex colour in a component fails it (shown, then reverted)
-- [ ] Component tests (roles/labels; stepper limits; StatusBadge word; ProductCard stock 0; StaffNote name/role/date)
-- [ ] E2E: layout matrix on `/styleguide`; fonts served as `font/woff2`
-- [ ] `docs/architecture/design-system.md`; testing protocol → `docs/test-reports/phase-09.md`; README, `decisions.md`, `RECENT.md` rotated, tracker 🔵 → PR → STOP
+- [x] `src/styles/tokens.css` + `src/styles/fonts/`
+- [x] Theme: `data-theme`, `useTheme`, toggle in the header, `localStorage`
+- [x] The 17 components in `src/components/<Name>/`, tests, `image` from `imageUrl`
+- [x] Every existing page restyled
+- [x] `/styleguide` (dev and E2E preview only)
+- [x] `scripts/check-tokens.mjs` in `verify`; hex colour shown failing, reverted
+- [x] Component tests; E2E (matrix on `/styleguide`, fonts `font/woff2`, images, theme, header search)
+- [x] `docs/architecture/design-system.md`, `docs/test-reports/phase-09.md` + screenshots, README, `decisions.md`, `RECENT.md` rotated (Phase 07 archived), tracker 🔵, `design-system/` mirrored
+- [x] `npm run verify` 362 tests, coverage 99.4 / 95.78 / 100 / 100, `npm run e2e` 247/247
 
 ## Next action
-Read `design-system/components/index.d.ts`, `components.css` and `src/index.tsx`, then post a short plan (tokens and fonts first, then components in the order of the phase file) and implement. Standing rules: sync the backend clone (`git fetch`) before each phase; backend doubts go to the owner as a forwardable message.
+Confirm CI is green on the PR head. Then wait for the owner's review (and their `changes: …` after the manual check). On `approved, merge it`: `gh pr merge <n> --merge` (no `--delete-branch`), merge verification on `main` (`npm ci && npm run verify`, `npm run e2e` against the running gateway), tag `phase-09-complete`. Before the next phase: `git fetch` the backend clone and compare `origin/main` with the pin (standing rule); backend doubts go to the owner as a forwardable message. Next phase only on `continue`: Phase 10 (read its file first).
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.
