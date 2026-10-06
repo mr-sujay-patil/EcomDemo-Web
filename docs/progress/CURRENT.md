@@ -5,28 +5,28 @@
 - **Updated:** 2026-10-06
 - **Phase:** 10 — Forms and Validation
 - **Branch:** `feature/phase-10-forms`
-- **Step:** BRANCHED
+- **Step:** WAITING_FOR_USER
   (NOT_STARTED | PREFLIGHT | BRANCHED | PLANNING | IMPLEMENTING | TESTING | PR_OPEN | VERIFYING | WAITING_FOR_USER)
-- **PR:** none yet
+- **PR:** open to `main` (number: `gh pr list`; CI running on the head)
 - **Backend pinned at:** `phase-34-complete`. Use a running `ecomdemo-gateway-service` if there is one.
-- **Waiting for user:** no
+- **Waiting for user:** YES: review of the Phase 10 PR (no manual steps)
 
 ## Merge verification before this phase
-Phase 9 (PR #12, merge `bcb6492`): PASS on 2026-10-06. PR MERGED; branch tip `b7e8466` is an ancestor of `origin/main`; diff empty; branch kept; `npm ci && npm run verify` 362/362 (`check:tokens` clean) and `npm run e2e` 247/247 (`api:check` green) on `main` against `phase-34-complete`; CI green on the PR head and on `main`; tag `phase-09-complete` pushed. Tracker ✅ is this branch's first commit.
-Backend sync (standing rule): `origin/main` is 6 commits past `phase-34-complete`, all test and line-ending fixes (backend KI-045, KI-046); no API change, no newer tag; pin unchanged.
+Phase 9 (PR #12, merge `bcb6492`): PASS on 2026-10-06 (first commit of this branch). Backend sync: `origin/main` six test/line-ending commits past `phase-34-complete`; pin unchanged.
 
 ## Checklist (from the phase file's "What you'll implement")
-- [ ] Form kit `src/components/forms/`: `Form`, `Field` (binds `TextField`), `FormError`
-- [ ] Zod schemas mirroring the backend rules (register, login, profile); `z.infer` types
-- [ ] Register page: `POST /api/customers/register`; 400 field errors on their fields; 409 on username; 201 to `/sign-in` with the username and a note
-- [ ] Sign-in page: `POST /api/auth/login`; 401 "Wrong username or password"; success note (token not kept; Phase 11)
-- [ ] Behaviour: validate on blur then change; focus first invalid; loading, no double submit; show/hide password
-- [ ] Store-voice copy; tests (schemas, server error mapping, focus, no double submit)
-- [ ] E2E: register a generated username; register again (409); short password; wrong password; sign in
-- [ ] Docs: module page, routing table, README, `decisions.md`, test report, `RECENT.md` rotated (Phase 08 archived), tracker 🔵
+- [x] Form kit `src/components/forms/`: `Form`, `Field`, `FormError` (+ `SubmitButton`, `applyServerErrors`)
+- [x] Zod schemas mirroring the backend rules (register, login, profile)
+- [x] Register page: 400 on fields, 409 on username, 201 to `/sign-in` with the name and a note
+- [x] Sign-in page: 401 "Wrong username or password."; success note (token dropped; Phase 11)
+- [x] Validate on blur then change; focus first invalid; loading, no double submit; Show/Hide
+- [x] Store-voice copy; tests (schemas, server mapping, focus, no double submit)
+- [x] E2E: register, 409, short password, real 400 mapped, wrong password, sign in
+- [x] Docs: `forms.md`, `modules/accounts.md`, routing table, README, `decisions.md`, KI-017 and KI-018 (fixed here), test report + screenshots, `RECENT.md` rotated (Phase 08 archived), tracker 🔵
+- [x] `npm run verify` 450 tests, coverage 99.54 / 96.12 / 100 / 100, `npm run e2e` 273/273
 
 ## Next action
-Install `react-hook-form`, `zod`, `@hookform/resolvers` (latest stable, exact), then build the form kit and schemas (tests first), then the two pages. Remember: login failures are throttled per client address (20 per 15 min on this machine): keep wrong-password E2E to one case, distinct usernames; the 429 countdown is Phase 11 (`docs/backend/phase-33-delta.md`).
+Confirm CI is green on the PR head. Then wait for the owner's review. On `approved, merge it`: `gh pr merge <n> --merge` (no `--delete-branch`), merge verification on `main` (`npm ci && npm run verify`, `npm run e2e` against the running gateway; mind the login throttle: the suite fails one real sign-in per run), tag `phase-10-complete`. Before the next phase: `git fetch` the backend clone and compare `origin/main` with the pin; backend doubts go to the owner as a forwardable message. Next phase only on `continue`: Phase 11 (read its file first; it builds the throttled-login countdown, `docs/backend/phase-33-delta.md`).
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.

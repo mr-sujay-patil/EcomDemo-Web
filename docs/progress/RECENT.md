@@ -15,6 +15,17 @@
 **Follow-ups (not done, out of scope):** <suggestions deferred to later phases>
 -->
 
+## Phase 10: Forms and Validation (tag: phase-10-complete, PR: see `gh pr list`)
+**What exists now:** `/register` and `/sign-in` work against the real backend. Register creates the account and goes to `/sign-in` with the username filled in and a note; sign-in checks the credentials and says "Signed in. Sessions arrive in the next phase." (the token is dropped: Phase 11). Every backend 400 lands on its own field; 409 on the username field; 401 reads "Wrong username or password."
+**Key code:** `src/components/forms/` (`Form`, `Field`, `FormError`, `SubmitButton`, `applyServerErrors`), `src/features/accounts/` (`schemas.ts`: register, login, profile; `api.ts`; `RegisterPage`; `SignInPage`; `signInState.ts`), `TextField`'s `ref` and `trailing`, `supportReference` in `src/api/errors.ts`, `docs/architecture/forms.md`.
+**Config & infrastructure:** `react-hook-form` 7.89.0, `zod` 4.6.5, `@hookform/resolvers` 5.9.1. **The dev and preview proxy keeps `Host`** (web KI-017: otherwise every browser write is a 403). Coverage floor 99.53 / 96.11 / 100 / 100.
+**Tests:** 450 unit and component (was 362), 273 E2E (was 247).
+**Backend tested against:** `phase-34-complete` (the backend team's running stack).
+**Gotchas:** A new form: schema, `useForm` with `zodResolver` and `mode: 'onTouched'`, `Form` + `Field`s + `SubmitButton`, a `useMutation`, `applyServerErrors` then `FormError`. A 400 lists fields alphabetically; the mapper focuses the top-most in the form's order. Login failures are throttled per client address (20 per 15 min on this machine): the E2E suite fails one real sign-in per run; never loop wrong-password tests. E2E creates real accounts (`e2e-…`), about three per run; the API has no delete. The 429 countdown is Phase 11. The nginx image (Phase 21) and ingress (Phase 22) must keep `Host` when proxying `/api` (KI-017).
+**Owner TODOs open:** `src/content/site.ts`; every paragraph of About, Returns, Shipping, Privacy, Terms; no `StaffNote` on the shelf or product page until the owner writes one.
+**Backend asks:** none.
+**Follow-ups (not done, out of scope):** load the account pages lazily (the main bundle grew ~121 kB); the throttled-login countdown and the session (Phase 11); the profile form (Phase 14, `profileSchema` is ready).
+
 ## Phase 09: Design System (tag: phase-09-complete, PR #12)
 **What exists now:** The approved look is code. Paper-coloured pages, self-hosted fonts, light and dark (follows the system until the header's **Theme** button is used; the choice is kept in `localStorage`), seventeen components, every existing page restyled, `/styleguide` (dev and E2E preview only), and a token check in `verify`. Product photos come from the API's `imageUrl` (backend `phase-34-complete`), with a "Photo to come" well for `null` or a failed load. The shelf filters with category `Chip`s; its h1 is "Everything for the desk".
 **Key code:** `src/styles/tokens.css` (tokens, `--fs-*`/`--lh-*` type scale), `src/styles/base.css`, `src/components/<Name>/` (Icon, Logo, Button + `buttonClass`, StatusBadge, Chip, TextField, QuantityStepper, Price, ProductTile, ProductCard, CartLine, OrderSummary, SagaTimeline, AssistantMessage, StaffNote, Alert, Header), `src/app/{useTheme,ThemeToggle,Layout}`, `scripts/check-tokens.mjs`, `docs/architecture/design-system.md`.
@@ -25,14 +36,3 @@
 **Owner TODOs open:** `src/content/site.ts`; every paragraph of About, Returns, Shipping, Privacy, Terms; no `StaffNote` is rendered on the shelf or product page until the owner writes one (design `patterns.md`).
 **Backend asks:** images (web KI-002) delivered in `phase-34-complete` and used here. Nothing open.
 **Follow-ups (not done, out of scope):** the About page photo and real store photography; per-product tab titles; an `<h1>`-aware search page (Phase 15); Add to cart (Phases 11 and 12).
-
-## Phase 08: Server State (tag: phase-08-complete, PR #10)
-**What exists now:** The catalogue is real: a shelf with a category filter, sort (name, price either way) and 24 to a page, all in the URL (`?category=&sort=&page=`), and a product page (`/products/:id`) with a stock hint, a disabled Add to cart and "No longer available" for a missing product. Server data lives in the TanStack Query cache.
-**Key code:** `src/app/providers.tsx` (`createQueryClient`, `AppProviders`), `src/features/catalog/api.ts` (`catalogKeys`, `productsQuery`, `productQuery`, `useProducts`, `useProduct`, `usePrefetchProduct`), `shelf.ts` (the pure filter, sort, page and URL functions; `stockHint`), `ProductListPage.tsx`, `ProductPage.tsx`, `src/components/ErrorPanel.tsx` (message, correlation id on 5xx and network, Retry), `src/lib/money.ts` (`formatPrice`). Docs: `docs/architecture/state.md`, `docs/modules/catalog.md`.
-**Config & infrastructure:** `@tanstack/react-query` 5.104.0. App-wide `retry: false` (Phase 7 retries); catalogue fresh 5 min, no refetch on focus. Coverage floor 99.13 / 92.68 / 100 / 100. Backend pin `phase-33-complete`.
-**Tests:** 187 unit and component (was 137), 229 E2E (was 208).
-**Backend tested against:** `phase-33-complete`
-**Gotchas:** Tests render through `renderRoute(path)` (it gives each render its own query cache). A page uses `useSearchParams`, so it needs a router in tests. A new query key goes in `catalogKeys`-style factories, never inline. The live catalogue has under 24 products, so the pager is browser-tested with a stubbed list. The results areas use an inline `min-height` that Phase 9 replaces with a token class. Prices are only formatted, never computed. A 404 or stubbed 5xx response needs `allowedConsoleErrors` in E2E (the browser logs it).
-**Owner TODOs open:** `src/content/site.ts`; every paragraph of About, Returns, Shipping, Privacy, Terms
-**Backend asks:** none
-**Follow-ups (not done, out of scope):** per-product tab titles; styling (Phase 9); Add to cart (Phase 12); search (Phase 15).

@@ -224,6 +224,19 @@ describe('the register page', () => {
       expect(requests).toBe(1)
     })
 
+    it('has a sentence for a reply that carries no account, and shows nothing field-specific', async () => {
+      const user = userEvent.setup()
+      server.use(http.post('/api/customers/register', () => new HttpResponse(null, { status: 201 })))
+      renderRoute('/register')
+      await screen.findByRole('heading', { level: 1, name: 'Create an account' })
+
+      await fillIn(user)
+      await submit(user)
+
+      expect(await screen.findByRole('alert')).toHaveTextContent('Something went wrong. Try again in a moment.')
+      expect(screen.getByLabelText('Username')).toBeValid()
+    })
+
     it('says so when the server cannot be reached, and lets the person try again', async () => {
       const user = userEvent.setup()
       let up = false

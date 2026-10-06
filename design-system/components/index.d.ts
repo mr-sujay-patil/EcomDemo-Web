@@ -18,7 +18,7 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
 }
 export interface StatusBadgeProps { status?: OrderStatus; tone?: 'neutral' | 'brand' | 'accent' | 'success' | 'danger'; children?: ReactNode; }
 export interface ChipProps { selected?: boolean; count?: number; onClick?: () => void; children: ReactNode; }
-export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> { label?: string; hint?: string; error?: string; icon?: IconName; }
+export interface TextFieldProps extends InputHTMLAttributes<HTMLInputElement> { label?: string; hint?: string; error?: string; icon?: IconName; /** a control inside the box after the input, such as a Show/Hide password button */ trailing?: ReactNode; }
 export interface QuantityStepperProps { value?: number; defaultValue?: number; /** default 1 */ min?: number; /** default 99 */ max?: number; onChange?: (n: number) => void; label?: string; }
 export interface PriceProps { /** rupees */ amount: number; compareAt?: number; size?: 'sm' | 'md' | 'lg'; }
 export interface ProductCardProps { name: string; description?: string; price: number; compareAt?: number; category?: Category; /** a real photo URL; without one the well says "Photo to come" */ image?: string; /** 0 = out of stock, 1–5 = low */ stock?: number; inCart?: number; onAdd?: () => void; }

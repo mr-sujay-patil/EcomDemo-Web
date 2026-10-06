@@ -32,8 +32,8 @@ The skip link focuses `<main>` itself (the browser scrolls to `#main` on its own
 | `/orders` | Your orders | 14 | the customer's order history |
 | `/orders/:id` | Order | 13, 14 | one order and its status |
 | `/account` | Your account | 14 | profile |
-| `/sign-in` | Sign in | 11 | authentication |
-| `/register` | Create an account | 10 | registration form |
+| `/sign-in` | Sign in | 10 (form), 11 (session) | the sign-in form; keeping the token and guards are Phase 11 |
+| `/register` | Create an account | 10 | registration form, then on to `/sign-in` |
 | `/admin/*` | Admin | 17 | the console; **lazy**; sub-routes arrive with the phase |
 | `/about`, `/returns`, `/shipping`, `/privacy`, `/terms` | their names | 6 (structure), owner (words) | the human surfaces a store needs from day one; every paragraph is a `TODO(owner)` |
 | `*` | Page not found | 6 | any other address; links back to `/` |

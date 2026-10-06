@@ -144,7 +144,7 @@ code {
   font: 400 var(--fs-caption)/var(--lh-caption) var(--font-sans);
   color: var(--ink-muted);
 }
-:where(.ed-btn, .ed-chip, .ed-stepper button, .ed-field-input):focus-visible {
+:where(.ed-btn, .ed-chip, .ed-stepper button):focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
 }

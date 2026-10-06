@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { useForm } from 'react-hook-form'
 import { describe, expect, it, vi } from 'vitest'
@@ -123,6 +123,30 @@ describe('Form and Field', () => {
     await waitFor(() => {
       expect(screen.getByRole('button', { name: 'Send' })).toBeEnabled()
     })
+  })
+
+  it('ignores a second submit that arrives in the same instant as the first, before anything re-renders', async () => {
+    const user = userEvent.setup()
+    let finish: () => void = () => undefined
+    const onSubmit = vi.fn(
+      () =>
+        new Promise<void>((resolve) => {
+          finish = resolve
+        }),
+    )
+    render(<Sample onSubmit={onSubmit} />)
+    await user.type(screen.getByLabelText('Name'), 'Test Person')
+    await user.type(screen.getByLabelText('Email'), 'a@b.c')
+    await user.type(screen.getByLabelText('Secret'), 'abc')
+    const form = screen.getByRole('form', { name: 'Sample' })
+
+    fireEvent.submit(form)
+    fireEvent.submit(form)
+    await waitFor(() => {
+      expect(onSubmit).toHaveBeenCalledTimes(1)
+    })
+
+    finish()
   })
 
   it('lets the person submit again after a submit has finished', async () => {

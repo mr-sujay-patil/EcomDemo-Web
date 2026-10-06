@@ -25,7 +25,8 @@ Adding an issue: take the next free ID, add a row, and add a detail section only
 
 | ID | Issue | Severity | Since | Source | Status |
 |---|---|---|---|---|---|
-| — | none yet | | | | |
+| KI-017 | Every browser write (POST, PUT, DELETE) through the dev and preview proxy got `403` from the gateway: `changeOrigin: true` rewrote `Host` to `localhost:8080` while the browser's `Origin` stayed `http://localhost:5173` or `:4173`, so the gateway's CORS check saw a cross-origin write. Reads were fine (a GET carries no `Origin`), so nothing showed it until registration | High (blocked Phase 10's goal) | Phase 7 (the proxy), found in Phase 10 | `curl` with `Host` equal to `Origin`: 400 from the validator; with `Host: localhost:8080`: 403. Browser run of the register form: `POST /api/customers/register` 403 | Fixed in Phase 10: the proxy keeps `Host` (`vite.config.ts`). **Carry forward:** the nginx in the image (Phase 21) and the ingress (Phase 22) must also keep `Host` (`proxy_set_header Host $host`), or the backend's `CORS_ALLOWED_ORIGINS` must name the origin |
+| KI-018 | A focused text field showed two rings: its box's `:focus-within` ring and an outline on the input inside it (the shared focus rule in `base.css` loaded after `outline: 0`). With an error showing the ring was green on a red border | Low | Phase 9 | Screenshot of `/register` with errors at 360 px | Fixed in Phase 10 (the field's box shows focus; red in error), mirrored in `design-system/components.css` |
 
 ## Backend gaps this app adapts to
 

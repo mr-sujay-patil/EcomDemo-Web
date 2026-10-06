@@ -74,6 +74,10 @@ The shelf (`/`) loads the product list once and filters, sorts and pages it in t
 
 The look comes from the approved design in [`design-system/`](design-system/), ported in Phase 9: tokens and self-hosted fonts in `src/styles/`, seventeen components in `src/components/<Name>/`, plain CSS on tokens only (no Tailwind, no component library, no icon library, no gradients, no emoji). Light and dark follow the system until you press the **Theme** button in the header (Auto, Light, Dark); the choice is kept in this browser. `npm run check:tokens` (part of `npm run verify`) fails on a hex colour, a px font size or a banned import in `src/`. To see every component in its states run `npm run dev` and open `/styleguide`. How it fits together: [`docs/architecture/design-system.md`](docs/architecture/design-system.md).
 
+## Accounts
+
+`/register` creates a customer account (`POST /api/customers/register`) and takes you to `/sign-in`, which checks your credentials (`POST /api/auth/login`). Keeping you signed in is the next phase: for now a successful sign-in says so and the token is dropped. Forms use React Hook Form with Zod schemas that mirror the backend's rules; the backend's answer is shown on the field it names ([`docs/architecture/forms.md`](docs/architecture/forms.md), [`docs/modules/accounts.md`](docs/modules/accounts.md)). The backend throttles failed logins per client address, so avoid repeated wrong-password tests.
+
 ## API contract
 
 The backend's OpenAPI documents are the contract. Three commands keep the types honest (details: [`docs/architecture/api-layer.md`](docs/architecture/api-layer.md)); they need the backend running at the pinned tag:

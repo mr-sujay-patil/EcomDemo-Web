@@ -1,0 +1,10 @@
+## Phase 08: Server State (tag: phase-08-complete, PR #10)
+**What exists now:** The catalogue is real: a shelf with a category filter, sort (name, price either way) and 24 to a page, all in the URL (`?category=&sort=&page=`), and a product page (`/products/:id`) with a stock hint, a disabled Add to cart and "No longer available" for a missing product. Server data lives in the TanStack Query cache.
+**Key code:** `src/app/providers.tsx` (`createQueryClient`, `AppProviders`), `src/features/catalog/api.ts` (`catalogKeys`, `productsQuery`, `productQuery`, `useProducts`, `useProduct`, `usePrefetchProduct`), `shelf.ts` (the pure filter, sort, page and URL functions; `stockHint`), `ProductListPage.tsx`, `ProductPage.tsx`, `src/components/ErrorPanel.tsx` (message, correlation id on 5xx and network, Retry), `src/lib/money.ts` (`formatPrice`). Docs: `docs/architecture/state.md`, `docs/modules/catalog.md`.
+**Config & infrastructure:** `@tanstack/react-query` 5.104.0. App-wide `retry: false` (Phase 7 retries); catalogue fresh 5 min, no refetch on focus. Coverage floor 99.13 / 92.68 / 100 / 100. Backend pin `phase-33-complete`.
+**Tests:** 187 unit and component (was 137), 229 E2E (was 208).
+**Backend tested against:** `phase-33-complete`
+**Gotchas:** Tests render through `renderRoute(path)` (it gives each render its own query cache). A page uses `useSearchParams`, so it needs a router in tests. A new query key goes in `catalogKeys`-style factories, never inline. The live catalogue has under 24 products, so the pager is browser-tested with a stubbed list. The results areas use an inline `min-height` that Phase 9 replaces with a token class. Prices are only formatted, never computed. A 404 or stubbed 5xx response needs `allowedConsoleErrors` in E2E (the browser logs it).
+**Owner TODOs open:** `src/content/site.ts`; every paragraph of About, Returns, Shipping, Privacy, Terms
+**Backend asks:** none
+**Follow-ups (not done, out of scope):** per-product tab titles; styling (Phase 9); Add to cart (Phase 12); search (Phase 15).
