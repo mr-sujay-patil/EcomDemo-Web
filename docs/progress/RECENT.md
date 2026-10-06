@@ -15,7 +15,7 @@
 **Follow-ups (not done, out of scope):** <suggestions deferred to later phases>
 -->
 
-## Phase 09: Design System (tag: phase-09-complete, PR: see `gh pr list`)
+## Phase 09: Design System (tag: phase-09-complete, PR #12)
 **What exists now:** The approved look is code. Paper-coloured pages, self-hosted fonts, light and dark (follows the system until the header's **Theme** button is used; the choice is kept in `localStorage`), seventeen components, every existing page restyled, `/styleguide` (dev and E2E preview only), and a token check in `verify`. Product photos come from the API's `imageUrl` (backend `phase-34-complete`), with a "Photo to come" well for `null` or a failed load. The shelf filters with category `Chip`s; its h1 is "Everything for the desk".
 **Key code:** `src/styles/tokens.css` (tokens, `--fs-*`/`--lh-*` type scale), `src/styles/base.css`, `src/components/<Name>/` (Icon, Logo, Button + `buttonClass`, StatusBadge, Chip, TextField, QuantityStepper, Price, ProductTile, ProductCard, CartLine, OrderSummary, SagaTimeline, AssistantMessage, StaffNote, Alert, Header), `src/app/{useTheme,ThemeToggle,Layout}`, `scripts/check-tokens.mjs`, `docs/architecture/design-system.md`.
 **Config & infrastructure:** `npm run check:tokens` (in `verify`); `VITE_STYLEGUIDE=true` adds `/styleguide` to a build (Playwright sets it); coverage floor 99.39 / 95.77 / 100 / 100; `eslint` `jsx-a11y/aria-role` ignores non-DOM; E2E stubs product images unless `realImages: true` (gateway rate limit 50 req/s).

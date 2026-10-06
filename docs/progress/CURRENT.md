@@ -7,7 +7,7 @@
 - **Branch:** `feature/phase-09-design-system`
 - **Step:** WAITING_FOR_USER
   (NOT_STARTED | PREFLIGHT | BRANCHED | PLANNING | IMPLEMENTING | TESTING | PR_OPEN | VERIFYING | WAITING_FOR_USER)
-- **PR:** open to `main` (number: `gh pr list`; CI running on the head)
+- **PR:** #12 (CI running on the head)
 - **Backend pinned at:** `phase-34-complete`. Use a running `ecomdemo-gateway-service` if there is one.
 - **Waiting for user:** YES: review of the Phase 9 PR, and the manual check (`/styleguide`, both themes, laptop and phone)
 
