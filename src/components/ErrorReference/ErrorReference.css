@@ -1,0 +1,17 @@
+.error-reference {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+.error-reference p {
+  margin: 0;
+}
+.error-reference code {
+  font-family: var(--font-mono);
+  overflow-wrap: anywhere;
+}
+.error-reference-status {
+  min-height: 1.5em;
+}

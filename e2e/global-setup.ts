@@ -23,7 +23,10 @@ export default async function globalSetup() {
   let problem: string | null = null
   try {
     const response = await fetch(url, { signal: AbortSignal.timeout(10_000) })
-    if (response.status !== 200) problem = `answered ${response.status}`
+    // scripts/e2e-service-down.sh stops the catalogue service on purpose: the gateway is up and says so with a 503, which is
+    // what that run is about. Anything else, or a 503 in an ordinary run, still stops the run here.
+    const expectedDown = process.env.E2E_SERVICE_DOWN && response.status === 503
+    if (response.status !== 200 && !expectedDown) problem = `answered ${response.status}`
   } catch (error) {
     // Node's fetch says only "fetch failed"; the cause names the real reason (ECONNREFUSED, a timeout).
     const reason = error instanceof Error && error.cause instanceof Error ? error.cause : error

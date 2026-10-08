@@ -3,18 +3,28 @@
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
 - **Updated:** 2026-10-08
-- **Task:** chore: move the backend pin to `f088fd4` (owner: "pin main's current commit")
-- **Branch:** `chore/pin-backend-f088fd4`
-- **Step:** PR_OPEN (when the PR exists; see `gh pr list`)
-- **Backend pinned at:** commit `f088fd4f517cceda44e478c9ca3ba8d5de1f8c68` (was `phase-34-complete`). The compose stack from `../ecomdemo-backend-readonly` is RUNNING at that commit (`CUSTOMER_DB_PORT=15435 docker compose up --build --wait -d`); stop it with `docker compose --profile tools down` (no `-v`).
-- **Waiting for user:** review and `approved, merge it` for the pin PR. Then, in the owner's order: **Part 2** (CI wall-clock: backend image cache + `backend-images.yml`, no repeat checks on push to main, unit tests once, Playwright cache, report perf layer cache; do not touch audit/image/Trivy; step timings of the latest e2e run go in the PR description; owner must turn on branch protection themselves), then **Part 1** (CLAUDE.md workflow rules: show the conflicts first, they were listed and the owner has not answered the 4 questions about rules 9, 10, 3 and PR sequencing).
-- Phase 22 is DONE (tag `phase-22-complete`, PR #27); its summary is not yet in `RECENT.md` (add it in the next phase's first commit). Carried: the screen-reader pass, `E2E_ADMIN_*`, relaying KI-019/020/021/022/024/025, web KI-027, KI-028, KI-029, KI-030 (paging), KI-031 (503 Retry-After).
+- **Phase:** 23 — Observability
+- **Branch:** `feature/phase-23-observability`
+- **Step:** IMPLEMENT
+- **PR:** none yet
+- **Backend pinned at:** commit `f088fd4f517cceda44e478c9ca3ba8d5de1f8c68` (backend `main`, tag `ki-011-fixed`). No stack runs now: start it from `../ecomdemo-backend-readonly` with `CUSTOMER_DB_PORT=15435 docker compose up --build --wait -d` (Windows app SignalRgb holds 5435); stop it at the end with `docker compose --profile tools down` (no `-v`; the volumes' stock is used up: web KI-020).
+- **Waiting for user:** no. The phase's manual step: stop and restart one backend service for the failure test (ask first). Carried: the screen-reader pass, `E2E_ADMIN_*`, relaying KI-019/020/021/022/024/025, web KI-027, 028, 029, **030 (shelf not paged), 031 (503 Retry-After)**. Owner decisions pending: reconcile CLAUDE.md workflow rules 9/10/3/5 with the hard rules; branch protection settings on `main`.
 
-## Results at the new pin
-`api:check` failed on 3 schemas, regenerated (`api:snapshot`, `api:generate`): catalogue paging + 400, `dltTimestamp`, inventory reserve/release removed (2 entries dropped from `notForTheFrontend`). `npm run verify` 853 passed. `npm run e2e` 1002 passed, 3 failed (`checkout` x2, `keyboard-flows`): stock of Desk Mat and Laptop Sleeve is 0 on this machine (web KI-020).
+## Merge verification before this phase
+Phase 22 (PR #27, merge `165402d`, tag `phase-22-complete`): tip in `main`; `npm ci && npm run verify` exit 0 (855); CI on `main` green incl. publish. Chores since: PR #28 (pin `f088fd4`), #29 (CI speed: backend image cache, verify/e2e on pull requests only, `backend-images.yml`), #30 (CLAUDE.md workflow rules). Backend sync (2026-10-08): `origin/main` `33d6f1a`, 3 commits past the pin, all backend CI/workflow rules; nothing for the web; pin stays.
+
+## Checklist (from the phase file's "What you'll implement")
+- [x] Error boundaries: root page, route boundary (layout stays), router `errorElement`s, unhandled-rejection alert (once); `ErrorReference` with Copy
+- [x] The reference is the `X-Correlation-Id` (a render error gets a fresh id, console only)
+- [x] OpenTelemetry Web: `src/app/tracing.ts`, `traceparent` on `/api` only, no exporter (optional dev OTLP not done: not published for browsers, would need a backend change)
+- [x] Web Vitals in dev (`src/app/webVitals.ts`), recorded in the test report
+- [x] `docs/troubleshooting.md` with a worked example from a real failure
+- [x] E2E: `e2e/observability.spec.ts`, `scripts/e2e-service-down.sh` (`npm run e2e:service-down`)
+- [ ] Done-when, second half: the reference finds the **gateway's log line**: NOT possible at the pinned backend (gateway writes no request log): web KI-032, backend KI-035; message for the backend team in the PR
+- [ ] PR; CI green; the owner's review; then `v1.0` after the merge (the phase file says tag `v1.0`)
 
 ## Next action
-Wait for the owner. After the merge: verify `main` (CI), no tag for a chore, then start Part 2 on `chore/ci-speed` only when told.
+Wait for the owner's review of the Phase 23 PR. On `approved, merge it`: confirm CI green on the PR head, `gh pr merge <n> --merge` (no `--delete-branch`), verify `main` (`npm ci && npm run verify`; CI on `main`; the phase file says to tag `v1.0` after this phase, in addition to `phase-23-complete`: ask the owner before tagging `v1.0`). The backend stack is RUNNING (commit `f088fd4`, Alloy recreated with a local override in the scratchpad so logs reach Loki): stop it with `docker compose --profile tools down` (no `-v`) when done. Next phase only on `continue`.
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.
