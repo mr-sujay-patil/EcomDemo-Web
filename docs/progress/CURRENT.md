@@ -5,7 +5,7 @@
 - **Updated:** 2026-10-08
 - **Phase:** 15 — Semantic Search
 - **Branch:** `feature/phase-15-search`
-- **Step:** IMPLEMENTING
+- **Step:** PR_OPEN
 - **PR:** none yet
 - **Backend pinned at:** `phase-34-complete`. No stack runs now: start it from `../ecomdemo-backend-readonly` (`docker compose up --build --wait`) and stop it at the end with `docker compose --profile tools down` (no `-v`).
 - **Waiting for user:** no
@@ -18,8 +18,8 @@ Phase 14 (PR #18, merge `8cf2be8`, tag `phase-14-complete`): CI `verify` and `e2
 - [x] `/search` page: `GET /api/products/search` (q ≤ 200, category, minPrice, maxPrice, limit 1-20); query and filters in the URL; results in returned order; no similarity shown
 - [x] 503: info `Alert` + client-side fallback over the loaded catalogue (name, description); the page says which mode it used
 - [x] Stale requests cancelled via the query's `signal`
-- [ ] `docs/modules/search.md`
-- [ ] Tests: debounce (fake timers), URL state, stale-response cancellation, 503 fallback; E2E additions (`e2e/`)
+- [x] `docs/modules/search.md`
+- [x] Tests: debounce (fake timers), URL state, stale-response cancellation, 503 fallback; E2E additions (`e2e/`)
 
 ## Next action
 Read `docs/architecture/` routing and the header component, then implement the checklist one item at a time with small Conventional Commits; tick each item here. Then the full testing protocol (backend up at the pin), report, PR, STOP.

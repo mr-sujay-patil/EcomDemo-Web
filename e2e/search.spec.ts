@@ -1,4 +1,5 @@
 import { expect, test } from './fixtures'
+import { unavailableResponseError } from './screens'
 
 // The real backend decides whether search by meaning works (an embedding model must be configured, backend Phase 28), so
 // the specs on the real path accept either answer: ranked results, or the notice and the word-matching fallback. The
@@ -6,6 +7,9 @@ import { expect, test } from './fixtures'
 const unavailable = { status: 503, message: 'Semantic search is not configured.' }
 
 test.describe('search', () => {
+  // The browser logs a 503 itself, whether the backend or a stub sent it.
+  test.use({ allowedConsoleErrors: [unavailableResponseError] })
+
   test('"something to type on" gives results or the fallback notice, and the URL round-trips', async ({ page }) => {
     await page.goto('/')
     const box = page.getByRole('banner').getByRole('combobox', { name: 'Search products' })

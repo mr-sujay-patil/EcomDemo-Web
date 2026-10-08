@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { fireEvent, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { server } from '@/test/msw/server'
@@ -87,6 +87,42 @@ describe('the header search box', () => {
     await user.keyboard('{Enter}')
 
     expect(router.state.location.pathname).toBe('/products/2')
+  })
+
+  it('wraps around with the arrow keys, and ArrowUp from the top goes to the last suggestion', async () => {
+    const { user } = setup()
+    await screen.findByRole('heading', { level: 1, name: 'About' })
+    await user.type(box(), 'desk')
+    await screen.findAllByRole('option')
+
+    await user.keyboard('{ArrowUp}')
+    expect(screen.getByRole('option', { name: /Test Kettle/ })).toHaveAttribute('aria-selected', 'true')
+    await user.keyboard('{ArrowUp}')
+    expect(screen.getByRole('option', { name: /Test Sofa/ })).toHaveAttribute('aria-selected', 'true')
+    await user.keyboard('{ArrowDown}{ArrowDown}')
+    expect(screen.getByRole('option', { name: /Test Gift Card/ })).toHaveAttribute('aria-selected', 'true')
+  })
+
+  it('opens a suggestion that is clicked, and closes the list', async () => {
+    const { user, router } = setup()
+    await screen.findByRole('heading', { level: 1, name: 'About' })
+    await user.type(box(), 'desk')
+
+    await user.click(await screen.findByRole('link', { name: /Test Sofa/, hidden: true }))
+
+    expect(router.state.location.pathname).toBe('/products/2')
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+  })
+
+  it('keeps the list open while focus moves to a suggestion inside the box', async () => {
+    const { user } = setup()
+    await screen.findByRole('heading', { level: 1, name: 'About' })
+    await user.type(box(), 'desk')
+    const link = await screen.findByRole('link', { name: /Test Sofa/, hidden: true })
+
+    fireEvent.blur(box(), { relatedTarget: link })
+
+    expect(screen.getByRole('listbox')).toBeVisible()
   })
 
   it('goes to /search?q=… on Enter with nothing highlighted, and closes the list', async () => {

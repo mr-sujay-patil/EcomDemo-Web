@@ -78,6 +78,10 @@ The look comes from the approved design in [`design-system/`](design-system/), p
 
 `/register` creates a customer account (`POST /api/customers/register`) and takes you to `/sign-in`. Signing in keeps a session **in memory only** (never `localStorage`, a cookie or the URL): you stay signed in while you shop, until the session ends (about 15 minutes, no refresh) or you reload the page. A quiet notice appears a minute before the end; when it ends, or the server refuses the token, you are sent to `/sign-in?next=…` and come back to the page you were on, with what you had typed (never a password). `/cart`, `/checkout`, `/orders` and `/account` need a signed-in customer, `/admin` an admin; the wrong role sees "Not permitted". Forms use React Hook Form with Zod schemas that mirror the backend's rules; the backend's answer is shown on the field it names. The backend throttles failed logins per client address (the form shows a countdown), so avoid repeated wrong-password tests. See [`docs/architecture/auth-flow.md`](docs/architecture/auth-flow.md), [`docs/architecture/forms.md`](docs/architecture/forms.md), [`docs/modules/auth.md`](docs/modules/auth.md) and [`docs/modules/accounts.md`](docs/modules/accounts.md).
 
+## Search
+
+The header search box suggests the top five products as you type (after a 300 ms pause) and Enter opens `/search?q=…`, whose query and filters (`category`, `minPrice`, `maxPrice`) live in the URL, so a search can be shared. Results are ranked by meaning by the backend (`GET /api/products/search`) and shown in its order. When the backend has no embedding model configured it answers 503; the page then says search by description is not available and matches the words against product names and descriptions instead. See [`docs/modules/search.md`](docs/modules/search.md).
+
 ## API contract
 
 The backend's OpenAPI documents are the contract. Three commands keep the types honest (details: [`docs/architecture/api-layer.md`](docs/architecture/api-layer.md)); they need the backend running at the pinned tag:

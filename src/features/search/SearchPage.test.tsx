@@ -2,6 +2,7 @@ import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { delay, http, HttpResponse } from 'msw'
 import { afterEach, describe, expect, it, vi } from 'vitest'
+import { fakeCart } from '@/test/msw/cart'
 import { productFixtures, searchHandlers } from '@/test/msw/handlers'
 import { server } from '@/test/msw/server'
 import { renderRoute } from '@/test/render'
@@ -164,6 +165,87 @@ describe('the search page', () => {
       expect(await screen.findByText('Catalogue down.')).toBeInTheDocument()
       expect(screen.getByText("Search by description isn't available right now")).toBeInTheDocument()
     })
+  })
+
+  it('tries the search again when Retry is pressed', async () => {
+    let calls = 0
+    server.use(
+      http.get('/api/products/search', () => {
+        calls += 1
+        return calls === 1
+          ? HttpResponse.json({ status: 500, message: 'Search broke.' }, { status: 500 })
+          : HttpResponse.json({ query: 'lamp', results: [{ product: productFixtures[0]!, similarity: 0.5 }] })
+      }),
+    )
+    const user = userEvent.setup()
+    renderRoute('/search?q=lamp')
+
+    await user.click(await screen.findByRole('button', { name: 'Retry' }))
+
+    expect(await screen.findByRole('heading', { level: 2, name: 'Test Kettle' })).toBeInTheDocument()
+  })
+
+  it('tries the catalogue again when Retry is pressed in the fallback', async () => {
+    let calls = 0
+    server.use(
+      searchHandlers.unavailable,
+      http.get('/api/products', () => {
+        calls += 1
+        return calls === 1
+          ? HttpResponse.json({ status: 500, message: 'Catalogue down.' }, { status: 500 })
+          : HttpResponse.json(productFixtures)
+      }),
+    )
+    const user = userEvent.setup()
+    renderRoute('/search?q=kettle')
+
+    await user.click(await screen.findByRole('button', { name: 'Retry' }))
+
+    expect(await screen.findByRole('heading', { level: 2, name: 'Test Kettle' })).toBeInTheDocument()
+  })
+
+  it('starts loading a product when its name is hovered or focused', async () => {
+    const requested: string[] = []
+    server.use(
+      http.get('/api/products/3', () => {
+        requested.push('3')
+        return HttpResponse.json(productFixtures[2])
+      }),
+    )
+    const user = userEvent.setup()
+    renderRoute('/search?q=lamp')
+
+    await user.hover(await screen.findByRole('link', { name: 'Test Gift Card' }))
+    await waitFor(() => expect(requested).toEqual(['3']))
+    // Focusing the name (the keyboard's way to the same place) asks the cache, which already has it.
+    screen.getByRole('link', { name: 'Test Gift Card' }).focus()
+    expect(screen.getByRole('link', { name: 'Test Gift Card' })).toHaveFocus()
+  })
+
+  it('adds a result to the cart for a customer', async () => {
+    const cart = fakeCart()
+    server.use(...cart.handlers)
+    const user = userEvent.setup()
+    renderRoute('/search?q=lamp', { signedInAs: 'CUSTOMER' })
+    await screen.findByRole('heading', { level: 2, name: 'Test Gift Card' })
+
+    await user.click(screen.getAllByRole('button', { name: 'Add to cart' })[0]!)
+
+    expect(await screen.findByRole('button', { name: 'In your cart (1)' })).toBeInTheDocument()
+    expect(cart.calls).toEqual(['POST 3 x1'])
+  })
+
+  it('shows why an add was refused, and lets the message go', async () => {
+    server.use(...fakeCart({ refuse: { status: 404, message: 'Product 3 not found' } }).handlers)
+    const user = userEvent.setup()
+    renderRoute('/search?q=lamp', { signedInAs: 'CUSTOMER' })
+    await screen.findByRole('heading', { level: 2, name: 'Test Gift Card' })
+
+    await user.click(screen.getAllByRole('button', { name: 'Add to cart' })[0]!)
+
+    expect(await screen.findByText('Product 3 not found')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Dismiss' }))
+    expect(screen.queryByText('Product 3 not found')).not.toBeInTheDocument()
   })
 
   describe('stale requests', () => {
