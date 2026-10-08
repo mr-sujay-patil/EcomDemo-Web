@@ -6,8 +6,8 @@ Goal: the machine is never the reason a result is in doubt. The web app is light
 
 | | |
 |---|---|
-| **Pinned backend tag** | **`phase-34-complete`** (backend PR #59, merge commit `9173309`, 2026-10-06) |
-| Why this one | it adds product images (web KI-002): `ProductResponse.imageUrl`, a gateway-relative path or `null`, and the anonymous `GET /api/products/{id}/image`. It keeps everything from `phase-33-complete` (RS256 tokens, login throttling `429` + `Retry-After`) and `ki-041-fixed` (CORS preflights) |
+| **Pinned backend** | **commit `f088fd4f517cceda44e478c9ca3ba8d5de1f8c68`** on the backend's `main` (backend PR #75, tagged `ki-011-fixed`, 2026-10-08). The backend publishes no `phase-*` tag after `phase-34-complete`, so the pin is a commit. Previous pin: `phase-34-complete` (backend PR #59, merge `9173309`, 2026-10-06) |
+| Why this one | the backend team asked the web to follow `main` after Phase 34: the catalogue is paged (`page`, `size`, `X-Total-Count`, `Link`), catalogue reads and checkout can answer `503` with `Retry-After`, the dead-letter shape changed (`dltTimestamp`), `/actuator` left port 8080, ports bind to 127.0.0.1. Earlier: `phase-34-complete` added product images (web KI-002): `ProductResponse.imageUrl`, a gateway-relative path or `null`, and the anonymous `GET /api/products/{id}/image`. It keeps everything from `phase-33-complete` (RS256 tokens, login throttling `429` + `Retry-After`) and `ki-041-fixed` (CORS preflights) |
 | Delta since `phase-33-complete` | `docs/backend/phase-34-delta.md` (earlier: `docs/backend/phase-33-delta.md`) |
 
 Moving the pin is a deliberate commit inside a phase or fix (`chore(backend): pin <tag>`), with `npm run verify`, `npm run api:check` (from Phase 7) and `npm run e2e` rerun, and a `docs/decisions.md` line saying why.
@@ -23,7 +23,7 @@ Everything lives **inside the WSL2 Linux filesystem**, never under `/mnt/c/...` 
 The read-only clone is set up once, in Phase 0:
 
     git clone https://github.com/mr-sujay-patil/ecomdemo ../ecomdemo-backend-readonly
-    git -C ../ecomdemo-backend-readonly checkout phase-34-complete
+    git -C ../ecomdemo-backend-readonly checkout f088fd4f517cceda44e478c9ca3ba8d5de1f8c68
     git -C ../ecomdemo-backend-readonly remote set-url --push origin no-push   # a mistaken push fails locally
 
 Reading it is allowed (files, `git log`, `git fetch --tags`, checking out a newer tag when the pin moves). Writing is never allowed: no commits, branches, pushes, PRs, issues or comments on the backend. Never check out a tag in `~/projects/ecomdemo`: that would move the backend team's work.
