@@ -77,6 +77,34 @@ describe('the session store', () => {
     expect(store.getSnapshot().endedBy).toBeNull()
   })
 
+  describe('updateProfile', () => {
+    it('swaps the profile, keeps the token and its clock, and tells listeners', () => {
+      const store = createSessionStore()
+      store.start(session())
+      const listener = vi.fn()
+      store.subscribe(listener)
+
+      store.updateProfile({ ...session().profile, fullName: 'Meera Rao' })
+
+      const kept = store.getSnapshot().session
+      expect(kept?.profile.fullName).toBe('Meera Rao')
+      expect(kept?.accessToken).toBe('tok-1')
+      expect(kept?.expiresAt).toBe(1_000_000)
+      expect(listener).toHaveBeenCalledTimes(1)
+    })
+
+    it('does nothing when nobody is signed in', () => {
+      const store = createSessionStore()
+      const listener = vi.fn()
+      store.subscribe(listener)
+
+      store.updateProfile(session().profile)
+
+      expect(store.getSnapshot().session).toBeNull()
+      expect(listener).not.toHaveBeenCalled()
+    })
+  })
+
   describe('reject (the server said 401 to a token)', () => {
     it('ends the session when it was the token in use', () => {
       const store = createSessionStore()

@@ -256,13 +256,14 @@ describe('the order page', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Order not found' })).toBeInTheDocument()
   })
 
-  it('says "Not permitted" for another customer’s order', async () => {
+  it('says "Order not found" for another customer’s order, and never the server’s reason', async () => {
     server.use(
       http.get('/api/orders/8', () => HttpResponse.json({ status: 403, message: 'Not your order' }, { status: 403 })),
     )
     renderRoute('/orders/8', { signedInAs: 'CUSTOMER' })
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Not permitted' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Order not found' })).toBeInTheDocument()
+    expect(screen.queryByText(/Not your order/)).not.toBeInTheDocument()
   })
 
   it('shows a load error with Retry', async () => {

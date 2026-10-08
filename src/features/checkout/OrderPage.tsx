@@ -9,7 +9,6 @@ import { SagaTimeline, type SagaStep } from '@/components/SagaTimeline'
 import { StaffNote } from '@/components/StaffNote'
 import { orderConfirmedNote } from '@/content/notes'
 import { useAddToCart } from '@/features/cart/api'
-import { NotPermittedPage } from '@/features/auth/NotPermittedPage'
 import { formatPrice } from '@/lib/money'
 import { useOrder, useOrderStatus } from './api'
 import { GIVE_UP_AFTER_MS, isPolling, nextPhase, SLOW_AFTER_MS, type OrderPhase } from './orderStatus'
@@ -48,7 +47,8 @@ export function OrderPage() {
     }
   }, [id])
 
-  if (id === null || (order.error instanceof ApiError && order.error.status === 404)) {
+  // 403 (another customer's order) and 404 (none) read the same, so the page never confirms that an id exists.
+  if (id === null || (order.error instanceof ApiError && (order.error.status === 404 || order.error.status === 403))) {
     return (
       <div className="stack">
         <h1>Order not found</h1>
@@ -59,7 +59,6 @@ export function OrderPage() {
       </div>
     )
   }
-  if (order.error instanceof ApiError && order.error.status === 403) return <NotPermittedPage />
   if (order.isError) {
     return (
       <div className="stack">

@@ -13,3 +13,19 @@ export async function registerCustomer(body: RegisterRequest, signal?: AbortSign
   if (!data) throw new Error('The server answered without an account.')
   return data
 }
+
+export type UpdateProfileRequest = components['schemas']['UpdateProfileRequest']
+
+/** GET /api/customers/me: the signed-in customer. Rejects with an `ApiError`. */
+export async function fetchMe(signal?: AbortSignal): Promise<CustomerResponse> {
+  const { data } = await customerApi.GET('/api/customers/me', { signal })
+  if (!data) throw new Error('The server answered without a profile.')
+  return data
+}
+
+/** PUT /api/customers/me: the full name is the only thing that can change. 400 names the field. */
+export async function updateMe(body: UpdateProfileRequest, signal?: AbortSignal): Promise<CustomerResponse> {
+  const { data } = await customerApi.PUT('/api/customers/me', { body, signal })
+  if (!data) throw new Error('The server answered without a profile.')
+  return data
+}

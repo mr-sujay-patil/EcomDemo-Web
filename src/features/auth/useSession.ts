@@ -10,5 +10,14 @@ export function useSession() {
   const { store, signIn, signOut, expiring } = useSessionContext()
   const { session, endedBy } = useSyncExternalStore(store.subscribe, store.getSnapshot)
   const role: Role | null = session?.profile.role ?? null
-  return { session, profile: session?.profile ?? null, role, endedBy, expiring, signIn, signOut }
+  return {
+    session,
+    profile: session?.profile ?? null,
+    role,
+    endedBy,
+    expiring,
+    signIn,
+    signOut,
+    updateProfile: store.updateProfile,
+  }
 }

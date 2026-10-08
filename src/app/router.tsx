@@ -54,13 +54,27 @@ export const routes: RouteObject[] = [
           },
           // Placing the order is the cart's button (one click, no address, web KI-008): /checkout is only an old address.
           { path: 'checkout', element: <Navigate to="/cart" replace /> },
-          route('orders', 'Your orders', <PlaceholderPage title="Your orders" phase={14} />),
+          // List and detail share the /orders path: the list is the index, an order opens under it.
           {
-            path: 'orders/:id',
-            handle: { title: 'Order' } satisfies RouteHandle,
-            lazy: async () => ({ Component: (await import('@/features/checkout/OrderPage')).OrderPage }),
+            path: 'orders',
+            children: [
+              {
+                index: true,
+                handle: { title: 'Your orders' } satisfies RouteHandle,
+                lazy: async () => ({ Component: (await import('@/features/orders/OrdersPage')).OrdersPage }),
+              },
+              {
+                path: ':id',
+                handle: { title: 'Order' } satisfies RouteHandle,
+                lazy: async () => ({ Component: (await import('@/features/checkout/OrderPage')).OrderPage }),
+              },
+            ],
           },
-          route('account', 'Your account', <PlaceholderPage title="Your account" phase={14} />),
+          {
+            path: 'account',
+            handle: { title: 'Your account' } satisfies RouteHandle,
+            lazy: async () => ({ Component: (await import('@/features/accounts/ProfilePage')).ProfilePage }),
+          },
         ],
       },
       route('sign-in', 'Sign in', <SignInPage />),
