@@ -69,3 +69,23 @@ Don't read other phase files or archives unless needed. Don't paste full logs or
 - From Phase 9, styling is plain CSS on the design-system tokens only: **no Tailwind, no shadcn/ui, no Radix, no CSS-in-JS, no icon libraries (Lucide etc.), no gradients, no emoji in UI, no entrance or scroll animations**; copy follows the voice rules in `design-system/README.md`
 - Conventional Commits; stable, current releases of every dependency (no `-rc`, `-beta`, `@next`); exact versions pinned, `package-lock.json` committed
 - Build: `npm ci && npm run verify` · E2E smoke: `npm run e2e` (backend running at the pinned tag)
+
+## Workflow rules to reduce cycle time
+
+### Local checks
+1. While iterating, run only the relevant checks (typecheck, lint, or the affected unit tests). Run the full npm run verify once, just before opening the PR.
+2. To reproduce a CI failure, run the exact command from .github/workflows/ci.yml.
+
+### End-to-end tests
+3. Keep the backend stack (../ecomdemo-backend-readonly) running between e2e iterations. Rebuild it only when BACKEND_TAG changes.
+4. While debugging, run only the failing spec (npx playwright test <file>). Run the full npm run e2e once, at the end.
+5. Run npm run perf only if the change could affect bundle size, page load, or the cart and order flows. Otherwise skip it and state why in the PR description.
+6. Never use fixed waits (page.waitForTimeout). Use Playwright's auto-waiting assertions.
+
+### Long-running commands and CI
+7. Run any command expected to take more than a few minutes (full e2e, perf, backend build, waiting on CI) in the background, then check its status. Do not block on it in the foreground or let it hit a tool timeout.
+8. Before asking me to approve a PR, confirm its CI run is green. If it is red, fix it first.
+9. After a merge, do not wait for the main-branch run unless the next task depends on the published image.
+
+### PRs
+10. Group related fixes into a single PR where reasonable, instead of one PR per fix.
