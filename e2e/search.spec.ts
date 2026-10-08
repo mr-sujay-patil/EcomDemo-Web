@@ -18,9 +18,9 @@ test.describe('search', () => {
 
     await expect(page).toHaveURL(/\/search\?q=something\+to\+type\+on$/)
     await expect(page.getByRole('heading', { level: 1, name: 'Results for “something to type on”' })).toBeVisible()
-    const notice = page.getByText("Search by description isn't available right now")
-    const count = page.getByText(/^\d+ products?, |^Nothing matches/)
-    await expect(notice.or(count)).toBeVisible()
+    // Either mode ends with a caption (a count, or "Nothing matches"); the fallback adds the notice above it, so the two are
+    // not alternatives and the caption is what says the search finished.
+    await expect(page.getByText(/^\d+ products?, |^Nothing matches/)).toBeVisible()
 
     // The address alone brings the same search back: a shared link, or a reload.
     await page.reload()
