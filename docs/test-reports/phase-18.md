@@ -63,7 +63,7 @@ The existing matrix (360, 480, 768, 1024, 1280 px, light and dark) still passes 
 ## 5. Things to know
 
 - ⚠️ **The manual screen-reader pass is yours.** Follow `docs/accessibility.md` (about 20 minutes, NVDA, VoiceOver or TalkBack), then reply `done` with anything that felt wrong. A machine cannot judge whether the words, the reading order and the announcements make sense. I did **not** try a screen reader.
-- ⚠️ **The visual baselines are Linux Chromium pictures** drawn here (WSL Ubuntu). CI runs Ubuntu with the same Playwright Chromium and the app's own fonts, so they should match, but **I have not seen them pass on CI yet**: read the CI result on this PR. If CI differs by a few pixels, the fix is to regenerate them from CI's own artifact, as a reviewed change.
+- **The visual baselines are Linux Chromium pictures** drawn here (WSL Ubuntu). **CI confirms them:** on the PR head the `e2e` job ran all 1005 tests, 32 of them visual, and all passed (run 37763460942). That run also passed the KI-020 spec, because CI starts the backend on a fresh database; here the shared stack's Laptop Sleeve is at 0.
 - ⚠️ **Chromium only.** axe, the keyboard checks and the pictures run in Chromium. Safari and Firefox are not covered; neither are Windows forced-colours mode or text-spacing overrides (WCAG 1.4.12).
 - ⚠️ **The focus ring's contrast** is not measured. The sweep proves a ring appears on every control and is not covered; whether `--focus` is bright enough on every surface is a manual check (listed in `docs/accessibility.md`).
 - The sweep runs one width per theme (1280 px light, 360 px dark) to keep it quick; axe runs both widths in both themes.
