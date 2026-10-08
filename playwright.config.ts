@@ -1,6 +1,7 @@
 import { defineConfig, devices } from '@playwright/test'
 
-const baseURL = 'http://localhost:4173'
+// `npm run e2e:docker` points the suite at the container (E2E_BASE_URL); otherwise it builds and previews the app itself.
+const baseURL = process.env.E2E_BASE_URL ?? 'http://localhost:4173'
 
 // https://playwright.dev/docs/test-configuration
 export default defineConfig({
@@ -25,12 +26,14 @@ export default defineConfig({
     { name: 'report', use: { ...devices['Desktop Chrome'] }, grep: /@report/ },
   ],
   // The production build, served the way users get it; `preview` proxies /api to the gateway (API_TARGET).
-  webServer: {
-    // VITE_STYLEGUIDE=true puts the /styleguide route in this build (src/app/router.tsx); the production build has none.
-    command: 'VITE_STYLEGUIDE=true npm run build && npm run preview',
-    url: baseURL,
-    // Never test a stale build left running on 4173: fail on the busy port instead.
-    reuseExistingServer: false,
-    timeout: 120_000,
-  },
+  webServer: process.env.E2E_BASE_URL
+    ? undefined
+    : {
+        // VITE_STYLEGUIDE=true puts the /styleguide route in this build (src/app/router.tsx); the production build has none.
+        command: 'VITE_STYLEGUIDE=true npm run build && npm run preview',
+        url: baseURL,
+        // Never test a stale build left running on 4173: fail on the busy port instead.
+        reuseExistingServer: false,
+        timeout: 120_000,
+      },
 })

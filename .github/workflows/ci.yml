@@ -160,3 +160,91 @@ jobs:
           name: backend-logs
           path: backend-logs.txt
           retention-days: 14
+
+  # The web container (Dockerfile, nginx/default.conf.template). Built on every pull request, and started once to prove it
+  # serves: a build that cannot start is caught here, not after a merge. The cache makes the publish job's rebuild a copy.
+  image:
+    name: image
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Build the image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          load: true
+          tags: ecomdemo-web:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # No backend here: nginx resolves the gateway when a request arrives, so it starts without one. This proves the
+      # image starts as its non-root user on a read-only filesystem, is healthy, and serves the app and a deep link.
+      - name: Start it and check it serves
+        run: |
+          docker run -d --name web --read-only --tmpfs /tmp --tmpfs /var/cache/nginx:uid=101,gid=101 \
+            --tmpfs /etc/nginx/conf.d:uid=101,gid=101 --cap-drop ALL -p 8070:8080 ecomdemo-web:ci
+          for attempt in $(seq 1 30); do
+            [ "$(docker inspect --format '{{.State.Health.Status}}' web)" = healthy ] && break
+            sleep 2
+          done
+          docker inspect --format 'health={{.State.Health.Status}} user={{.Config.User}}' web
+          docker image inspect --format 'size={{.Size}} bytes' ecomdemo-web:ci
+          test "$(docker inspect --format '{{.State.Health.Status}}' web)" = healthy
+          curl --fail --silent --show-error http://localhost:8070/healthz
+          curl --fail --silent --show-error http://localhost:8070/products/1 | grep -q '<div id="root">'
+          docker rm --force web
+
+  # Publishes the image, only for a merge to main and only after every check above passed.
+  publish:
+    name: publish
+    needs: [verify, e2e, image]
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Check out the code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069 # v4.4.1
+
+      - name: Log in to GHCR
+        uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4.6.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # The image name is lower-cased for us (the repository name has capitals, a registry name may not).
+      - name: Work out the tags
+        id: meta
+        uses: docker/metadata-action@dc802804100637a589fabce1cb79ff13a1411302 # v6.2.0
+        with:
+          images: ghcr.io/${{ github.repository }}
+          tags: |
+            type=sha,format=long,prefix=
+            type=raw,value=latest
+
+      - name: Build and push
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc # v7.4.0
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
