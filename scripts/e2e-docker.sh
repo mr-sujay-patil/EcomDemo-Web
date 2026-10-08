@@ -5,7 +5,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-gateway=ecomdemo-gateway-service
+gateway="${GATEWAY_CONTAINER:-ecomdemo-gateway-service}"
 # The network the running gateway is on (its compose project's default network), unless the caller names one.
 network="${BACKEND_NETWORK:-$(docker inspect "$gateway" --format '{{range $name, $_ := .NetworkSettings.Networks}}{{$name}} {{end}}' 2>/dev/null | awk '{print $1}')}"
 if [ -z "$network" ]; then
