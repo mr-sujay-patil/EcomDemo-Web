@@ -2,29 +2,20 @@
 
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
-- **Updated:** 2026-10-08
-- **Phase:** 23 — Observability
-- **Branch:** `feature/phase-23-observability`
-- **Step:** IMPLEMENT
-- **PR:** none yet
-- **Backend pinned at:** commit `f088fd4f517cceda44e478c9ca3ba8d5de1f8c68` (backend `main`, tag `ki-011-fixed`). No stack runs now: start it from `../ecomdemo-backend-readonly` with `CUSTOMER_DB_PORT=15435 docker compose up --build --wait -d` (Windows app SignalRgb holds 5435); stop it at the end with `docker compose --profile tools down` (no `-v`; the volumes' stock is used up: web KI-020).
-- **Waiting for user:** no. The phase's manual step: stop and restart one backend service for the failure test (ask first). Carried: the screen-reader pass, `E2E_ADMIN_*`, relaying KI-019/020/021/022/024/025, web KI-027, 028, 029, **030 (shelf not paged), 031 (503 Retry-After)**. Owner decisions pending: reconcile CLAUDE.md workflow rules 9/10/3/5 with the hard rules; branch protection settings on `main`.
+- **Updated:** 2026-10-09
+- **State:** all planned phases (0 to 23) are merged and tagged (`phase-23-complete`, PR #31). Working on: `chore/phase-23-housekeeping` (tracker row 23, `RECENT.md`, this file).
+- **Branch:** `chore/phase-23-housekeeping`
+- **Step:** PR_OPEN (when the PR exists; see `gh pr list`)
+- **Backend pinned at:** commit `f088fd4f517cceda44e478c9ca3ba8d5de1f8c68`. Backend `origin/main` was `3c7ecf5` on 2026-10-09 (KI-052, KI-053: internal, nothing for the web). No stack runs now (start: `CUSTOMER_DB_PORT=15435 docker compose up --wait -d` in `../ecomdemo-backend-readonly`; stop: `docker compose --profile tools down`, no `-v`).
+- **Waiting for user:** review and `approved, merge it` for this chore. The owner's plan after it, in order: tag `v1.0` (the Phase 23 file asks for it; owner approved the order "housekeeping, then v1.0, then KI-030 and KI-031 as one fix PR"), then the fix PR for web KI-030 (the shelf and admin list are not paged) and KI-031 (503 with `Retry-After`).
 
-## Merge verification before this phase
-Phase 22 (PR #27, merge `165402d`, tag `phase-22-complete`): tip in `main`; `npm ci && npm run verify` exit 0 (855); CI on `main` green incl. publish. Chores since: PR #28 (pin `f088fd4`), #29 (CI speed: backend image cache, verify/e2e on pull requests only, `backend-images.yml`), #30 (CLAUDE.md workflow rules). Backend sync (2026-10-08): `origin/main` `33d6f1a`, 3 commits past the pin, all backend CI/workflow rules; nothing for the web; pin stays.
-
-## Checklist (from the phase file's "What you'll implement")
-- [x] Error boundaries: root page, route boundary (layout stays), router `errorElement`s, unhandled-rejection alert (once); `ErrorReference` with Copy
-- [x] The reference is the `X-Correlation-Id` (a render error gets a fresh id, console only)
-- [x] OpenTelemetry Web: `src/app/tracing.ts`, `traceparent` on `/api` only, no exporter (optional dev OTLP not done: not published for browsers, would need a backend change)
-- [x] Web Vitals in dev (`src/app/webVitals.ts`), recorded in the test report
-- [x] `docs/troubleshooting.md` with a worked example from a real failure
-- [x] E2E: `e2e/observability.spec.ts`, `scripts/e2e-service-down.sh` (`npm run e2e:service-down`)
-- [ ] Done-when, second half: the reference finds the **gateway's log line**: NOT possible at the pinned backend (gateway writes no request log): web KI-032, backend KI-035; message for the backend team in the PR
-- [ ] PR; CI green; the owner's review; then `v1.0` after the merge (the phase file says tag `v1.0`)
+## Open items (nothing else is planned)
+- Owner decisions: reconcile CLAUDE.md workflow rules 9/10/3/5 with the hard rules (until then follow the hard rules); turn on branch protection "Require branches to be up to date before merging" and "Do not allow bypassing" on `main` (CI skips `verify` and `e2e` on pushes to main).
+- To relay to the backend team: KI-032 (message in PR #31), KI-019/020/021/022/024/025.
+- Defects: web KI-020 (specs assume seed stock; the local volumes are drained), KI-025, KI-026/028/029 (flakes under load), KI-027 (LCP warning), KI-030, KI-031, KI-032. The Phase 18 screen-reader pass and `E2E_ADMIN_*` are carried.
 
 ## Next action
-Wait for the owner's review of the Phase 23 PR. On `approved, merge it`: confirm CI green on the PR head, `gh pr merge <n> --merge` (no `--delete-branch`), verify `main` (`npm ci && npm run verify`; CI on `main`; the phase file says to tag `v1.0` after this phase, in addition to `phase-23-complete`: ask the owner before tagging `v1.0`). The backend stack is RUNNING (commit `f088fd4`, Alloy recreated with a local override in the scratchpad so logs reach Loki): stop it with `docker compose --profile tools down` (no `-v`) when done. Next phase only on `continue`.
+Wait for the owner. After the merge: confirm CI on the PR head was green, merge verification on `main`, no tag for a chore. Then, if the owner confirms, tag `v1.0` on the `main` commit, and start `fix/ki-030-031-…` (read `docs/KNOWN_ISSUES.md` rows KI-030 and KI-031 only).
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.
