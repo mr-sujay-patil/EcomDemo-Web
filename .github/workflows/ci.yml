@@ -16,8 +16,14 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  # `verify` and `e2e` run on pull requests only. On a push to main they would test the tree the pull request already
+  # tested: branch protection requires a branch to be up to date with main before it merges, so the commit that lands on main
+  # has the same tree as the PR run that went green. Needs "Require branches to be up to date before merging" and "Do not
+  # allow bypassing the above settings" on main (repository settings, turned on by the owner). `image` still runs on every push, and
+  # `publish` below is gated on all three.
   verify:
     name: verify
+    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -38,7 +44,7 @@ jobs:
       - name: Install exact dependencies
         run: npm ci
 
-      # The same gate as on a laptop: typecheck, lint, format check, unit tests, build.
+      # The same gate as on a laptop: typecheck, lint, format check, unit tests (with coverage, once: this writes coverage/), build.
       - name: Verify
         run: npm run verify
 
@@ -46,9 +52,6 @@ jobs:
       # reason and an expiry date. Needs the registry, so it can also fail on a day a new advisory is published: that is the point.
       - name: Audit the dependencies
         run: npm run audit:deps
-
-      - name: Measure coverage
-        run: npm run test:coverage
 
       - name: Upload the coverage report
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -59,6 +62,7 @@ jobs:
 
   e2e:
     name: e2e
+    if: ${{ github.event_name == 'pull_request' }}
     runs-on: ubuntu-latest
     # Building eight backend images from source is most of this; see docs/test-reports/phase-05.md.
     timeout-minutes: 45
@@ -103,11 +107,34 @@ jobs:
           echo "::add-mask::$secret"
           sed -i "s|^JWT_SECRET=.*|JWT_SECRET=$secret|" .env
 
-      # The backend publishes no per-service images to GHCR yet (web KI-015), so they are built here.
-      # When they exist, this step becomes `docker compose pull` followed by `up --wait`.
-      - name: Build and start the backend stack
+      # The backend publishes no per-service images to GHCR yet (web KI-015). Building eight of them from source took ~200 s,
+      # so a tarball of the built images is cached per backend commit. Only .github/workflows/backend-images.yml saves it
+      # (on main, daily and by hand): a cache saved by a pull request is visible to that pull request alone.
+      - name: Find the backend commit
+        id: backend
+        run: echo "sha=$(git -C ecomdemo-backend-readonly rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      - name: Restore the backend images
+        id: backend-images
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: backend-images.tar
+          key: backend-images-${{ steps.backend.outputs.sha }}
+
+      # A hit: load the tarball and start without building. A miss: build and start as before (slower, same result).
+      - name: Load the cached backend images and start the stack
+        if: ${{ steps.backend-images.outputs.cache-hit == 'true' }}
         working-directory: ecomdemo-backend-readonly
-        run: docker compose up --build --wait --wait-timeout 600
+        run: |
+          docker load --input ../backend-images.tar
+          docker compose up --wait --wait-timeout 600
+
+      - name: Build and start the backend stack (no cached images)
+        if: ${{ steps.backend-images.outputs.cache-hit != 'true' }}
+        working-directory: ecomdemo-backend-readonly
+        run: |
+          echo "::notice::No cached backend images for ${{ steps.backend.outputs.sha }}: building. Run the 'Backend images' workflow to cache them."
+          docker compose up --build --wait --wait-timeout 600
 
       # Printed to the log and to the run's summary page: does the stack still fit a hosted runner?
       - name: Record the stack's footprint
@@ -132,6 +159,20 @@ jobs:
       - name: Install exact dependencies
         working-directory: web
         run: npm ci
+
+      # The browser download is cached by Playwright version; `install --with-deps` still runs, because the system libraries
+      # (apt) are not part of the cache. With the browser present it only installs those. Like every cache saved from a pull
+      # request, it is visible to that pull request only (so it helps a re-run, not a new PR).
+      - name: Find the Playwright version
+        id: playwright
+        working-directory: web
+        run: echo "version=$(node -p "require('./package-lock.json').packages['node_modules/@playwright/test'].version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache the Playwright browser
+        uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
 
       - name: Install Chromium for Playwright
         working-directory: web
@@ -275,7 +316,13 @@ jobs:
   publish:
     name: publish
     needs: [verify, e2e, image]
-    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    # verify and e2e are skipped on a push to main (they ran on the pull request), so "skipped" counts as passed here; a
+    # failure or a cancellation does not. `always()` is needed because a skipped dependency would otherwise skip this job too.
+    if: >-
+      ${{ always() && github.event_name == 'push' && github.ref == 'refs/heads/main'
+      && needs.image.result == 'success'
+      && (needs.verify.result == 'success' || needs.verify.result == 'skipped')
+      && (needs.e2e.result == 'success' || needs.e2e.result == 'skipped') }}
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:

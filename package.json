@@ -18,7 +18,7 @@
     "format:check": "prettier --check .",
     "check:tokens": "node scripts/check-tokens.mjs",
     "check:budgets": "node scripts/check-budgets.mjs",
-    "verify": "npm run typecheck && npm run lint && npm run format:check && npm run check:tokens && npm run test && npm run build && npm run check:budgets && npm run check:dist",
+    "verify": "npm run typecheck && npm run lint && npm run format:check && npm run check:tokens && npm run test:coverage && npm run build && npm run check:budgets && npm run check:dist",
     "api:snapshot": "node scripts/api.ts snapshot",
     "api:generate": "node scripts/api.ts generate",
     "api:check": "node scripts/api.ts check",
