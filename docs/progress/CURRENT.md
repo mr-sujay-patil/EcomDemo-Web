@@ -14,8 +14,8 @@
 Phase 17 (PR #21, merge `10795ed`, tag `phase-17-complete` on origin): all branch commits in `main`; CI on `main` green; `npm ci && npm run verify` exit 0 on `main` (2026-10-08). Backend sync 2026-10-08: `origin/main` is 40 commits past the pin (KI-002/003/004/005/006/040/044/045/046); nothing new for the web beyond what Phase 16 reported; Phase 18 needs nothing from the backend. Pin stays `phase-34-complete`.
 
 ## Checklist (from the phase file's "What you'll implement")
-- [ ] axe on every route (signed out, customer, admin) in both themes; fail on serious/critical
-- [ ] Keyboard-only runs of every E2E flow; focus visible; trapped only in dialogs
+- [x] axe on every route (signed out, customer, admin) in both themes; fail on serious/critical (`e2e/a11y.spec.ts`, 2 widths; fixed unnamed header links and nested controls in search options)
+- [x] Keyboard-only runs (`e2e/keyboard-flows.spec.ts`, pointer guard); focus visible and no trap on every screen (`e2e/keyboard-sweep.spec.ts`; both proven able to fail)
 - [ ] 200% zoom and 20 px root font still pass overflow checks
 - [ ] `prefers-reduced-motion`: spinner slows, no other motion (asserted)
 - [ ] `toHaveScreenshot` baselines (key screens, 360/1280, light/dark, MSW-deterministic, animations off)
@@ -23,7 +23,7 @@ Phase 17 (PR #21, merge `10795ed`, tag `phase-17-complete` on origin): all branc
 - [ ] Done-when proof: a `--radius-md` change fails baselines (shown, reverted)
 
 ## Next action
-Read `e2e/screens.ts`, `e2e/layout.spec.ts`, `playwright.config.ts`; add `@axe-core/playwright` (exact stable version) and write `e2e/a11y.spec.ts` over the screen matrix.
+Backend stack for this phase is RUNNING (started from the clone with `CUSTOMER_DB_PORT=15435`; stop it at the end with `docker compose --profile tools down`, no `-v`). Next: `e2e/zoom.spec.ts` (200% zoom + 20 px root font vs the overflow checks), `e2e/motion.spec.ts` (reduced motion), `e2e/visual.spec.ts` (`toHaveScreenshot`, stubbed data), `docs/accessibility.md`, decisions lines, module docs, test report, then the `--radius-md` proof.
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.
