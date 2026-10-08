@@ -1,4 +1,4 @@
-import { fireEvent, screen } from '@testing-library/react'
+import { fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { afterEach, describe, expect, it, vi } from 'vitest'
@@ -58,7 +58,9 @@ describe('when a list cannot load', () => {
   it('dead letters and the replay log each show their own error', async () => {
     server.use(boom('/api/admin/dead-letters'), boom('/api/admin/dead-letters/replays'))
     renderRoute('/admin/dead-letters', { signedInAs: 'ADMIN' })
-    expect(await screen.findAllByText('The server fell over.')).toHaveLength(2)
+    await waitFor(() => {
+      expect(screen.getAllByText('The server fell over.')).toHaveLength(2)
+    })
   })
 
   it('every Retry asks again', async () => {
