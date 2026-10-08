@@ -3,28 +3,27 @@
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
 - **Updated:** 2026-10-08
-- **Phase:** 17 — Admin Console
-- **Branch:** `feature/phase-17-admin`
-- **Step:** PR_OPEN
-- **PR:** #21 (CI running on the head)
+- **Phase:** 18 — Accessibility
+- **Branch:** `feature/phase-18-accessibility`
+- **Step:** IMPLEMENTING
+- **PR:** none yet
 - **Backend pinned at:** `phase-34-complete`. No stack runs now: start it from `../ecomdemo-backend-readonly` with `CUSTOMER_DB_PORT=15435 docker compose up --build --wait -d` (Windows app SignalRgb holds 5435) and stop it at the end with `docker compose --profile tools down` (no `-v`).
-- **Waiting for user:** YES: review of the Phase 17 PR; set `E2E_ADMIN_USERNAME` / `E2E_ADMIN_PASSWORD` and run `e2e/admin.spec.ts` (and add them as CI secrets); relay web KI-019, KI-020, KI-021, KI-022 to the backend team; the ADMIN embeddings backfill; decide on `chore/pin-backend-<tag>`
+- **Waiting for user:** NO (carried: set `E2E_ADMIN_USERNAME` / `E2E_ADMIN_PASSWORD` and run `e2e/admin.spec.ts` (and add them as CI secrets); relay web KI-019, KI-020, KI-021, KI-022 to the backend team; the ADMIN embeddings backfill; decide on `chore/pin-backend-<tag>`)
 
 ## Merge verification before this phase
-Phase 16 (PR #20, merge `d3da037`, tag `phase-16-complete`): all branch commits in `main`; CI on `main` green; `npm ci && npm run verify` exit 0 on `main` (2026-10-08). E2E not re-run locally (no stack); CI e2e passed. Backend sync 2026-10-08: `origin/main` is 31 commits past the pin (KI-002/003/004/040/044 fixes). New for the web: KI-004 gateway circuit breaker answers 503 + `Retry-After: 10` + `ApiError` on catalogue reads; KI-040 dead-letter replay identity adds `dltTimestamp` (matters to the optional saga support). Pin stays `phase-34-complete`.
+Phase 17 (PR #21, merge `10795ed`, tag `phase-17-complete` on origin): all branch commits in `main`; CI on `main` green; `npm ci && npm run verify` exit 0 on `main` (2026-10-08). Backend sync 2026-10-08: `origin/main` is 40 commits past the pin (KI-002/003/004/005/006/040/044/045/046); nothing new for the web beyond what Phase 16 reported; Phase 18 needs nothing from the backend. Pin stays `phase-34-complete`.
 
 ## Checklist (from the phase file's "What you'll implement")
-- [x] `/admin/*` lazy-loaded, ADMIN only; CUSTOMER sees "Not permitted"
-- [x] Products: list, create, full-replace edit, delete with typed confirmation
-- [x] Generate description (owner chose: warn, then Restore previous; web KI-022)
-- [x] Stock: set a level (not a delta)
-- [x] CSV import: header check, preview, `skipCount`
-- [x] Search index backfill: 202 + poll every 2 s
-- [x] Saga support (dead letters, replay, replay log), built against the pin
-- [x] `docs/modules/admin.md`; tests (824 unit); E2E (screens in the matrix; real `admin.spec.ts` written, NOT run: no credentials)
+- [ ] axe on every route (signed out, customer, admin) in both themes; fail on serious/critical
+- [ ] Keyboard-only runs of every E2E flow; focus visible; trapped only in dialogs
+- [ ] 200% zoom and 20 px root font still pass overflow checks
+- [ ] `prefers-reduced-motion`: spinner slows, no other motion (asserted)
+- [ ] `toHaveScreenshot` baselines (key screens, 360/1280, light/dark, MSW-deterministic, animations off)
+- [ ] `docs/accessibility.md` with manual screen-reader checklist
+- [ ] Done-when proof: a `--radius-md` change fails baselines (shown, reverted)
 
 ## Next action
-Wait for the owner's review. On `approved, merge it`: wait for CI to pass (read it), `gh pr merge 21 --merge` (no `--delete-branch`); merge verification on `main` (`npm ci && npm run verify`; start the stack with `CUSTOMER_DB_PORT=15435 docker compose up --build --wait -d` in `../ecomdemo-backend-readonly`, run `npm run e2e`, read the result before tagging; the checkout stock spec fails on a used database, web KI-020); tag `phase-17-complete`; stop the stack (`docker compose --profile tools down`, no `-v`). The first commit of the next branch updates the tracker row (17 ✅) and this file. Before the next phase: fetch the backend clone and compare with the pin. Next phase only on `continue`: Phase 18 (read its file first).
+Read `e2e/screens.ts`, `e2e/layout.spec.ts`, `playwright.config.ts`; add `@axe-core/playwright` (exact stable version) and write `e2e/a11y.spec.ts` over the screen matrix.
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.
