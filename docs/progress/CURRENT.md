@@ -14,16 +14,16 @@
 Phase 21 (PR #26, merge `97d9892`, tag `phase-21-complete`): branch tip `e7f213a` is an ancestor of `main`; CI on `main` green. Backend sync (2026-10-08): 57 commits past the pin, mostly backend-internal fixes; paged `GET /products` (backend KI-007) is already web KI-025; nothing needed for Phase 22; pin stays `phase-34-complete`.
 
 ## Checklist (from the phase file's "What you'll implement")
-- [ ] nginx security headers: strict CSP (no unsafe-inline), Referrer-Policy, X-Content-Type-Options, Permissions-Policy, COOP; fix what breaks (theme bootstrap script, inline styles)
-- [ ] CI: `npm audit --audit-level=high` and Trivy on the image (findings fixed or suppressed with justification + expiry)
-- [ ] CycloneDX SBOM for the image attached to the CI run
-- [ ] Check that `dist/` has no secrets and no backend URL other than relative `/api`
-- [ ] `docs/security.md` (OWASP Top 10 as it applies)
-- [ ] E2E: every response has the headers; zero CSP violations across the suite (`securitypolicyviolation` listener)
-- [ ] Proof: CI blocks a pinned vulnerable package (then removed)
+- [x] nginx security headers via `nginx/security-headers.conf` (included in every location; `/api` hides the gateway's copies); theme script moved to `public/theme-init.js`; zod `jitless` (`src/app/zodConfig.ts`) because its eval probe is a CSP violation
+- [x] CI: `npm run audit:deps` (`scripts/audit-deps.mjs` + `audit-allowlist.json`: extract-zip x2, expires 2026-12-31; `overrides` tmp 0.2.7, basic-ftp 6.2.2); Trivy 0.75.0 on the image (fixed pcre2 CVE-2026-103111 with `apk upgrade pcre2`)
+- [x] CycloneDX SBOM artifact (`sbom`) from the image job
+- [x] `scripts/check-dist.mjs` in `npm run verify`
+- [x] E2E: `cspGuard` fixture (securitypolicyviolation) + headers spec in `container.spec.ts`; `zoom.spec.ts` uses `bypassCSP` (injects a user stylesheet)
+- [ ] `docs/security.md`, `docs/decisions.md` [Phase 22], KNOWN_ISSUES rows (saga.test flake; stock drained)
+- [ ] Push, read CI; proof that CI blocks a pinned vulnerable package (commit it, see it red, revert it); Phase Review Report; PR
 
 ## Next action
-Read `nginx/default.conf.template`, `index.html` (the inline theme script), and the e2e fixtures; write the CSP; run the container and the suite to find violations.
+Write `docs/security.md` and the decisions; push and read CI; add a known-vulnerable pinned package in a throwaway commit, confirm `verify` goes red on the audit step, revert it; then raise the PR and STOP. Local E2E against the container: 983 of 987 pass; the 4 failures were the (now fixed) duplicate nosniff header and 3 specs that need stock the shared backend no longer has (web KI-020: Desk Mat and Laptop Sleeve are at 0 after two full runs; no admin credentials to restock). The compose stack from `../ecomdemo-backend-readonly` is RUNNING (stop it with `docker compose --profile tools down`, no `-v`).
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.

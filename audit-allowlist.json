@@ -1,0 +1,17 @@
+{
+  "_comment": "Advisories `npm run audit:deps` accepts for now. Each entry needs the GitHub advisory id, the package, a written reason, and an expiry date (YYYY-MM-DD); past that date the build fails again until the entry is fixed or renewed on purpose, in a pull request.",
+  "accepted": [
+    {
+      "id": "GHSA-jmr9-qjv8-65gv",
+      "package": "extract-zip",
+      "reason": "No fixed version exists (2.0.1 is the latest). Reached only through puppeteer-core -> @puppeteer/browsers, which unzips a browser it downloads; this repo downloads none (Lighthouse drives the Chrome already on the machine), and the package is a dev dependency of the performance check, never in the shipped build (`npm audit --omit=dev` is clean).",
+      "expires": "2026-12-31"
+    },
+    {
+      "id": "GHSA-7pqw-9j4j-h8q3",
+      "package": "extract-zip",
+      "reason": "Same package and same reasoning as GHSA-jmr9-qjv8-65gv: no fix published, never unzips anything here, dev dependency only.",
+      "expires": "2026-12-31"
+    }
+  ]
+}

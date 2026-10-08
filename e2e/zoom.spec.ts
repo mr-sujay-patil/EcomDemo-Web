@@ -26,7 +26,15 @@ for (const screen of screens) {
   for (const colorScheme of colorSchemes) {
     for (const condition of conditions) {
       test.describe(`${screen.name}, ${condition.name}, ${colorScheme}`, () => {
-        test.use({ viewport: condition.viewport, colorScheme, allowedConsoleErrors: screen.allowedConsoleErrors ?? [] })
+        // bypassCSP: the test adds a stylesheet the way a person's own settings or extension would, and a Content-Security-Policy
+        // does not govern a user's stylesheet; without it the page's `style-src 'self'` refuses the test's <style> element.
+        // The other specs run with the policy in force and fail on any violation.
+        test.use({
+          viewport: condition.viewport,
+          colorScheme,
+          bypassCSP: true,
+          allowedConsoleErrors: screen.allowedConsoleErrors ?? [],
+        })
 
         test('has no sideways scroll and no clipped text', async ({ page }) => {
           await openScreen(page, screen)

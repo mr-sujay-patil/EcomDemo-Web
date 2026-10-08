@@ -18,12 +18,14 @@
     "format:check": "prettier --check .",
     "check:tokens": "node scripts/check-tokens.mjs",
     "check:budgets": "node scripts/check-budgets.mjs",
-    "verify": "npm run typecheck && npm run lint && npm run format:check && npm run check:tokens && npm run test && npm run build && npm run check:budgets",
+    "verify": "npm run typecheck && npm run lint && npm run format:check && npm run check:tokens && npm run test && npm run build && npm run check:budgets && npm run check:dist",
     "api:snapshot": "node scripts/api.ts snapshot",
     "api:generate": "node scripts/api.ts generate",
     "api:check": "node scripts/api.ts check",
     "e2e": "npm run api:check && playwright test --project=chromium",
     "perf": "bash scripts/perf.sh",
+    "check:dist": "node scripts/check-dist.mjs",
+    "audit:deps": "node scripts/audit-deps.mjs",
     "perf:analyze": "ANALYZE=1 vite build",
     "e2e:docker": "bash scripts/e2e-docker.sh",
     "e2e:k8s": "bash scripts/e2e-k8s.sh",
@@ -76,6 +78,8 @@
   "overrides": {
     "openapi-typescript": {
       "typescript": "$typescript"
-    }
+    },
+    "tmp": "0.2.7",
+    "basic-ftp": "6.2.2"
   }
 }
