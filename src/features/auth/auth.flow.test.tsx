@@ -4,7 +4,7 @@ import { http, HttpResponse } from 'msw'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import type { RouteObject } from 'react-router'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@/api/errors'
 import { appApi } from '@/api/client'
 import { SignInPage } from '@/features/accounts/SignInPage'
@@ -13,6 +13,7 @@ import { renderRoute, sessionFor, storeFor } from '@/test/render'
 import { RequireRole } from './RequireRole'
 import { createSessionStore } from './session'
 import { useFormDraft } from './useFormDraft'
+import { preloadAdminConsole } from '@/test/preloadAdminConsole'
 
 // A page of this test's own, standing in for the protected forms later phases build: a note and a password, and
 // a Send that calls an endpoint only a signed-in customer may call.
@@ -82,6 +83,9 @@ const cartAnswers = (status: number, seen: (string | null)[] = []) =>
 afterEach(() => {
   vi.useRealTimers()
 })
+
+// The admin console is a lazy route: load it outside the first test's clock (web KI-029).
+beforeAll(preloadAdminConsole)
 
 describe('guards', () => {
   it.each(['/cart', '/checkout', '/orders', '/orders/42', '/account'])(

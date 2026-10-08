@@ -1,7 +1,13 @@
 import '@testing-library/jest-dom/vitest'
-import { cleanup } from '@testing-library/react'
+import { cleanup, configure } from '@testing-library/react'
 import { afterAll, afterEach, beforeAll } from 'vitest'
 import { server } from './msw/server'
+
+// How long `findBy*` and `waitFor` wait. The library's 1 s suits an idle fast machine; the first render of a route, or a test
+// that runs while a build or a container is using the CPUs, can need several seconds for work that takes 100 ms when idle (web
+// KI-029: the first admin test failed in 1 of 4 full runs after a Docker build). A test that passes costs nothing extra: it
+// returns as soon as the element is there. Only a test that is really failing waits longer before it says so.
+configure({ asyncUtilTimeout: 4000 })
 
 // A request with no handler fails the test instead of silently reaching (or missing) a real server.
 // MSW 3 calls this onUnhandledFrame (MSW 2's onUnhandledRequest); a "frame" is an HTTP request or a WebSocket event.

@@ -1,9 +1,10 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { server } from '@/test/msw/server'
 import { renderRoute } from '@/test/render'
+import { preloadAdminConsole } from '@/test/preloadAdminConsole'
 
 const letter = (offset: number, replayed = false) => ({
   topic: 'order.events.DLT',
@@ -17,6 +18,9 @@ const letter = (offset: number, replayed = false) => ({
   payload: '{"orderId":7}',
   replayed,
 })
+
+// The admin console is a lazy route: load it outside the first test's clock (web KI-029).
+beforeAll(preloadAdminConsole)
 
 describe('dead letters', () => {
   it('lists the records and the replay log; a replayed record has no button to press', async () => {

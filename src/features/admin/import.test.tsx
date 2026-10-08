@@ -1,9 +1,10 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 import { renderRoute } from '@/test/render'
 import { ApiError } from '@/api/errors'
 import { importForm, importProducts, restartImport } from './batch'
+import { preloadAdminConsole } from '@/test/preloadAdminConsole'
 
 // jsdom's FormData cannot travel through Node's Request, so the page is tested with the upload call replaced, and the
 // body it builds is tested on its own below. The real multipart upload is covered by e2e/admin.spec.ts.
@@ -31,6 +32,9 @@ const execution = (overrides: object = {}) => ({
   steps: [],
   ...overrides,
 })
+
+// The admin console is a lazy route: load it outside the first test's clock (web KI-029).
+beforeAll(preloadAdminConsole)
 
 describe('importing a CSV', () => {
   beforeEach(() => {

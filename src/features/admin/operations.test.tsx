@@ -1,14 +1,18 @@
 import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { server } from '@/test/msw/server'
 import { renderRoute } from '@/test/render'
+import { preloadAdminConsole } from '@/test/preloadAdminConsole'
 
 const stockHandler = http.get('/api/inventory', ({ request }) => {
   const ids = new URL(request.url).searchParams.get('productIds')?.split(',').map(Number) ?? []
   return HttpResponse.json(ids.map((productId) => ({ productId, quantity: productId * 10 })))
 })
+
+// The admin console is a lazy route: load it outside the first test's clock (web KI-029).
+beforeAll(preloadAdminConsole)
 
 describe('stock', () => {
   it('asks for every product at once, comma-separated, and shows each level', async () => {

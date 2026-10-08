@@ -3,18 +3,18 @@
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
 - **Updated:** 2026-10-09
-- **Task:** chore: move the backend pin to commit `82ef5989594c30330850594f388967b8f080ce8a` (backend `main`, `ki-049-fixed`; the owner added `REDIS_PASSWORD` to the clone's `.env` and said to proceed)
-- **Branch:** `chore/pin-backend-82ef598`
-- **Step:** PR_OPEN (see `gh pr list`)
-- **Backend pinned at:** the commit above. The stack runs with `bash scripts/backend-stack.sh up` (needs `REDIS_PASSWORD` in the clone's `.env`); it is STOPPED now (never `down -v`).
-- **Waiting for user:** review and `approved, merge it` for the pin PR. After the merge: dispatch **Actions > Backend images > Run workflow** (or `gh workflow run "Backend images"`) so the cache exists for the new commit; verify `main`; no tag for a chore.
-- Phase 22 and 23 and KI-030/031 are merged and tagged. Open: owner decisions (CLAUDE.md rule conflicts, branch protection), KI-032 to relay, KI-033 (perf budget borderline), flakes KI-026/028/029, KI-020/025 (specs assume seed stock; the local volumes are drained).
+- **Task:** fix KI-029 (the flaky first admin test: `saga.test.tsx`, also `products.test.tsx`), the owner said `fix KI-029`
+- **Branch:** `fix/ki-029-saga-test-flake`
+- **Step:** PR_OPEN (PR #38; see `gh pr list`)
+- **Backend pinned at:** commit `82ef5989594c30330850594f388967b8f080ce8a`. No stack runs now (this fix is unit tests only; `scripts/backend-stack.sh up` when needed, never `down -v`).
+- **Waiting for user:** review and `approved, merge it` for PR #38. Then (rule 9, strict): local `verify` on `main` and the CI run on `main` green, then tag `ki-029-fixed`, and start nothing before that.
+- Open, not started: KI-034 (k8s HTTPS, blocked on the backend's answer about `shop.localhost` in the certificate), KI-033 (perf budget borderline, the owner decides), KI-032 (gateway request log, relay), KI-026/028 (flakes), KI-020/025; owner: branch protection settings on `main`.
 
-## Results at the new pin
-Backend quick checks at `82ef598`: `size=2` gives 200 + `X-Total-Count` + `Link`, `size=101` gives 400, `/actuator/health` gives 401. `api:check`: matches all 5 snapshots (no contract change, nothing regenerated). `npm run verify`: 889 passed. `npm run e2e:docker`: 989 passed, 4 failed, 1 skipped: 3 stock (KI-020) + the KI-028 visual flake (passes alone, twice).
+## Result
+Reproduced by saturating the CPUs (2 busy loops per core): before, the saga test failed in 3 of 6 runs. Preload alone: 1 of 12. Preload and `asyncUtilTimeout: 4000`: 0 of 15 (all `src/features/admin` files). No unit test can reproduce a timing flake deterministically, so the regression evidence is that load test, in the PR.
 
 ## Next action
-Wait for CI on the PR: the `e2e` job builds the backend at the new commit with a generated `REDIS_PASSWORD` (first real test of that step; it cannot use the image cache, keyed on the old commit).
+Wait for CI on PR #38 and the owner's `approved, merge it`.
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.
