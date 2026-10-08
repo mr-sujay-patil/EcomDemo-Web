@@ -6,7 +6,7 @@
 - **Phase:** 14 — Orders and Profile
 - **Branch:** `feature/phase-14-orders-profile`
 - **Step:** PR_OPEN
-- **PR:** raised, see `gh pr list` (number added once it exists)
+- **PR:** #18 (CI running on the head)
 - **Backend pinned at:** `phase-34-complete`. No stack runs now: start it from `../ecomdemo-backend-readonly` (`docker compose up --build --wait`) and stop it at the end with `docker compose --profile tools down` (no `-v`).
 - **Waiting for user:** YES: review of the Phase 14 PR; decide about web KI-020 and the backend running ahead of the pin (optional: write `orderConfirmedNote` in `src/content/notes.ts`)
 
