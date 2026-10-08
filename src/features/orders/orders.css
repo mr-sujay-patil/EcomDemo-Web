@@ -43,6 +43,28 @@
   overflow-wrap: anywhere;
 }
 
+/* The status is in two places so that each width shows it once; display: none also removes the hidden copy from
+   the accessibility tree and from a screen reader's table. */
+.orders-status-narrow {
+  display: none;
+  margin-top: var(--space-2);
+}
+
+@media (max-width: 559px) {
+  .orders-status-wide {
+    display: none;
+  }
+
+  .orders-status-narrow {
+    display: block;
+  }
+
+  .orders-table th,
+  .orders-table td {
+    padding-right: var(--space-2);
+  }
+}
+
 .orders-pager {
   display: flex;
   flex-wrap: wrap;

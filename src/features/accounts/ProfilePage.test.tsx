@@ -110,4 +110,47 @@ describe('the profile page', () => {
     expect(await screen.findByText(/Accounts are down/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /retry|try again/i })).toBeInTheDocument()
   })
+
+  it('tries again when Retry is pressed', async () => {
+    let asked = 0
+    server.use(
+      http.get('/api/customers/me', () => {
+        asked += 1
+        return asked === 1
+          ? HttpResponse.json({ status: 500, message: 'Accounts are down' }, { status: 500 })
+          : HttpResponse.json(me)
+      }),
+    )
+    const user = userEvent.setup()
+    renderRoute('/account', { signedInAs: 'CUSTOMER' })
+
+    await user.click(await screen.findByRole('button', { name: /retry|try again/i }))
+
+    expect(await screen.findByLabelText('Full name')).toHaveValue('Asha Rao')
+  })
+
+  it('leaves out what the server did not send: no member-since date, a blank name', async () => {
+    server.use(
+      http.get('/api/customers/me', () => HttpResponse.json({ ...me, fullName: undefined, createdAt: 'soon' })),
+    )
+    renderRoute('/account', { signedInAs: 'CUSTOMER' })
+
+    expect(await screen.findByLabelText('Full name')).toHaveValue('')
+    expect(screen.queryByText('Member since')).not.toBeInTheDocument()
+  })
+
+  it('shows a blank field when the server answers a save without a name', async () => {
+    server.use(
+      http.get('/api/customers/me', () => HttpResponse.json(me)),
+      http.put('/api/customers/me', () => HttpResponse.json({ ...me, fullName: undefined })),
+    )
+    const user = userEvent.setup()
+    renderRoute('/account', { signedInAs: 'CUSTOMER' })
+
+    await user.type(await screen.findByLabelText('Full name'), 'x')
+    await user.click(screen.getByRole('button', { name: 'Save name' }))
+
+    expect(await screen.findByText('Your name is updated.')).toBeInTheDocument()
+    expect(screen.getByLabelText('Full name')).toHaveValue('')
+  })
 })

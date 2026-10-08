@@ -45,8 +45,9 @@ describe('my orders', () => {
     const first = within(screen.getAllByRole('row')[1]!)
     expect(first.getByText('2')).toBeInTheDocument() // two kettles are two items
     expect(first.getByText('₹2,598.00')).toBeInTheDocument()
-    expect(first.getByText('Cancelled')).toBeInTheDocument()
-    expect(first.getByText('Insufficient stock for Test Kettle')).toBeInTheDocument()
+    // The status is rendered for a wide and for a narrow layout (CSS shows one); jsdom has no CSS, so both are here.
+    expect(first.getAllByText('Cancelled')).toHaveLength(2)
+    expect(first.getAllByText('Insufficient stock for Test Kettle')).toHaveLength(2)
     expect(within(screen.getAllByRole('row')[2]!).queryByText(/Insufficient/)).not.toBeInTheDocument()
   })
 
@@ -79,6 +80,11 @@ describe('my orders', () => {
     expect(rowIds()).toEqual(['#3', '#2', '#1'])
     expect(screen.getByText('Page 2 of 2')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Older' })).toBeDisabled()
+
+    await user.click(screen.getByRole('button', { name: 'Newer' }))
+
+    expect(screen.getByText('Page 1 of 2')).toBeInTheDocument()
+    expect(rowIds()[0]).toBe(`#${PAGE_SIZE + 3}`)
   })
 
   it('shows no pager for one page', async () => {
@@ -86,6 +92,13 @@ describe('my orders', () => {
     renderRoute('/orders', { signedInAs: 'CUSTOMER' })
     await screen.findByRole('table')
     expect(screen.queryByRole('navigation', { name: 'Pages of orders' })).not.toBeInTheDocument()
+  })
+
+  it('shows a date it cannot read as the server sent it', async () => {
+    serve([orderFixture({ id: 3, placedAt: 'last Tuesday' })])
+    renderRoute('/orders', { signedInAs: 'CUSTOMER' })
+
+    expect(await screen.findByText('last Tuesday')).toBeInTheDocument()
   })
 
   it('has an empty state', async () => {
@@ -107,5 +120,24 @@ describe('my orders', () => {
 
     expect(await screen.findByText(/Orders are unavailable/)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /retry|try again/i })).toBeInTheDocument()
+  })
+
+  it('asks again when Retry is pressed', async () => {
+    let asked = 0
+    server.use(
+      http.get('/api/orders', () => {
+        asked += 1
+        return asked === 1
+          ? HttpResponse.json({ status: 500, message: 'Orders are unavailable' }, { status: 500 })
+          : HttpResponse.json([orderFixture({ id: 5 })])
+      }),
+    )
+    const user = userEvent.setup()
+    renderRoute('/orders', { signedInAs: 'CUSTOMER' })
+
+    await user.click(await screen.findByRole('button', { name: /retry|try again/i }))
+
+    expect(await screen.findByRole('table')).toBeInTheDocument()
+    expect(rowIds()).toEqual(['#5'])
   })
 })

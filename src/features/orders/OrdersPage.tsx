@@ -55,8 +55,7 @@ export function OrdersPage() {
       {shown.length > 0 ? (
         <>
           <div className="orders-scroll">
-            <table className="orders-table">
-              <caption className="visually-hidden">Your orders, newest first</caption>
+            <table className="orders-table" aria-label="Your orders, newest first">
               <thead>
                 <tr>
                   <th scope="col">Order</th>
@@ -67,7 +66,9 @@ export function OrdersPage() {
                   <th scope="col" className="orders-num">
                     Total
                   </th>
-                  <th scope="col">Status</th>
+                  <th scope="col" className="orders-status-wide">
+                    Status
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -76,14 +77,17 @@ export function OrdersPage() {
                     <th scope="row" className="orders-id">
                       <Link to={`/orders/${order.id}`} aria-label={`Order ${order.id}`}>{`#${order.id}`}</Link>
                     </th>
-                    <td>{placed(order.placedAt)}</td>
+                    <td>
+                      {placed(order.placedAt)}
+                      {/* Narrow screens have no room for a Status column: the status sits under the date instead. */}
+                      <div className="orders-status-narrow">
+                        <Status order={order} />
+                      </div>
+                    </td>
                     <td className="orders-num">{itemCount(order)}</td>
                     <td className="orders-num orders-money">{formatPrice(order.totalAmount)}</td>
-                    <td>
-                      <StatusBadge status={order.status} />
-                      {order.status === 'CANCELLED' && order.statusReason ? (
-                        <p className="ed-caption orders-reason">{order.statusReason}</p>
-                      ) : null}
+                    <td className="orders-status-wide">
+                      <Status order={order} />
                     </td>
                   </tr>
                 ))}
@@ -104,5 +108,17 @@ export function OrdersPage() {
         </>
       ) : null}
     </div>
+  )
+}
+
+/** The badge, and for a cancelled order the server's reason under it. */
+function Status({ order }: { order: Order }) {
+  return (
+    <>
+      <StatusBadge status={order.status} />
+      {order.status === 'CANCELLED' && order.statusReason ? (
+        <p className="ed-caption orders-reason">{order.statusReason}</p>
+      ) : null}
+    </>
   )
 }
