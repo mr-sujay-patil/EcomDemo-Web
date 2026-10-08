@@ -31,8 +31,7 @@ export function StockPage() {
       {products.data?.length === 0 ? <p>There are no products yet.</p> : null}
       {products.data && stock.data ? (
         <div className="admin-scroll">
-          <table className="admin-table">
-            <caption className="visually-hidden">Stock levels</caption>
+          <table className="admin-table" aria-label="Stock levels">
             <thead>
               <tr>
                 <th scope="col">Product</th>
@@ -91,7 +90,7 @@ function StockRow({ product, quantity }: { product: ProductResponse; quantity: n
           noValidate
         >
           <TextField
-            label={`New level for ${product.name}`}
+            aria-label={`New level for ${product.name}`}
             inputMode="numeric"
             autoComplete="off"
             value={typed}

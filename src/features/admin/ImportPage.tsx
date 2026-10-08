@@ -49,6 +49,7 @@ export function ImportPage() {
         </label>
         <input
           id="import-file"
+          className="admin-file"
           type="file"
           accept=".csv,text/csv"
           onChange={(event) => void choose(event.target.files?.[0])}

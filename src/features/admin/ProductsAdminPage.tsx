@@ -34,8 +34,7 @@ export function ProductsAdminPage() {
       {products.data?.length === 0 ? <p>There are no products yet. Create the first one.</p> : null}
       {products.data && products.data.length > 0 ? (
         <div className="admin-scroll">
-          <table className="admin-table">
-            <caption className="visually-hidden">Products</caption>
+          <table className="admin-table" aria-label="Products">
             <thead>
               <tr>
                 <th scope="col" className="admin-num">
@@ -49,9 +48,7 @@ export function ProductsAdminPage() {
                 <th scope="col" className="admin-num">
                   Stock
                 </th>
-                <th scope="col">
-                  <span className="visually-hidden">Actions</span>
-                </th>
+                <th scope="col" aria-label="Actions" />
               </tr>
             </thead>
             <tbody>
@@ -62,24 +59,26 @@ export function ProductsAdminPage() {
                   <td>{product.category ?? '—'}</td>
                   <td className="admin-num admin-mono">{formatPrice(product.price)}</td>
                   <td className="admin-num admin-mono">{product.stockQuantity}</td>
-                  <td className="admin-actions">
-                    <Link
-                      to={String(product.id)}
-                      className={buttonClass({ variant: 'secondary', size: 'sm' })}
-                      aria-label={`Edit ${product.name}`}
-                    >
-                      <span>Edit</span>
-                    </Link>
-                    <Button
-                      variant="danger"
-                      size="sm"
-                      aria-label={`Delete ${product.name}`}
-                      onClick={() => {
-                        setTarget(product)
-                      }}
-                    >
-                      Delete
-                    </Button>
+                  <td>
+                    <div className="admin-actions">
+                      <Link
+                        to={String(product.id)}
+                        className={buttonClass({ variant: 'secondary', size: 'sm' })}
+                        aria-label={`Edit ${product.name}`}
+                      >
+                        <span>Edit</span>
+                      </Link>
+                      <Button
+                        variant="danger"
+                        size="sm"
+                        aria-label={`Delete ${product.name}`}
+                        onClick={() => {
+                          setTarget(product)
+                        }}
+                      >
+                        Delete
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}

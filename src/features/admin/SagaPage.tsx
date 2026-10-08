@@ -63,17 +63,14 @@ export function SagaPage() {
       {letters.data?.length === 0 ? <p>There are no dead letters.</p> : null}
       {letters.data && letters.data.length > 0 ? (
         <div className="admin-scroll">
-          <table className="admin-table">
-            <caption className="visually-hidden">Dead letters</caption>
+          <table className="admin-table" aria-label="Dead letters">
             <thead>
               <tr>
                 <th scope="col">Topic</th>
                 <th scope="col">Where</th>
                 <th scope="col">Failed with</th>
                 <th scope="col">State</th>
-                <th scope="col">
-                  <span className="visually-hidden">Actions</span>
-                </th>
+                <th scope="col" aria-label="Actions" />
               </tr>
             </thead>
             <tbody>
@@ -101,18 +98,20 @@ export function SagaPage() {
                       <StatusBadge tone="accent">Waiting</StatusBadge>
                     )}
                   </td>
-                  <td className="admin-actions">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      disabled={letter.replayed}
-                      aria-label={`Replay offset ${letter.offset} from ${letter.originalTopic}`}
-                      onClick={() => {
-                        setTarget(letter)
-                      }}
-                    >
-                      Replay
-                    </Button>
+                  <td>
+                    <div className="admin-actions">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        disabled={letter.replayed}
+                        aria-label={`Replay offset ${letter.offset} from ${letter.originalTopic}`}
+                        onClick={() => {
+                          setTarget(letter)
+                        }}
+                      >
+                        Replay
+                      </Button>
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -125,8 +124,7 @@ export function SagaPage() {
       {replays.data?.length === 0 ? <p>Nothing has been replayed.</p> : null}
       {replays.data && replays.data.length > 0 ? (
         <div className="admin-scroll">
-          <table className="admin-table">
-            <caption className="visually-hidden">Replay log</caption>
+          <table className="admin-table" aria-label="Replay log">
             <thead>
               <tr>
                 <th scope="col">When</th>

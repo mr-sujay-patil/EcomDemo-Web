@@ -2,7 +2,7 @@
 .admin {
   display: grid;
   gap: var(--space-6);
-  grid-template-columns: 1fr;
+  grid-template-columns: minmax(0, 1fr);
 }
 
 @media (min-width: 800px) {
@@ -163,4 +163,29 @@
   font-size: var(--fs-note);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+.admin-inline .ed-field {
+  width: 6rem;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.admin-table td:last-child {
+  padding-right: 0;
+}
+
+.admin-file {
+  color: var(--ink);
+  font: inherit;
+}
+
+.admin-file::file-selector-button {
+  margin-right: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-card);
+  color: var(--ink-strong);
+  font: 600 var(--fs-label) / var(--lh-label) var(--font-sans);
+  cursor: pointer;
 }

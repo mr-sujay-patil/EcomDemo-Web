@@ -1,0 +1,10 @@
+## Phase 15: Semantic Search (tag: phase-15-complete, PR pending)
+**What exists now:** The header search box is a combobox: after a 300 ms pause it shows the top five suggestions (arrow keys, Enter opens one; Enter with none highlighted goes to `/search?q=…`). `/search` takes `q`, `category`, `minPrice`, `maxPrice` from the URL, asks `GET /api/products/search` for 20, and shows the results in the server's order with no similarity. A 503 gives an `info` Alert and a word match over the loaded catalogue, and the caption says which mode was used. The old Phase 15 placeholder is gone.
+**Key code:** `src/features/search/` (`search.ts`, `api.ts`, `useDebouncedValue.ts`, `SearchBox.tsx`, `SearchPage.tsx`, `search.css`), the `search` slot on `components/Header`, `docs/modules/search.md`, decisions [Phase 15].
+**Config & infrastructure:** no new dependencies. Coverage floor 99.89 / 97.6 / 100 / 100. `searchHandlers` in `src/test/msw/handlers.ts` (default success ranks the fixtures backwards on purpose; `unavailable` is the 503). `unavailableResponseError` in `e2e/screens.ts`: the browser logs a 503 itself.
+**Tests:** 704 unit and component (was 662); E2E 344 (was 310): `e2e/search.spec.ts` (4) and three search screens in the matrix (`search-results`, `search-fallback`, `search-suggestions`).
+**Backend tested against:** `phase-34-complete`, started from the clone with `CUSTOMER_DB_PORT=15435` (a Windows app held 5435). Semantic search answered 200 with real similarities, so the full path ran.
+**Gotchas:** In MSW tests a `server.use('/api/products/:id')` override also catches `/api/products/search`; scope it to one id. The header box now has role `combobox`, not `textbox`. The search E2E accepts results or the fallback, because the backend decides.
+**Owner TODOs open:** unchanged from Phase 14.
+**Backend asks:** none.
+**Follow-ups (not done, out of scope):** search analytics (the phase says no); a result count above 20 would need backend paging; web KI-019 and KI-020 still to relay.
