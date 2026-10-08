@@ -1,5 +1,5 @@
-import { useId, useState, type FocusEvent, type KeyboardEvent } from 'react'
-import { Link, useLocation, useNavigate, useSearchParams } from 'react-router'
+import { useId, useState, type KeyboardEvent } from 'react'
+import { useLocation, useNavigate, useSearchParams } from 'react-router'
 import { Price } from '@/components/Price'
 import { ProductTile } from '@/components/ProductTile'
 import { TextField } from '@/components/TextField'
@@ -77,13 +77,8 @@ export function SearchBox() {
     }
   }
 
-  function onBlur(event: FocusEvent<HTMLDivElement>) {
-    // Focus moving to a suggestion inside the box keeps the list open; anywhere else closes it.
-    if (!event.currentTarget.contains(event.relatedTarget)) close()
-  }
-
   return (
-    <div className="ed-header-search search-box" role="search" onBlur={onBlur}>
+    <div className="ed-header-search search-box" role="search" onBlur={close}>
       <TextField
         name="q"
         icon="search"
@@ -110,22 +105,27 @@ export function SearchBox() {
         aria-label="Suggestions"
         className="search-suggestions"
         hidden={!expanded}
-        // Pressing a suggestion must not pull focus out of the input before the click lands.
+        // Focus stays in the input (the options are reached with aria-activedescendant), so a press must not take it.
         onMouseDown={(event) => event.preventDefault()}
       >
         {items.map((product, index) => (
+          // Keys are handled by the combobox input (aria-activedescendant), as the ARIA pattern says; an option takes only the pointer.
+          // eslint-disable-next-line jsx-a11y/click-events-have-key-events
           <li
             key={product.id}
             id={`${listId}-${index}`}
             role="option"
             aria-selected={index === active}
             className={index === active ? 'search-suggestion is-active' : 'search-suggestion'}
+            // An option holds no link or button (a control inside an option is an accessibility error): the option itself opens the product.
+            onClick={() => {
+              close()
+              void navigate(`/products/${product.id}`)
+            }}
           >
-            <Link to={`/products/${product.id}`} tabIndex={-1} onClick={close}>
-              <ProductTile size="sm" category={categoryOf(product)} image={product.imageUrl} alt="" />
-              <span className="search-suggestion-name">{product.name}</span>
-              <Price amount={product.price} size="sm" />
-            </Link>
+            <ProductTile size="sm" category={categoryOf(product)} image={product.imageUrl} alt="" />
+            <span className="search-suggestion-name">{product.name}</span>
+            <Price amount={product.price} size="sm" />
           </li>
         ))}
       </ul>

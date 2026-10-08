@@ -36,7 +36,7 @@
     flex-basis: 100%;
     max-width: none;
   }
-  .ed-header-nav .ed-btn--ghost span {
+  .ed-header-nav .ed-btn--ghost:has(> svg) span {
     display: none;
   }
 }

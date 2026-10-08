@@ -94,7 +94,8 @@ export function Layout() {
           session ? (
             <AccountMenu />
           ) : (
-            <Link to="/sign-in" className={buttonClass({ variant: 'ghost' })}>
+            // The word is hidden in a narrow header (see Header.css), leaving the icon: the name is given here.
+            <Link to="/sign-in" className={buttonClass({ variant: 'ghost' })} aria-label="Sign in">
               <Icon name="user" size={18} />
               <span>Sign in</span>
             </Link>
