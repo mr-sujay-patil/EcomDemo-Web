@@ -16,14 +16,15 @@ Phase 17 (PR #21, merge `10795ed`, tag `phase-17-complete` on origin): all branc
 ## Checklist (from the phase file's "What you'll implement")
 - [x] axe on every route (signed out, customer, admin) in both themes; fail on serious/critical (`e2e/a11y.spec.ts`, 2 widths; fixed unnamed header links and nested controls in search options)
 - [x] Keyboard-only runs (`e2e/keyboard-flows.spec.ts`, pointer guard); focus visible and no trap on every screen (`e2e/keyboard-sweep.spec.ts`; both proven able to fail)
-- [ ] 200% zoom and 20 px root font still pass overflow checks
-- [ ] `prefers-reduced-motion`: spinner slows, no other motion (asserted)
-- [ ] `toHaveScreenshot` baselines (key screens, 360/1280, light/dark, MSW-deterministic, animations off)
-- [ ] `docs/accessibility.md` with manual screen-reader checklist
-- [ ] Done-when proof: a `--radius-md` change fails baselines (shown, reverted)
+- [x] 200% zoom, 400% zoom (320 px) and 20 px root font pass the overflow checks (`e2e/zoom.spec.ts`; fixed header tools row, import file input, style guide specimens)
+- [x] `prefers-reduced-motion`: spinner slows, no other motion (`e2e/motion.spec.ts`)
+- [x] `toHaveScreenshot` baselines: 32 in `e2e/visual.spec.ts-snapshots/` (stubbed with page.route, exact compare; `npm run e2e:baselines` updates)
+- [x] `docs/accessibility.md` with manual screen-reader checklist
+- [x] Done-when proof: `--radius-md` 4→9 px fails 32/32, 4→5 px fails 15/32 (reverted)
+- [ ] Full `npm run e2e` run (background, log `/tmp/claude-1000/e2e-full.log`), `npm run e2e:report` screenshots into `docs/test-reports/phase-18/`, `docs/test-reports/phase-18.md`, RECENT.md rotation (move Phase 16 to `archive/`), push, PR, stop the stack
 
 ## Next action
-Backend stack for this phase is RUNNING (started from the clone with `CUSTOMER_DB_PORT=15435`; stop it at the end with `docker compose --profile tools down`, no `-v`). Next: `e2e/zoom.spec.ts` (200% zoom + 20 px root font vs the overflow checks), `e2e/motion.spec.ts` (reduced motion), `e2e/visual.spec.ts` (`toHaveScreenshot`, stubbed data), `docs/accessibility.md`, decisions lines, module docs, test report, then the `--radius-md` proof.
+Backend stack for this phase is RUNNING (started from the clone with `CUSTOMER_DB_PORT=15435`; stop it at the end with `docker compose --profile tools down`, no `-v`). `npm run verify` exit 0 (825 tests). Read the full E2E result, then `npm run e2e:report`, write `docs/test-reports/phase-18.md` (report the stock failure web KI-020 honestly if it recurs), rotate `RECENT.md`, add the Phase 18 summary, push, `gh pr create` (title `Phase 18: Accessibility`, reason for the new baselines in the body), stop the stack, STOP for review.
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.

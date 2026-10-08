@@ -52,7 +52,7 @@ export type FocusStop = {
   label: string
   /** The element draws something around itself when focused (an outline or a box shadow). */
   indicated: boolean
-  /** The element, once focused, lies at least partly inside the viewport. */
+  /** The element, once focused, lies at least partly inside the viewport and nothing sits on top of it (WCAG 2.4.11). */
   onScreen: boolean
 }
 
@@ -118,12 +118,28 @@ export async function tabThroughPage(page: Page, maxPresses = 250): Promise<{ st
       const repeated = marks.has(element)
       marks.add(element)
       const rect = element.getBoundingClientRect()
+      // The middle of the part of the element that is inside the window, and what is painted there.
+      const visible = {
+        left: Math.max(rect.left, 0),
+        right: Math.min(rect.right, innerWidth),
+        top: Math.max(rect.top, 0),
+        bottom: Math.min(rect.bottom, innerHeight),
+      }
+      const inWindow = visible.right > visible.left && visible.bottom > visible.top
+      const hit = inWindow
+        ? document.elementFromPoint((visible.left + visible.right) / 2, (visible.top + visible.bottom) / 2)
+        : null
+      const uncovered =
+        hit !== null &&
+        (element.contains(hit) ||
+          hit.contains(element) ||
+          (element as HTMLInputElement).labels?.[0]?.contains(hit) === true)
       const label =
         element.getAttribute('aria-label') ?? element.textContent?.trim().slice(0, 30) ?? element.tagName.toLowerCase()
       return {
         label: `<${element.tagName.toLowerCase()}> ${label || element.getAttribute('name') || element.getAttribute('type') || ''}`,
         indicated: focused !== plain,
-        onScreen: rect.bottom > 0 && rect.right > 0 && rect.top < innerHeight && rect.left < innerWidth,
+        onScreen: uncovered,
         repeated,
       }
     })

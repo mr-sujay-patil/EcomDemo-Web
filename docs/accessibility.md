@@ -11,13 +11,13 @@ All of it is Playwright against the production build (`npm run e2e`). Screens co
 | Check | File | What it proves | WCAG |
 |---|---|---|---|
 | axe | `e2e/a11y.spec.ts` | No serious or critical violation on any screen (signed out, customer, admin) at 360 and 1280 px, light and dark. Tags: `wcag2a`, `wcag2aa`, `wcag21a`, `wcag21aa`, `wcag22aa`. No rule is switched off. | 1.1.1, 1.3.1, 1.4.3, 2.4.x, 4.1.2 and the rest axe covers |
-| Keyboard sweep | `e2e/keyboard-sweep.spec.ts` | One lap of Tab on every screen reaches every control (inside the dialog when one is open), each control changes its look when focused, and focus is never trapped. | 2.1.1, 2.1.2, 2.4.7 |
+| Keyboard sweep | `e2e/keyboard-sweep.spec.ts` | One lap of Tab on every screen reaches every control (inside the dialog when one is open), each control changes its look when focused, nothing is painted over the focused control, and focus is never trapped. | 2.1.1, 2.1.2, 2.4.7, 2.4.11 |
 | Keyboard-only flows | `e2e/keyboard-flows.spec.ts` | Sign in, put a Desk Mat in the cart, change the quantity with Space, place the order, find it under My orders, sign out; open a product signed out, sign in and come back; register; search; the admin delete dialog traps focus, closes on Escape and returns focus. A pointer guard fails the test if any mouse or touch event reaches the page. | 2.1.1, 2.1.2, 2.4.3 |
 | Dialogs | `e2e/assistant.spec.ts`, `e2e/keyboard-flows.spec.ts` | Focus stays inside an open dialog; Escape closes it; focus goes back to the button that opened it. | 2.1.2, 2.4.3 |
 | Zoom and font size | `e2e/zoom.spec.ts` | The overflow and clipped-text checks of `layout.spec.ts` pass at 200% zoom (640 px), at 400% zoom (320 px, the reflow width) and with a 20 px root font on a phone and a desktop. | 1.4.4, 1.4.10 |
 | Motion | `e2e/motion.spec.ts` | Nothing but the button spinner animates, nothing transitions, nothing scrolls smoothly, on every screen, with and without `prefers-reduced-motion`. The spinner turns at 0.8 s a lap, 2.4 s when motion is reduced. | 2.3.3, 2.2.2 |
 | Visual comparison | `e2e/visual.spec.ts` | Eight key screens (shelf, product, cart, order confirmed, order cancelled, sign-in, assistant, admin products) at 360 and 1280 px, light and dark, match their baselines exactly. | not WCAG: catches what the layout checks cannot see |
-| Unit | `AccountMenu.test.tsx`, `SearchBox.test.tsx` | The header sign-in link names itself; a search option holds nothing focusable. | 4.1.2 |
+| Unit | `AccountMenu.test.tsx`, `SearchBox.test.tsx` | The header sign-in link names itself; a search option holds nothing focusable; the account menu closes when focus leaves it. | 4.1.2, 2.4.11 |
 
 Each guard was shown able to fail before it was trusted (see the Phase 18 test report): the focus outline removed fails the sweep, a click fails the pointer guard, and a `--radius-md` change fails the baselines.
 
