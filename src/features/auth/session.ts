@@ -59,6 +59,10 @@ export function createSessionStore() {
       set({ session, endedBy: null })
     },
     end,
+    /** Swaps in a profile the server just returned (a renamed customer); the token and its clock stay. */
+    updateProfile: (profile: CustomerResponse) => {
+      if (snapshot.session) set({ ...snapshot, session: { ...snapshot.session, profile } })
+    },
     /** The server said 401 to this token: ends the session only if it is still the one in use. */
     reject: (rejectedToken: string) => {
       if (snapshot.session?.accessToken === rejectedToken) end('rejected')

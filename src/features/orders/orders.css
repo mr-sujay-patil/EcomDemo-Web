@@ -1,0 +1,73 @@
+/* My orders: a table, not cards. Tokens only. */
+.orders-scroll {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.orders-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.orders-table th,
+.orders-table td {
+  padding: var(--space-3) var(--space-3) var(--space-3) 0;
+  border-bottom: 1px solid var(--border);
+  vertical-align: top;
+}
+
+.orders-table thead th {
+  font-weight: 600;
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.orders-num {
+  text-align: right;
+}
+
+.orders-id,
+.orders-money {
+  font-family: var(--font-mono);
+  white-space: nowrap;
+}
+
+.orders-id {
+  font-weight: 400;
+}
+
+.orders-reason {
+  margin: var(--space-1) 0 0;
+  max-width: 28ch;
+  overflow-wrap: anywhere;
+}
+
+/* The status is in two places so that each width shows it once; display: none also removes the hidden copy from
+   the accessibility tree and from a screen reader's table. */
+.orders-status-narrow {
+  display: none;
+  margin-top: var(--space-2);
+}
+
+@media (max-width: 559px) {
+  .orders-status-wide {
+    display: none;
+  }
+
+  .orders-status-narrow {
+    display: block;
+  }
+
+  .orders-table th,
+  .orders-table td {
+    padding-right: var(--space-2);
+  }
+}
+
+.orders-pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
