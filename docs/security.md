@@ -12,7 +12,7 @@ The app is one origin: the nginx in the web container serves the built files and
 
 ## The headers
 
-Set by nginx (`nginx/security-headers.conf`, included in every location, so a 404 and a proxied API answer carry them too). The E2E suite against the container checks them on the page, a built file, a missing file, `/healthz` and `/api`.
+Set by nginx (`nginx/security-headers.conf`, included in every location, so a 404 and a proxied API answer carry them too). The one exception is `.woff2` font files: these headers only act on a document, and their ~450 bytes per file pushed the Phase 21 font budget over its limit (decisions.md). The E2E suite against the container checks them on the page, a built file, a missing file, `/healthz` and `/api`.
 
 | Header | Value | Why |
 |---|---|---|

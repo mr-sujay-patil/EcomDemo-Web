@@ -49,6 +49,21 @@ if (againstContainer) {
       }
     })
 
+    test('a font file carries no security headers (they only cost bytes there); a script has them', async ({
+      request,
+    }) => {
+      const page = await (await request.get('/')).text()
+      const script = page.match(/src="(\/assets\/[^"]+\.js)"/)?.[1] ?? '/assets/missing.js'
+      const stylesheet = page.match(/href="(\/assets\/[^"]+\.css)"/)?.[1] ?? '/assets/missing.css'
+      const font = (await (await request.get(stylesheet)).text()).match(/url\(([^)]+\.woff2)\)/)?.[1]
+
+      expect(font, 'the stylesheet names a font').toBeTruthy()
+      const fontHeaders = (await request.get(font!.replace(/^["']|["']$/g, ''))).headers()
+      expect(fontHeaders['content-security-policy']).toBeUndefined()
+      expect(fontHeaders['cache-control']).toContain('immutable')
+      expect((await request.get(script)).headers()['content-security-policy']).toContain("script-src 'self'")
+    })
+
     test('index.html is always re-asked, and a hashed asset is kept for a year', async ({ request }) => {
       const index = await request.get('/')
       expect(index.headers()['cache-control']).toBe('no-cache')
