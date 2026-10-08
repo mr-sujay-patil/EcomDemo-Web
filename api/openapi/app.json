@@ -351,6 +351,11 @@
             "format": "int32",
             "type": "integer"
           },
+          "dltTimestamp": {
+            "description": "When it was written there: with the address, what identifies the record. Null for a replay from before the field existed",
+            "format": "date-time",
+            "type": "string"
+          },
           "dltTopic": {
             "description": "The dead-letter topic it was read from",
             "example": "inventory.stock-reserved-dlt",

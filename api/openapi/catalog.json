@@ -312,8 +312,37 @@
   "paths": {
     "/api/products": {
       "get": {
-        "description": "Returns the whole catalogue, unpaged and unsorted. Paging arrives when the catalogue is big enough to need it.",
+        "description": "Returns one page of the catalogue as a JSON array, in id order. `page` counts from 0 (default 0) and `size` defaults to 50, at most 100. `X-Total-Count` is the number of products in all, and `Link` carries the first, prev, next and last pages. A page past the end is an empty array.",
         "operationId": "list",
+        "parameters": [
+          {
+            "description": "Page number, from 0",
+            "example": 0,
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "format": "int32",
+              "minimum": 0,
+              "type": "integer"
+            }
+          },
+          {
+            "description": "Products per page (default 50, max 100)",
+            "example": 50,
+            "in": "query",
+            "name": "size",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "format": "int32",
+              "maximum": 100,
+              "minimum": 1,
+              "type": "integer"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -326,10 +355,30 @@
                 }
               }
             },
-            "description": "The catalogue, possibly empty"
+            "description": "The page, possibly empty",
+            "headers": {
+              "Link": {
+                "description": "RFC 8288 links: first, prev, next, last",
+                "style": "simple"
+              },
+              "X-Total-Count": {
+                "description": "Products in the whole catalogue",
+                "style": "simple"
+              }
+            }
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            },
+            "description": "A negative page, or a size under 1 or over 100"
           }
         },
-        "summary": "List every product",
+        "summary": "List the products, one page at a time",
         "tags": [
           "Products"
         ]

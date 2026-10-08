@@ -512,6 +512,11 @@ export interface components {
              */
             dltPartition: number;
             /**
+             * Format: date-time
+             * @description When it was written there: with the address, what identifies the record. Null for a replay from before the field existed
+             */
+            dltTimestamp: string;
+            /**
              * @description The dead-letter topic it was read from
              * @example inventory.stock-reserved-dlt
              */
