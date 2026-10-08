@@ -12,7 +12,7 @@ describe('the admin product list', () => {
   it('lists every product with the server price and stock, and links to edit', async () => {
     renderRoute('/admin/products', { signedInAs: 'ADMIN' })
 
-    const row = (await screen.findByRole('row', { name: /Test Kettle/ }))
+    const row = await screen.findByRole('row', { name: /Test Kettle/ })
     expect(within(row).getByText('₹1,299.00')).toBeInTheDocument()
     expect(within(row).getByText('Kitchen')).toBeInTheDocument()
     expect(within(row).getByRole('link', { name: 'Edit Test Kettle' })).toHaveAttribute('href', '/admin/products/1')

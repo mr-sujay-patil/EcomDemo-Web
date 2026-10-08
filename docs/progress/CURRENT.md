@@ -17,14 +17,14 @@ Phase 16 (PR #20, merge `d3da037`, tag `phase-16-complete`): all branch commits 
 - [x] `/admin/*` lazy-loaded, ADMIN only; CUSTOMER sees "Not permitted"
 - [x] Products: list, create, full-replace edit, delete with typed confirmation
 - [x] Generate description (owner chose: warn, then Restore previous; web KI-022)
-- [ ] Stock: set a level (not a delta)
-- [ ] CSV import: header check, preview, `skipCount`
-- [ ] Search index backfill: 202 + poll every 2 s
+- [x] Stock: set a level (not a delta)
+- [x] CSV import: header check, preview, `skipCount`
+- [x] Search index backfill: 202 + poll every 2 s
 - [ ] Saga support (optional, last)
 - [ ] `docs/modules/admin.md`; tests; E2E additions
 
 ## Next action
-Slice 2: stock (`GET /api/inventory?productIds=`, `PUT /api/inventory/{id}` sets a level), then CSV import, search-index backfill, optional saga support, `docs/modules/admin.md`, E2E (`e2e/admin.spec.ts`), test report. Components live in `src/features/admin/`; sections are routed inside `AdminPage.tsx`.
+Saga support (dead letters, replay, audit; build against the pin, see Merge verification), then `docs/modules/admin.md`, E2E (`e2e/admin.spec.ts`: product create-edit-delete, stock, CSV with one bad row, customer sees Not permitted), screens in `e2e/screens.ts`, test report, coverage floor, PR. Components live in `src/features/admin/`; sections are routed inside `AdminPage.tsx`.
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.
