@@ -3,29 +3,26 @@
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
 - **Updated:** 2026-10-08
-- **Phase:** 18 — Accessibility
-- **Branch:** `feature/phase-18-accessibility`
+- **Phase:** 19 — Containerization
+- **Branch:** `feature/phase-19-docker`
 - **Step:** PR_OPEN
-- **PR:** #22 (CI green on the pushed head: verify and e2e, 1005 e2e passed in CI)
+- **PR:** pending (see `gh pr list`)
 - **Backend pinned at:** `phase-34-complete`. No stack runs now: start it from `../ecomdemo-backend-readonly` with `CUSTOMER_DB_PORT=15435 docker compose up --build --wait -d` (Windows app SignalRgb holds 5435) and stop it at the end with `docker compose --profile tools down` (no `-v`).
-- **Waiting for user:** YES: review of the Phase 18 PR; the manual screen-reader pass in `docs/accessibility.md` (reply `done` with notes). Carried: set `E2E_ADMIN_USERNAME` / `E2E_ADMIN_PASSWORD` and run `e2e/admin.spec.ts` (and add them as CI secrets); relay web KI-019, KI-020, KI-021, KI-022 to the backend team; the ADMIN embeddings backfill; decide on `chore/pin-backend-<tag>`)
+- **Waiting for user:** YES: review of the Phase 19 PR; reply `approved, merge it` to merge. Carried: the manual screen-reader pass (`docs/accessibility.md`), the `E2E_ADMIN_*` credentials, relay web KI-019/020/021/022 (and KI-024 before any pin move) to the backend team, decide on `chore/pin-backend-<tag>`.
 
 ## Merge verification before this phase
-Phase 17 (PR #21, merge `10795ed`, tag `phase-17-complete` on origin): all branch commits in `main`; CI on `main` green; `npm ci && npm run verify` exit 0 on `main` (2026-10-08). Backend sync 2026-10-08: `origin/main` is 40 commits past the pin (KI-002/003/004/005/006/040/044/045/046); nothing new for the web beyond what Phase 16 reported; Phase 18 needs nothing from the backend. Pin stays `phase-34-complete`.
+Phase 18 (PR #22, merge `640d11c`, tag `phase-18-complete`; PR #23 Dependabot merged by the owner as `171a218`): all branch commits in `main`; `npm ci && npm run verify` exit 0 on `main` (827 tests); `npm run e2e` on `main` 1004 passed + web KI-020. Backend sync 2026-10-08: `origin/main` is 46 commits past the pin; new KI-007 (paged `GET /api/products`) recorded as web KI-024; pin stays `phase-34-complete`.
 
 ## Checklist (from the phase file's "What you'll implement")
-- [x] axe on every route (signed out, customer, admin) in both themes; fail on serious/critical (`e2e/a11y.spec.ts`, 2 widths; fixed unnamed header links and nested controls in search options)
-- [x] Keyboard-only runs (`e2e/keyboard-flows.spec.ts`, pointer guard); focus visible and no trap on every screen (`e2e/keyboard-sweep.spec.ts`; both proven able to fail)
-- [x] 200% zoom, 400% zoom (320 px) and 20 px root font pass the overflow checks (`e2e/zoom.spec.ts`; fixed header tools row, import file input, style guide specimens)
-- [x] `prefers-reduced-motion`: spinner slows, no other motion (`e2e/motion.spec.ts`)
-- [x] `toHaveScreenshot` baselines: 32 in `e2e/visual.spec.ts-snapshots/` (stubbed with page.route, exact compare; `npm run e2e:baselines` updates)
-- [x] `docs/accessibility.md` with manual screen-reader checklist
-- [x] Done-when proof: `--radius-md` 4→9 px fails 32/32, 4→5 px fails 15/32 (reverted)
-- [x] Full `npm run e2e` (1004 pass, 1 fails: web KI-020), report screenshots, `docs/test-reports/phase-18.md`, RECENT.md rotated, pushed, PR raised, stack stopped
-- Also fixed in this phase (web KI-023): unnamed header links, nested controls in search options, 320 px reflow, account menu left open when focus moved on
+- [x] `Dockerfile`: node 24.21.0-alpine builder, nginx 1.30.5-alpine-slim final (digests pinned), non-root, `HEALTHCHECK /healthz`
+- [x] `nginx/default.conf.template`: SPA fallback, `/api/` proxy (Host kept, long timeouts, 16 MB bodies), `/healthz`, immutable assets, no-cache index, gzip, `server_tokens off`
+- [x] `.dockerignore`; `compose.yaml` (only `web`, external backend network via `BACKEND_NETWORK`)
+- [x] `npm run e2e:docker` (985 pass, 1 fails: web KI-020); `e2e/container.spec.ts` (8)
+- [x] CI: `image` job on PRs, `publish` job to GHCR on `main` (publish unproven until the merge)
+- [x] docs (README, development-environment, decisions, KNOWN_ISSUES KI-024), test report, RECENT rotated
 
 ## Next action
-Wait for the owner's review. The backend stack is STOPPED (started from the clone with `CUSTOMER_DB_PORT=15435`, taken down with `docker compose --profile tools down`, no `-v`). On `approved, merge it`: wait for CI to pass on the PR head and read it (it was green on the pushed head, including the 32 visual baselines), `gh pr merge 22 --merge` (no `--delete-branch`); merge verification on `main` (`npm ci && npm run verify`; start the stack with `CUSTOMER_DB_PORT=15435 docker compose up --build --wait -d` in `../ecomdemo-backend-readonly`, run `npm run e2e`, read the result before tagging; web KI-020 fails on stock data); tag `phase-18-complete`; stop the stack. The first commit of the next branch updates the tracker row (18 ✅) and this file. Before the next phase: fetch the backend clone and compare with the pin. Next phase only on `continue`: Phase 19 (read its file first).
+Wait for the owner's review. The backend stack is RUNNING (started from the clone with `CUSTOMER_DB_PORT=15435`); stop it with `docker compose --profile tools down` (no `-v`) unless the owner needs it. On `approved, merge it`: wait for CI to pass on the PR head and read it (the new `image` job especially), `gh pr merge <n> --merge` (no `--delete-branch`); then READ the `publish` run on `main` and check the image exists in GHCR (Settings → Actions permissions, or package visibility, are the usual failures); merge verification on `main` (`npm ci && npm run verify`, `npm run e2e:docker` with the stack up, read the result before tagging); tag `phase-19-complete`; stop the stack. The first commit of the next branch updates the tracker row (19 ✅) and this file. Before the next phase: fetch the backend clone and compare with the pin. Next phase only on `continue`: Phase 20 (read its file first).
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.
