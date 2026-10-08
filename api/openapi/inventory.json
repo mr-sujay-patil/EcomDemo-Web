@@ -50,22 +50,6 @@
           }
         },
         "type": "object"
-      },
-      "UnitsRequest": {
-        "properties": {
-          "productName": {
-            "type": "string"
-          },
-          "units": {
-            "exclusiveMinimum": 0,
-            "format": "int32",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "units"
-        ],
-        "type": "object"
       }
     },
     "securitySchemes": {
@@ -239,88 +223,6 @@
             "application/json": {
               "schema": {
                 "$ref": "#/components/schemas/StockLevelRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/StockResponse"
-                }
-              }
-            },
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "inventory-controller"
-        ]
-      }
-    },
-    "/api/inventory/{productId}/release": {
-      "post": {
-        "operationId": "release",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "productId",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UnitsRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/StockResponse"
-                }
-              }
-            },
-            "description": "OK"
-          }
-        },
-        "tags": [
-          "inventory-controller"
-        ]
-      }
-    },
-    "/api/inventory/{productId}/reserve": {
-      "post": {
-        "operationId": "reserve",
-        "parameters": [
-          {
-            "in": "path",
-            "name": "productId",
-            "required": true,
-            "schema": {
-              "format": "int64",
-              "type": "integer"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/UnitsRequest"
               }
             }
           },

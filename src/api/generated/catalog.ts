@@ -13,8 +13,8 @@ export interface paths {
             cookie?: never;
         };
         /**
-         * List every product
-         * @description Returns the whole catalogue, unpaged and unsorted. Paging arrives when the catalogue is big enough to need it.
+         * List the products, one page at a time
+         * @description Returns one page of the catalogue as a JSON array, in id order. `page` counts from 0 (default 0) and `size` defaults to 50, at most 100. `X-Total-Count` is the number of products in all, and `Link` carries the first, prev, next and last pages. A page past the end is an empty array.
          */
         get: operations["list"];
         put?: never;
@@ -360,20 +360,44 @@ export type $defs = Record<string, never>;
 export interface operations {
     list: {
         parameters: {
-            query?: never;
+            query?: {
+                /**
+                 * @description Page number, from 0
+                 * @example 0
+                 */
+                page?: number;
+                /**
+                 * @description Products per page (default 50, max 100)
+                 * @example 50
+                 */
+                size?: number;
+            };
             header?: never;
             path?: never;
             cookie?: never;
         };
         requestBody?: never;
         responses: {
-            /** @description The catalogue, possibly empty */
+            /** @description The page, possibly empty */
             200: {
                 headers: {
+                    /** @description RFC 8288 links: first, prev, next, last */
+                    Link?: unknown;
+                    /** @description Products in the whole catalogue */
+                    "X-Total-Count"?: unknown;
                     [name: string]: unknown;
                 };
                 content: {
                     "*/*": components["schemas"]["ProductResponse"][];
+                };
+            };
+            /** @description A negative page, or a size under 1 or over 100 */
+            400: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiError"];
                 };
             };
         };

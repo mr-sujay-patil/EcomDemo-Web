@@ -52,14 +52,12 @@ const rules: readonly Rule[] = [
 ]
 
 /**
- * In the documents but not for the browser. The guide names the first four as service-to-service
- * calls (the import and the order saga). DELETE /api/inventory/{productId} is not in the guide at
+ * In the documents but not for the browser. The guide names the first two as service-to-service
+ * calls (the import and the order saga). The inventory reserve and release calls were removed by the backend (KI-011, pin f088fd4). DELETE /api/inventory/{productId} is not in the guide at
  * all; it is kept out of the app until the backend team says who may call it.
  */
 export const notForTheFrontend: readonly Pick<Rule, 'method' | 'path'>[] = [
   { method: 'POST', path: '/api/products/batch' },
-  { method: 'POST', path: '/api/inventory/{productId}/reserve' },
-  { method: 'POST', path: '/api/inventory/{productId}/release' },
   { method: 'POST', path: '/api/inventory/orders/{orderId}/close' },
   { method: 'DELETE', path: '/api/inventory/{productId}' },
 ]
