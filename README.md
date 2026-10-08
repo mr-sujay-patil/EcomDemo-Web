@@ -51,7 +51,7 @@ The container joins the backend's Docker network. Its name is `<backend compose 
 
 ### In the backend's kind cluster
 
-With the backend's kind cluster up, `bash scripts/k8s-up.sh` adds the shop to it (two replicas behind the cluster's Traefik): **http://shop.localhost:18080**, while `localhost:18080` stays the backend's own. `bash scripts/k8s-down.sh` removes only what it added.
+With the backend's kind cluster up, `bash scripts/k8s-up.sh` adds the shop to it (two replicas behind the cluster's Traefik): **http://shop.localhost:18080** (⚠️ the backend's cluster is HTTPS now, so this does not work until it is changed: web KI-034, `docs/process/development-environment.md`), while `localhost:18080` stays the backend's own. `bash scripts/k8s-down.sh` removes only what it added.
 
 | Script | What it does |
 |---|---|
