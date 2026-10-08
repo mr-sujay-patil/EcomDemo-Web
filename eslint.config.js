@@ -76,10 +76,15 @@ export default defineConfig([
     languageOptions: { globals: globals.node },
   },
 
-  // Plain JavaScript outside every tsconfig (the config files, scripts/check-tokens.mjs): no type information.
+  // Plain JavaScript outside every tsconfig (the config files, scripts/check-tokens.mjs, scripts/localhost-dns.cjs): no type information.
   {
-    files: ['**/*.js', '**/*.mjs'],
+    files: ['**/*.js', '**/*.mjs', '**/*.cjs'],
     extends: [tseslint.configs.disableTypeChecked],
+  },
+  // A `.cjs` file is CommonJS on purpose (it is preloaded with `node --require`): `require` is the only way in.
+  {
+    files: ['**/*.cjs'],
+    rules: { '@typescript-eslint/no-require-imports': 'off' },
   },
 
   // Last: turn off every rule that would fight Prettier over formatting.

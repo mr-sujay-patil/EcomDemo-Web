@@ -1,0 +1,26 @@
+# The shop's web container in the backend's kind cluster (Phase 20). A separate app: its own names, its own labels, in the
+# backend's namespace because the Ingress and the gateway Service must share one. It adds objects; it never edits or
+# deletes a backend object. `scripts/k8s-down.sh` removes exactly what is listed here and nothing else.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ecomdemo
+
+resources:
+  - configmap.yaml
+  - deployment.yaml
+  - service.yaml
+  - ingress.yaml
+
+# Every object here carries these, and the Deployment selects on them. `part-of` is deliberately NOT `ecomdemo`, the
+# backend's value: a command that selects the backend by that label must never catch the shop.
+labels:
+  - pairs:
+      app.kubernetes.io/name: ecomdemo-web
+      app.kubernetes.io/part-of: ecomdemo-web
+    includeSelectors: true
+
+# The image `scripts/k8s-up.sh` builds and loads into the cluster's node (the backend's own images are used the same way).
+images:
+  - name: ecomdemo-web
+    newTag: k8s
