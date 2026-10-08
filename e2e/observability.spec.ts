@@ -101,11 +101,14 @@ test.describe('with the catalogue service really stopped', () => {
   test.skip(!process.env.E2E_SERVICE_DOWN, 'run it with scripts/e2e-service-down.sh')
   test.use({ allowedConsoleErrors: [/Failed to load resource/] })
 
-  test('the shelf shows a reference, the one the gateway logged', async ({ page }) => {
-    const sent: string[] = []
+  test('the shelf shows a reference, one of the ids the page sent', async ({ page }) => {
+    const sent = new Map<string, string>()
     page.on('request', (request) => {
-      const id = request.headers()['x-correlation-id']
-      if (request.resourceType() === 'fetch' && request.url().includes('/api/products') && id) sent.push(id)
+      const headers = request.headers()
+      const id = headers['x-correlation-id']
+      if (request.resourceType() === 'fetch' && request.url().includes('/api/products') && id) {
+        sent.set(id, headers['traceparent'] ?? '')
+      }
     })
 
     await page.goto('/')
@@ -113,8 +116,23 @@ test.describe('with the catalogue service really stopped', () => {
     const alert = page.getByRole('alert')
     await expect(alert).toBeVisible()
     const reference = (await alert.locator('code').innerText()).trim()
-    // The gateway reuses the id the page sent (src/api/client.ts), so the reference is one of the ids in the requests.
-    expect(sent).toContain(reference)
+    // The gateway reuses the id the page sent (src/api/client.ts) and echoes it, so the reference is one of the ids in the requests.
+    expect([...sent.keys()]).toContain(reference)
+    // For docs/troubleshooting.md: the reference on screen, and the trace the same request started (DevTools > Network > traceparent).
     console.log(`E2E_REFERENCE=${reference}`)
+    console.log(`E2E_TRACEPARENT=${sent.get(reference)}`)
+
+    // The screenshots of the report (docs/test-reports/phase-23/): the shelf with the catalogue really down.
+    for (const [name, size, scheme] of [
+      ['1280-light', { width: 1280, height: 800 }, 'light'],
+      ['360-light', { width: 360, height: 800 }, 'light'],
+      ['1280-dark', { width: 1280, height: 800 }, 'dark'],
+      ['360-dark', { width: 360, height: 800 }, 'dark'],
+    ] as const) {
+      await page.setViewportSize(size)
+      await page.emulateMedia({ colorScheme: scheme })
+      await expect(alert).toBeVisible()
+      await page.screenshot({ path: `docs/test-reports/phase-23/shelf-service-down-${name}.png`, fullPage: true })
+    }
   })
 })

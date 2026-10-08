@@ -14,15 +14,17 @@
 Phase 22 (PR #27, merge `165402d`, tag `phase-22-complete`): tip in `main`; `npm ci && npm run verify` exit 0 (855); CI on `main` green incl. publish. Chores since: PR #28 (pin `f088fd4`), #29 (CI speed: backend image cache, verify/e2e on pull requests only, `backend-images.yml`), #30 (CLAUDE.md workflow rules). Backend sync (2026-10-08): `origin/main` `33d6f1a`, 3 commits past the pin, all backend CI/workflow rules; nothing for the web; pin stays.
 
 ## Checklist (from the phase file's "What you'll implement")
-- [ ] Error boundaries: root (full page, "Reference: …", link home) and per route (layout stays usable); router `errorElement`s use the same components; global unhandled-rejection handler shows the reference `Alert` once
-- [ ] The reference is the `X-Correlation-Id` the client sent and the gateway echoed; copy to clipboard
-- [ ] OpenTelemetry Web: fetch instrumentation propagating `traceparent` on `/api` only; no third-party exporter; optional dev OTLP only if the backend collector accepts browser traffic (else stop, rule 10)
-- [ ] Web Vitals logged in dev, recorded in the test report; no analytics service
-- [ ] `docs/troubleshooting.md`: reference on screen to the request in Grafana (Loki by correlation id, Tempo by trace), worked example from a real failure
-- [ ] E2E: backend service down shows the reference page; every `/api` request carries `traceparent` and `X-Correlation-Id`
+- [x] Error boundaries: root page, route boundary (layout stays), router `errorElement`s, unhandled-rejection alert (once); `ErrorReference` with Copy
+- [x] The reference is the `X-Correlation-Id` (a render error gets a fresh id, console only)
+- [x] OpenTelemetry Web: `src/app/tracing.ts`, `traceparent` on `/api` only, no exporter (optional dev OTLP not done: not published for browsers, would need a backend change)
+- [x] Web Vitals in dev (`src/app/webVitals.ts`), recorded in the test report
+- [x] `docs/troubleshooting.md` with a worked example from a real failure
+- [x] E2E: `e2e/observability.spec.ts`, `scripts/e2e-service-down.sh` (`npm run e2e:service-down`)
+- [ ] Done-when, second half: the reference finds the **gateway's log line**: NOT possible at the pinned backend (gateway writes no request log): web KI-032, backend KI-035; message for the backend team in the PR
+- [ ] PR; CI green; the owner's review; then `v1.0` after the merge (the phase file says tag `v1.0`)
 
 ## Next action
-Read the integration guide's error/correlation sections, `src/api/client.ts` and `errors.ts`, the router's current error pages; then plan the boundaries.
+Wait for the owner's review of the Phase 23 PR. On `approved, merge it`: confirm CI green on the PR head, `gh pr merge <n> --merge` (no `--delete-branch`), verify `main` (`npm ci && npm run verify`; CI on `main`; the phase file says to tag `v1.0` after this phase, in addition to `phase-23-complete`: ask the owner before tagging `v1.0`). The backend stack is RUNNING (commit `f088fd4`, Alloy recreated with a local override in the scratchpad so logs reach Loki): stop it with `docker compose --profile tools down` (no `-v`) when done. Next phase only on `continue`.
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.

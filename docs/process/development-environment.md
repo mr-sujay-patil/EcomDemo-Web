@@ -28,6 +28,8 @@ The read-only clone is set up once, in Phase 0:
 
 Reading it is allowed (files, `git log`, `git fetch --tags`, checking out a newer tag when the pin moves). Writing is never allowed: no commits, branches, pushes, PRs, issues or comments on the backend. Never check out a tag in `~/projects/ecomdemo`: that would move the backend team's work.
 
+> ⚠️ **Logs reach Loki only from the compose project `ecomdemo`.** The backend's Alloy config keeps containers whose project label is exactly `ecomdemo`; a clone in `ecomdemo-backend-readonly` has a project of that name, so Loki stays empty (traces are fine). To read logs here, mount a copy of `docker/alloy/config.alloy` with the project name changed through a local override file (outside both repositories); never run this clone as project `ecomdemo` (its volumes are the backend team's). Details: `docs/troubleshooting.md`.
+
 ## Running the backend stack
 
 Only one backend stack can run at a time: both copies use the same container names and ports.

@@ -54,3 +54,7 @@ A loading state says what is loading (`role="status"`) and sits in a box that ke
 ## The session and the cache (Phase 11)
 
 The signed-in person's data lives in the query cache like any server state, and is **removed whenever a session ends** (sign-out, expiry, a refused token): every query whose key does not start with `'catalog'`. So a new feature's keys are safe by default, and a catalogue key must start with `catalog` to survive (`catalogKeys` does). The session itself is not in the cache: it is a small external store (`docs/architecture/auth-flow.md`).
+
+## Errors that are not a failed call
+
+A call that fails is an `ApiError` and shows in the screen that made it (`ErrorPanel`). An error React meets while rendering goes to the nearest boundary: the route boundary (a pathless route under the layout, `RouteError` in `src/app/ErrorPages.tsx`) keeps the header and footer; the layout's own `errorElement` and `RootErrorBoundary` (around the providers and the router) show a page on its own. A promise nobody caught is shown once by `UnhandledRejectionNotice`. All of them show a reference (`ErrorReference`); `docs/troubleshooting.md` says what each reference finds.
