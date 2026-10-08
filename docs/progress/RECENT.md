@@ -15,7 +15,7 @@
 **Follow-ups (not done, out of scope):** <suggestions deferred to later phases>
 -->
 
-## Phase 17: Admin Console (tag: phase-17-complete, PR pending)
+## Phase 17: Admin Console (tag: phase-17-complete, PR #21)
 **What exists now:** `/admin/*` is the owner's console (ADMIN only; a customer sees "Not permitted" and nothing is requested). Sections: Products (table, create, full-replace edit from a fresh copy, delete by typing the name, "Write a description"), Stock (sets a level), Import (header check, five-row preview, upload, `skipCount` and the error-file path, restart), Search index (start the backfill, poll every 2 s), Dead letters (replay once, replay log).
 **Key code:** `src/features/admin/` (`AdminPage.tsx` routes the sections inside the one lazy `admin/*` route; `products.ts`, `stock.ts`, `batch.ts`, `saga.ts` are the calls; `api.ts` the hooks; `schemas.ts` the `ProductRequest` rules; `csv.ts`; `ConfirmDialog.tsx`; `failure.ts`), `docs/modules/admin.md`, decisions [Phase 17], web KI-022. `PlaceholderPage` is deleted.
 **Config & infrastructure:** no new dependencies. Coverage floor 99.9 / 98 / 100 / 100. `e2e/admin.spec.ts` (4) registers only when `E2E_ADMIN_USERNAME` and `E2E_ADMIN_PASSWORD` are set. `stubConsole` in `e2e/screens.ts` answers the console's reads for a stubbed ADMIN; five stubbed admin screens in the matrix.
