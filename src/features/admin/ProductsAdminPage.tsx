@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router'
-import { supportReference } from '@/api/errors'
 import { usePageTitle } from '@/app/pageTitle'
 import { Alert } from '@/components/Alert'
 import { buttonClass } from '@/components/Button'
@@ -12,6 +11,7 @@ import { useProducts } from '@/features/catalog/api'
 import type { ProductResponse } from '@/features/catalog/products'
 import { useDeleteProduct } from './api'
 import { ConfirmDialog } from './ConfirmDialog'
+import { failureOf, type Failure } from './failure'
 
 export function ProductsAdminPage() {
   usePageTitle('Products')
@@ -100,7 +100,7 @@ export function ProductsAdminPage() {
 /** Typing the product's name is the confirmation: a delete cannot be done by a stray click or Enter. */
 function DeleteDialog({ product, onClose }: { product: ProductResponse | null; onClose: () => void }) {
   const [typed, setTyped] = useState('')
-  const [failure, setFailure] = useState<{ message: string; reference: string | null } | null>(null)
+  const [failure, setFailure] = useState<Failure | null>(null)
   const [done, setDone] = useState<string | null>(null)
   const remove = useDeleteProduct()
 
@@ -113,16 +113,14 @@ function DeleteDialog({ product, onClose }: { product: ProductResponse | null; o
   }
 
   async function confirm() {
-    if (!shown) return
+    // Only the open dialog can confirm, and it opens with a product.
+    const doomed = shown!
     try {
-      await remove.mutateAsync(shown.id)
-      setDone(`Deleted “${shown.name}”.`)
+      await remove.mutateAsync(doomed.id)
+      setDone(`Deleted “${doomed.name}”.`)
       onClose()
     } catch (error) {
-      setFailure({
-        message: error instanceof Error ? error.message : 'The product was not deleted.',
-        reference: supportReference(error),
-      })
+      setFailure(failureOf(error, 'The product was not deleted.'))
     }
   }
 

@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { supportReference } from '@/api/errors'
 import { usePageTitle } from '@/app/pageTitle'
 import { Alert } from '@/components/Alert'
 import { Button } from '@/components/Button'
@@ -7,6 +6,7 @@ import { ErrorPanel } from '@/components/ErrorPanel'
 import { TextField } from '@/components/TextField'
 import { useProducts } from '@/features/catalog/api'
 import type { ProductResponse } from '@/features/catalog/products'
+import { failureOf } from './failure'
 import { useSetStock, useStock } from './api'
 
 const WHOLE_NUMBER = /^\d+$/
@@ -74,10 +74,8 @@ function StockRow({ product, quantity }: { product: ProductResponse; quantity: n
       setSaved(level.quantity)
       setTyped('')
     } catch (error) {
-      const reference = supportReference(error)
-      setProblem(
-        `${error instanceof Error ? error.message : 'The stock level was not saved.'}${reference ? ` Reference for support: ${reference}` : ''}`,
-      )
+      const { message, reference } = failureOf(error, 'The stock level was not saved.')
+      setProblem(`${message}${reference ? ` Reference for support: ${reference}` : ''}`)
     }
   }
 

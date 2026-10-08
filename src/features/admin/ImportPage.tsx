@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { usePageTitle } from '@/app/pageTitle'
-import { supportReference } from '@/api/errors'
 import { Alert } from '@/components/Alert'
 import { Button } from '@/components/Button'
 import { useImportProducts, useRestartImport } from './api'
 import type { ImportResult } from './batch'
+import { failureOf, type Failure } from './failure'
 import { IMPORT_HEADER, previewCsv, type CsvPreview } from './csv'
 
 /** The server stops a run that should not go on; a few statuses the page treats as "finished well". */
@@ -15,7 +15,7 @@ export function ImportPage() {
   const [file, setFile] = useState<File | null>(null)
   const [preview, setPreview] = useState<CsvPreview | null>(null)
   const [result, setResult] = useState<ImportResult | null>(null)
-  const [problem, setProblem] = useState<{ message: string; reference: string | null } | null>(null)
+  const [problem, setProblem] = useState<Failure | null>(null)
   const upload = useImportProducts()
   const restart = useRestartImport()
 
@@ -31,10 +31,7 @@ export function ImportPage() {
     try {
       setResult(await action())
     } catch (error) {
-      setProblem({
-        message: error instanceof Error ? error.message : 'The import did not run.',
-        reference: supportReference(error),
-      })
+      setProblem(failureOf(error, 'The import did not run.'))
     }
   }
 

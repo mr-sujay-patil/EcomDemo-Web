@@ -109,4 +109,45 @@ describe('importing a CSV', () => {
     await user.click(await screen.findByRole('button', { name: 'Import 1 rows' }))
     expect(await screen.findByText('Not a CSV file')).toBeInTheDocument()
   })
+
+  it('shows a reference for a server failure, a plain sentence for anything else, and short rows without a crash', async () => {
+    const user = userEvent.setup()
+    renderRoute('/admin/import', { signedInAs: 'ADMIN' })
+    const input = await screen.findByLabelText('CSV file')
+
+    vi.mocked(importProducts).mockRejectedValueOnce(
+      new ApiError({ status: 500, message: 'Import crashed', correlationId: 'ref-1234567890' }),
+    )
+    await user.upload(
+      input,
+      new File(['name,description,price,stock_quantity,category\nShort,row'], 'a.csv', { type: 'text/csv' }),
+    )
+    await user.click(await screen.findByRole('button', { name: 'Import 1 rows' }))
+    expect(await screen.findByText('ref-1234567890')).toBeInTheDocument()
+
+    vi.mocked(importProducts).mockRejectedValueOnce('not an error')
+    await user.click(screen.getByRole('button', { name: 'Import 1 rows' }))
+    expect(await screen.findByText('The import did not run.')).toBeInTheDocument()
+
+    vi.mocked(importProducts).mockResolvedValueOnce({
+      execution: {
+        id: 6,
+        instanceId: 6,
+        jobName: 'j',
+        status: 'COMPLETED',
+        exitCode: 'COMPLETED',
+        failureMessage: '',
+        readCount: 3,
+        writeCount: 1,
+        skipCount: 2,
+        startTime: '',
+        endTime: '',
+        steps: [],
+      },
+      inputFile: 'i',
+      errorFile: '/tmp/e.csv',
+    })
+    await user.click(screen.getByRole('button', { name: 'Import 1 rows' }))
+    expect(await screen.findByText(/2 rows were skipped/)).toBeInTheDocument()
+  })
 })

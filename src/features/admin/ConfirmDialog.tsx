@@ -35,8 +35,8 @@ export function ConfirmDialog({
   const dialog = useRef<HTMLDialogElement | null>(null)
 
   useEffect(() => {
-    const element = dialog.current
-    if (!element) return
+    // The ref is set before any effect runs.
+    const element = dialog.current!
     if (open && !element.open) element.showModal()
     if (!open && element.open) element.close()
   }, [open])

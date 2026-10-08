@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { supportReference } from '@/api/errors'
 import { usePageTitle } from '@/app/pageTitle'
 import { Alert } from '@/components/Alert'
 import { Button } from '@/components/Button'
@@ -7,6 +6,7 @@ import { ErrorPanel } from '@/components/ErrorPanel'
 import { StatusBadge } from '@/components/StatusBadge'
 import { useDeadLetters, useReplay, useReplays } from './api'
 import { ConfirmDialog } from './ConfirmDialog'
+import { failureOf } from './failure'
 import type { DeadLetter } from './saga'
 
 const when = new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeStyle: 'medium' })
@@ -26,8 +26,8 @@ export function SagaPage() {
   } | null>(null)
 
   async function confirm() {
-    if (!target) return
-    const letter = target
+    // Only the open dialog can confirm, and it opens with a record.
+    const letter = target!
     setTarget(null)
     try {
       await replay.mutateAsync(letter)
@@ -36,11 +36,7 @@ export function SagaPage() {
         message: `Sent the record at offset ${letter.offset} back to ${letter.originalTopic}.`,
       })
     } catch (error) {
-      setOutcome({
-        tone: 'danger',
-        message: error instanceof Error ? error.message : 'The record was not replayed.',
-        reference: supportReference(error),
-      })
+      setOutcome({ tone: 'danger', ...failureOf(error, 'The record was not replayed.') })
     }
   }
 

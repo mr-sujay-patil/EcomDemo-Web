@@ -1,5 +1,5 @@
+import { usePageTitle } from '@/app/pageTitle'
 import { NavLink, Navigate, Route, Routes } from 'react-router'
-import { PlaceholderPage } from '@/components/PlaceholderPage'
 import { ImportPage } from './ImportPage'
 import { ProductFormPage } from './ProductFormPage'
 import { ProductsAdminPage } from './ProductsAdminPage'
@@ -40,9 +40,19 @@ export function AdminPage() {
           <Route path="import" element={<ImportPage />} />
           <Route path="search-index" element={<SearchIndexPage />} />
           <Route path="dead-letters" element={<SagaPage />} />
-          <Route path="*" element={<PlaceholderPage title="Not found" phase={17} />} />
+          <Route path="*" element={<AdminNotFound />} />
         </Routes>
       </div>
+    </div>
+  )
+}
+
+function AdminNotFound() {
+  usePageTitle('Not found')
+  return (
+    <div className="stack">
+      <h1>Not found</h1>
+      <p>There is no such page in the console. Pick a section from the list.</p>
     </div>
   )
 }

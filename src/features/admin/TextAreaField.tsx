@@ -3,7 +3,7 @@ import { useFormContext } from 'react-hook-form'
 import { cx } from '@/components/cx'
 import { Icon } from '@/components/Icon'
 
-type Props = Omit<ComponentPropsWithoutRef<'textarea'>, 'name'> & { name: string; label: string; hint?: string }
+type Props = Omit<ComponentPropsWithoutRef<'textarea'>, 'name'> & { name: string; label: string; hint: string }
 
 /** A multi-line field bound to the surrounding `Form`, in the same box, label and note as `TextField`. */
 export function TextAreaField({ name, label, hint, rows = 6, ...rest }: Props) {
@@ -23,17 +23,15 @@ export function TextAreaField({ name, label, hint, rows = 6, ...rest }: Props) {
           rows={rows}
           className="ed-field-input admin-textarea"
           aria-invalid={error ? true : undefined}
-          aria-describedby={note ? `${id}-note` : undefined}
+          aria-describedby={`${id}-note`}
           {...rest}
           {...register(name)}
         />
       </div>
-      {note ? (
-        <p id={`${id}-note`} className="ed-field-note">
-          {error ? <Icon name="alert" size={14} /> : null}
-          {note}
-        </p>
-      ) : null}
+      <p id={`${id}-note`} className="ed-field-note">
+        {error ? <Icon name="alert" size={14} /> : null}
+        {note}
+      </p>
     </div>
   )
 }

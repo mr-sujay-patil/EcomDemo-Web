@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate, useParams } from 'react-router'
-import { ApiError, supportReference } from '@/api/errors'
+import { ApiError } from '@/api/errors'
 import { usePageTitle } from '@/app/pageTitle'
 import { Alert } from '@/components/Alert'
 import { Button, buttonClass } from '@/components/Button'
@@ -13,6 +13,7 @@ import { productQuery } from '@/features/catalog/api'
 import { fetchProduct, type ProductResponse } from '@/features/catalog/products'
 import { useGenerateDescription, useSaveProduct } from './api'
 import { ConfirmDialog } from './ConfirmDialog'
+import { failureOf, type Failure } from './failure'
 import { DESCRIPTION_MAX, productLabels, productSchema, toRequest, toValues, type ProductValues } from './schemas'
 import { TextAreaField } from './TextAreaField'
 
@@ -63,12 +64,6 @@ function NotFound() {
     </div>
   )
 }
-
-type Failure = { message: string; reference: string | null }
-const failureOf = (error: unknown, fallback: string): Failure => ({
-  message: error instanceof Error ? error.message : fallback,
-  reference: supportReference(error),
-})
 
 function ProductForm({ id, product }: { id: number | null; product?: ProductResponse }) {
   const navigate = useNavigate()
@@ -169,14 +164,13 @@ function GenerateDescription({ product, onText }: { product: ProductResponse; on
     }
   }
 
-  async function restore() {
-    if (previous === null) return
+  async function restore(text: string) {
     setFailure(null)
     try {
       // A full replace from the server's current copy, so nothing else on the product is overwritten with stale values.
       const current = await fetchProduct(product.id)
-      await save.mutateAsync(toRequest(toValues({ ...current, description: previous })))
-      onText(previous)
+      await save.mutateAsync(toRequest(toValues({ ...current, description: text })))
+      onText(text)
       setResult(null)
       setPrevious(null)
       setRestored(true)
@@ -216,7 +210,7 @@ function GenerateDescription({ product, onText }: { product: ProductResponse; on
               {result.seoTitle}.{result.model ? ` Written by ${result.model}.` : ''}
             </p>
             <div>
-              <Button variant="secondary" size="sm" loading={save.isPending} onClick={() => void restore()}>
+              <Button variant="secondary" size="sm" loading={save.isPending} onClick={() => void restore(previous)}>
                 Restore previous
               </Button>
             </div>
