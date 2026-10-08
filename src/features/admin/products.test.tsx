@@ -1,12 +1,16 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import { productFixtures } from '@/test/msw/handlers'
 import { server } from '@/test/msw/server'
 import { renderRoute } from '@/test/render'
+import { preloadAdminConsole } from '@/test/preloadAdminConsole'
 
 const kettle = productFixtures[0]!
+
+// The admin console is a lazy route: load it outside the first test's clock (web KI-029).
+beforeAll(preloadAdminConsole)
 
 describe('the admin product list', () => {
   it('lists every product with the server price and stock, and links to edit', async () => {

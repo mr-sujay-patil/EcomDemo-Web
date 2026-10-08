@@ -1,7 +1,7 @@
 import { fireEvent, screen, waitFor } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
-import { afterEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest'
 import { productFixtures, productHandlers, SERVER_ERROR_CORRELATION_ID } from '@/test/msw/handlers'
 import { server } from '@/test/msw/server'
 import { renderRoute } from '@/test/render'
@@ -9,6 +9,7 @@ import { importProducts, restartImport, startBackfill, fetchBackfill } from './b
 import { createProduct, deleteProduct, generateDescription, updateProduct } from './products'
 import { fetchDeadLetters, fetchReplays, replayDeadLetter } from './saga'
 import { fetchStock, setStock } from './stock'
+import { preloadAdminConsole } from '@/test/preloadAdminConsole'
 
 const boom = (path: string, method: 'get' | 'post' | 'put' | 'delete' = 'get') =>
   http[method](path, () =>
@@ -17,6 +18,9 @@ const boom = (path: string, method: 'get' | 'post' | 'put' | 'delete' = 'get') =
       { status: 500, headers: { 'X-Correlation-Id': SERVER_ERROR_CORRELATION_ID } },
     ),
   )
+
+// The admin console is a lazy route: load it outside the first test's clock (web KI-029).
+beforeAll(preloadAdminConsole)
 
 describe('when a list cannot load', () => {
   it('products: says why, with a reference, and Retry asks again', async () => {

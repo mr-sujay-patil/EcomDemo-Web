@@ -1,9 +1,10 @@
 import { screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
-import { describe, expect, it } from 'vitest'
+import { beforeAll, describe, expect, it } from 'vitest'
 import type { Role } from '@/features/auth/session'
 import { renderRoute } from '@/test/render'
 import { createAppRouter } from './router'
+import { preloadAdminConsole } from '@/test/preloadAdminConsole'
 
 // One row per route in src/app/router.tsx: the path to visit, its h1 and its document title.
 const pages = [
@@ -34,6 +35,9 @@ function viewerOf(path: string): Role | undefined {
   const customerOnly = ['/cart', '/checkout', '/orders', '/account']
   return customerOnly.some((prefix) => path === prefix || path.startsWith(`${prefix}/`)) ? 'CUSTOMER' : undefined
 }
+
+// The admin console is a lazy route: load it outside the first test's clock (web KI-029).
+beforeAll(preloadAdminConsole)
 
 describe('routes', () => {
   it.each(pages)('%s renders its h1 and sets the document title', async (path, heading, title) => {
