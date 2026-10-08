@@ -26,7 +26,7 @@ The skip link focuses `<main>` itself (the browser scrolls to `#main` on its own
 |---|---|---|---|
 | `/` | Products | Phase 1 (data: 8) | the shelf: where a visitor starts |
 | `/products/:id` | Product | 8 | one product: price, stock, add to cart |
-| `/search` | Search | 15 | semantic search results; the query lives in the URL |
+| `/search` | Search | 15 | semantic search results (or the word-matching fallback); the query and filters live in the URL |
 | `/cart` | Your cart | 12 | what the customer is about to buy |
 | `/checkout` | (redirect) | 13 | an old address: goes to `/cart`, where the order is placed |
 | `/orders` | Your orders | 14 | the customer's order history |

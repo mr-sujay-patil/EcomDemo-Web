@@ -3,24 +3,26 @@
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
 - **Updated:** 2026-10-08
-- **Phase:** 14 — Orders and Profile
-- **Branch:** `feature/phase-14-orders-profile`
+- **Phase:** 15 — Semantic Search
+- **Branch:** `feature/phase-15-search`
 - **Step:** PR_OPEN
-- **PR:** #18 (CI running on the head)
+- **PR:** #19 (CI running on the head)
 - **Backend pinned at:** `phase-34-complete`. No stack runs now: start it from `../ecomdemo-backend-readonly` (`docker compose up --build --wait`) and stop it at the end with `docker compose --profile tools down` (no `-v`).
-- **Waiting for user:** YES: review of the Phase 14 PR; decide about web KI-020 and the backend running ahead of the pin (optional: write `orderConfirmedNote` in `src/content/notes.ts`)
+- **Waiting for user:** YES: review of the Phase 15 PR; relay web KI-019 and KI-020 to the backend team
 
 ## Merge verification before this phase
-Phase 13 (PR #16, merge `2443ab3`, tag `phase-13-complete`): tag exists on the merge commit. Backend sync 2026-10-08: `origin/main` is past the pin by KI-002/040/044/045/046 fixes and docs only; nothing for orders, customers or the gateway. Pin stays `phase-34-complete`.
+Phase 14 (PR #18, merge `8cf2be8`, tag `phase-14-complete`): CI `verify` and `e2e` green on the PR; on `main` `npm run verify` 662/662 tests, `npm run e2e` 310/310 against the pinned stack (KI-020's spec passed on the fresh stack). Backend sync 2026-10-08: `origin/main` is past the pin by KI-002/040/044/045/046 fixes and docs, plus a comment-only edit in `ProductIndexer`; nothing changes the search contract. Pin stays `phase-34-complete`.
 
 ## Checklist (from the phase file's "What you'll implement")
-- [x] My orders `/orders`: table, newest first, client-side paging, StatusBadge + reason
-- [x] Order detail `/orders/:id` nested under the list; 403 and 404 both "Order not found"
-- [x] Profile `/account`: `GET/PUT /api/customers/me`, full name only; says there is no password change (web KI-006); header follows
-- [x] `docs/modules/orders.md`, `docs/modules/account.md`, decisions [Phase 14]; tests (662) + E2E (309/310); report + screenshots; `RECENT.md` rotated (Phase 12 archived); tracker 🔵; floor 99.88 / 97.5 / 100 / 100
+- [x] Header search box: ~300 ms debounce, top-5 suggestions, Enter goes to `/search?q=…`
+- [x] `/search` page: `GET /api/products/search` (q ≤ 200, category, minPrice, maxPrice, limit 1-20); query and filters in the URL; results in returned order; no similarity shown
+- [x] 503: info `Alert` + client-side fallback over the loaded catalogue (name, description); the page says which mode it used
+- [x] Stale requests cancelled via the query's `signal`
+- [x] `docs/modules/search.md`
+- [x] Tests: debounce (fake timers), URL state, stale-response cancellation, 503 fallback; E2E additions (`e2e/`)
 
 ## Next action
-Wait for the owner's review. On `approved, merge it`: `gh pr merge <n> --merge` (no `--delete-branch`); merge verification on `main` (`npm ci && npm run verify`; the Playwright suite, **read the result before tagging**; know that `api:check` and the stock-refusal spec fail on the running backend, see below); tag `phase-14-complete`. The first commit of the next branch updates the tracker row (14 ✅) and this file. Before the next phase: `git fetch` the backend clone and compare with the pin. Relay web KI-019 and web KI-020. Next phase only on `continue`: Phase 15 (read its file first).
+Wait for the owner's review. On `approved, merge it`: wait for CI, `gh pr merge 19 --merge` (no `--delete-branch`); merge verification on `main` (`npm ci && npm run verify`; start the stack with `CUSTOMER_DB_PORT=15435 docker compose up --build --wait -d` in `../ecomdemo-backend-readonly` because Windows app SignalRgb holds 5435, run `npm run e2e`, read the result before tagging); tag `phase-15-complete`; stop the stack (`docker compose --profile tools down`, no `-v`). The first commit of the next branch updates the tracker row (15 ✅) and this file. Before the next phase: fetch the backend clone and compare with the pin. Next phase only on `continue`: Phase 16 (read its file first). Manual check for the owner: the suggestions list with a screen reader (see the report, section 5).
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.

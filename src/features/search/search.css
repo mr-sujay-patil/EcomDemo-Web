@@ -1,0 +1,82 @@
+/* The header's search box with its suggestions, and the results page. Tokens only. */
+
+.search-box {
+  position: relative;
+}
+
+.search-suggestions {
+  position: absolute;
+  inset-inline: 0;
+  top: calc(100% + var(--space-1));
+  z-index: 10;
+  margin: 0;
+  padding: var(--space-1);
+  list-style: none;
+  background: var(--surface-card);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-pop);
+}
+
+.search-suggestions[hidden] {
+  display: none;
+}
+
+.search-suggestion a {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2);
+  border-radius: var(--radius-sm);
+  color: var(--ink-strong);
+  text-decoration: none;
+}
+
+.search-suggestion.is-active a,
+.search-suggestion a:hover {
+  background: var(--brand-soft);
+}
+
+.search-suggestion-name {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.search-page {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.search-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space-3) var(--space-4);
+}
+
+.search-filters .ed-field {
+  width: 140px;
+  /* An input's own width would otherwise stretch the grid track past the 140px. */
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.search-filters .search-category {
+  display: grid;
+  gap: 6px;
+}
+
+.search-filters-actions {
+  display: flex;
+  gap: var(--space-2);
+  align-self: flex-end;
+}
+
+.search-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 240px), 1fr));
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}

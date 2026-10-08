@@ -207,6 +207,15 @@ export const abortedRequestError = /Failed to load resource: net::ERR_FAILED/
 /** The browser logs a 404 response itself, even though the app handles it. */
 export const notFoundResponseError = /Failed to load resource: the server responded with a status of 404/
 
+/** The browser logs a 503 response itself too: search by description answers it when no embedding model is configured. */
+export const unavailableResponseError = /Failed to load resource: the server responded with a status of 503/
+
+/** A product as the search endpoint returns it. A test double for the screenshots: the real ranking depends on the backend's model. */
+const searchHit = (id: number, name: string, price: number, category: string) => ({
+  product: { id, name, description: `${name}, for the desk.`, price, stockQuantity: 12, category, imageUrl: null },
+  similarity: 0.8,
+})
+
 /** Makes every product request fail as if the gateway were unreachable. */
 export async function gatewayUnreachable(page: Page) {
   await page.route('**/api/products', (route) => route.abort('failed'))
@@ -232,6 +241,66 @@ export const screens: Screen[] = [
       await expect(page.getByRole('alert')).toBeVisible()
     },
     allowedConsoleErrors: [abortedRequestError],
+  },
+  {
+    // Search by meaning answered: three stubbed hits, so the screenshot does not depend on the backend's model.
+    name: 'search-results',
+    path: '/search?q=something+to+type+on',
+    prepare: async (page) => {
+      await page.route('**/api/products/search*', (route) =>
+        route.fulfill({
+          json: {
+            query: 'something to type on',
+            results: [
+              searchHit(1, 'Mechanical Keyboard', 4999, 'PERIPHERALS'),
+              searchHit(2, 'Wireless Mouse', 1499, 'PERIPHERALS'),
+              searchHit(3, 'Wrist Rest', 799, 'ACCESSORIES'),
+            ],
+          },
+        }),
+      )
+    },
+    ready: async (page) => {
+      await expect(page.getByText('3 products, best match first')).toBeVisible()
+    },
+  },
+  {
+    // The header box with its suggestions open (stubbed hits).
+    name: 'search-suggestions',
+    path: '/about',
+    prepare: async (page) => {
+      await page.route('**/api/products/search*', (route) =>
+        route.fulfill({
+          json: {
+            query: 'keyboard',
+            results: [
+              searchHit(1, 'Mechanical Keyboard', 4999, 'PERIPHERALS'),
+              searchHit(2, 'Wireless Mouse', 1499, 'PERIPHERALS'),
+              searchHit(3, 'Wrist Rest', 799, 'ACCESSORIES'),
+            ],
+          },
+        }),
+      )
+    },
+    ready: async (page) => {
+      await page.getByRole('banner').getByRole('combobox', { name: 'Search products' }).fill('keyboard')
+      await expect(page.getByRole('option', { name: /Wrist Rest/ })).toBeVisible()
+    },
+  },
+  {
+    // Search by meaning is off: the notice, then the catalogue matched on words.
+    name: 'search-fallback',
+    path: '/search?q=keyboard',
+    prepare: async (page) => {
+      await page.route('**/api/products/search*', (route) =>
+        route.fulfill({ status: 503, json: { status: 503, message: 'Semantic search is not configured.' } }),
+      )
+    },
+    ready: async (page) => {
+      await expect(page.getByText("Search by description isn't available right now")).toBeVisible()
+      await expect(page.getByText(/matched on words in the name and description/)).toBeVisible()
+    },
+    allowedConsoleErrors: [unavailableResponseError],
   },
   {
     name: 'product-not-found',
