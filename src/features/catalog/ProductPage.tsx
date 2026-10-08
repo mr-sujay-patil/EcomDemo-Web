@@ -58,7 +58,7 @@ export function ProductPage() {
   return (
     <div className="product-wrap">
       <div className="product-layout">
-        <ProductTile category={category} image={imageUrl} alt={name} />
+        <ProductTile category={category} image={imageUrl} alt={name} priority />
         <div className="product-details">
           <p className="ed-overline">{category}</p>
           <h1>{name}</h1>

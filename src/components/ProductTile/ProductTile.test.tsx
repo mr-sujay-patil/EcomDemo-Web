@@ -25,6 +25,18 @@ describe('ProductTile', () => {
     expect(screen.queryByText('Photo to come')).not.toBeInTheDocument()
   })
 
+  it("loads a card's photo lazily, and a page's main photo at once and first", () => {
+    const { rerender } = render(<ProductTile image="/api/products/1/image" alt="Test Kettle" />)
+
+    expect(screen.getByRole('img', { name: 'Test Kettle' })).toHaveAttribute('loading', 'lazy')
+    expect(screen.getByRole('img', { name: 'Test Kettle' })).not.toHaveAttribute('fetchpriority')
+
+    rerender(<ProductTile image="/api/products/1/image" alt="Test Kettle" priority />)
+
+    expect(screen.getByRole('img', { name: 'Test Kettle' })).toHaveAttribute('loading', 'eager')
+    expect(screen.getByRole('img', { name: 'Test Kettle' })).toHaveAttribute('fetchpriority', 'high')
+  })
+
   it('falls back to the well when the image fails to load', () => {
     render(<ProductTile image="/api/products/1/image" alt="Test Kettle" />)
 

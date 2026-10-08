@@ -33,7 +33,7 @@ export function ProductListPage() {
       <h1>Everything for the desk</h1>
       {products.isPending && (
         // The results area keeps its height while loading and after, so the footer does not jump when the products arrive.
-        <div className="reserve">
+        <div className="reserve reserve-page">
           <p role="status">Loading products…</p>
         </div>
       )}

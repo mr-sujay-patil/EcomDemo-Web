@@ -135,6 +135,31 @@ jobs:
         working-directory: web
         run: npm run e2e
 
+      # The budgets (docs/performance.md): Lighthouse CI on the production image for the shelf and a product page, and the signed-in
+      # cart and order flows, against the backend this job already started. A broken budget fails the job. `npm run perf` builds the
+      # image, starts only `web`, and takes it down again.
+      - name: Check the performance budgets
+        working-directory: web
+        run: npm run perf
+
+      # The bundle's treemap and its raw numbers, as an artifact to read (rollup-plugin-visualizer is a dev dependency, not in the app).
+      - name: Analyse the bundle
+        if: ${{ always() }}
+        working-directory: web
+        run: npm run perf:analyze
+
+      - name: Upload the performance results and the bundle analysis
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: performance
+          path: |
+            web/perf-results/
+            web/.lighthouseci/
+            web/bundle-analysis/
+          if-no-files-found: ignore
+          retention-days: 14
+
       # Traces are recorded on the first retry (playwright.config.ts), so a failure always has one.
       - name: Upload the Playwright report and traces
         if: ${{ failure() }}

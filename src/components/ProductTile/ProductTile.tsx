@@ -19,15 +19,26 @@ export type ProductTileProps = {
   /** Describes the photo: the product's name. The placeholder is hidden from screen readers. */
   alt?: string
   size?: 'sm' | 'md'
+  /**
+   * The photo is the main content of the page (a product's own page), so the browser should fetch it at once and first.
+   * Without this the photo is lazy, as a card on a shelf should be: only fetched when it is about to be seen.
+   */
+  priority?: boolean
 }
 
-export function ProductTile({ category, image, alt = '', size = 'md' }: ProductTileProps) {
+export function ProductTile({ category, image, alt = '', size = 'md', priority = false }: ProductTileProps) {
   // The url that failed, so a different image for the same tile gets its own chance.
   const [failed, setFailed] = useState<string | null>(null)
   if (image && image !== failed) {
     return (
       <div className={cx('ed-tile', `ed-tile--${size}`, 'has-photo')}>
-        <img src={image} alt={alt} loading="lazy" onError={() => setFailed(image)} />
+        <img
+          src={image}
+          alt={alt}
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : undefined}
+          onError={() => setFailed(image)}
+        />
       </div>
     )
   }

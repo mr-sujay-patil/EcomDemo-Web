@@ -1,6 +1,7 @@
 /// <reference types="vitest/config" />
 import { fileURLToPath } from 'node:url'
 import react from '@vitejs/plugin-react'
+import { visualizer } from 'rollup-plugin-visualizer'
 import { defineConfig, loadEnv, type ProxyOptions } from 'vite'
 
 // https://vite.dev/config/
@@ -20,9 +21,33 @@ export default defineConfig(({ mode }) => {
   }
 
   return {
-    plugins: [react()],
+    plugins: [
+      react(),
+      // `ANALYZE=1 npm run build` writes the bundle's treemap and its raw numbers to bundle-analysis/ (git-ignored, a CI artifact).
+      // A dev dependency only: nothing of it reaches the app.
+      ...(env.ANALYZE
+        ? [
+            visualizer({ filename: 'bundle-analysis/treemap.html', template: 'treemap', gzipSize: true }),
+            visualizer({ filename: 'bundle-analysis/stats.json', template: 'raw-data', gzipSize: true }),
+          ]
+        : []),
+    ],
     resolve: {
       alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) },
+    },
+    build: {
+      rolldownOptions: {
+        output: {
+          // React and the router are the bulk of the JavaScript and change only when they are upgraded. One chunk of their own
+          // stays under the 100 KB limit (scripts/check-budgets.mjs) and in the browser's cache across deploys of the app's own
+          // code. One, not two: on a slow link every extra file is another round trip (two chunks made the first paint 0.15 s later).
+          advancedChunks: {
+            groups: [
+              { name: 'vendor', test: /node_modules[\\/](react|react-dom|scheduler|react-router|@remix-run)[\\/]/ },
+            ],
+          },
+        },
+      },
     },
     server: { port: 5173, strictPort: true, proxy },
     preview: { port: 4173, strictPort: true, proxy },

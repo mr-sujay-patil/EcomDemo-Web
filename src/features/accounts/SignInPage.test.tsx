@@ -95,7 +95,8 @@ describe('the sign-in page', () => {
   it('arrives from registration with the username filled in, a note that the account is ready, and the cursor on the password', async () => {
     renderRoute({ pathname: '/sign-in', state: signInStateFor('asha.rao') })
 
-    expect(await screen.findByRole('status')).toHaveTextContent('Your account is ready.')
+    // The page's code is fetched when it is first visited: the loading note comes first, then the page.
+    expect(await screen.findByText('Your account is ready. Sign in to start.')).toBeInTheDocument()
     expect(screen.getByLabelText('Username')).toHaveValue('asha.rao')
     expect(screen.getByLabelText('Password')).toHaveFocus()
   })

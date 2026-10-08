@@ -10,6 +10,9 @@ COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
 RUN npm run build
+# Compress the text files once, at the strongest level (-9), next to the originals: nginx serves the .gz file as it is
+# (`gzip_static on`), smaller than its on-the-fly level-1 gzip and with no CPU spent per request. Fonts are already compressed.
+RUN find dist -type f \( -name '*.js' -o -name '*.css' -o -name '*.html' -o -name '*.svg' -o -name '*.json' -o -name '*.txt' \) -exec gzip -9 -k {} \;
 
 # --- Stage 2: serve. The official nginx, stable line, alpine-slim variant (21 MB; the full alpine image is 94 MB). ---
 FROM nginx:1.30.5-alpine-slim@sha256:32463212baf0e7d91aded2e9b843a4f2b9e017804b8c9d5bae7b51dcef64389c

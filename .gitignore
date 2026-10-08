@@ -27,3 +27,8 @@ test-results/
 Thumbs.db
 desktop.ini
 *:Zone.Identifier
+bundle-analysis/
+.lighthouseci/
+perf-results/
+# Lighthouse's Chrome launcher, on WSL, names its profile folders like a Windows path and creates them in the working directory.
+C:*
