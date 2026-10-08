@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState, type MouseEvent } from 'react'
 import { Link, Outlet, ScrollRestoration, useLocation, useMatches } from 'react-router'
-import { buttonClass } from '@/components/Button'
+import { Button, buttonClass } from '@/components/Button'
 import { Header } from '@/components/Header'
 import { Icon } from '@/components/Icon'
 import { Logo } from '@/components/Logo'
 import { site } from '@/content/site'
+import { AssistantSheet } from '@/features/assistant/AssistantSheet'
 import { AccountMenu } from '@/features/auth/AccountMenu'
 import { ExpiryNotice } from '@/features/auth/ExpiryNotice'
 import { SearchBox } from '@/features/search/SearchBox'
@@ -27,6 +28,7 @@ export function Layout() {
   const handle = matches.map((match) => match.handle).findLast(isRouteHandle)
   // A page may name itself (a "Not permitted" standing in for the admin console); otherwise the route does.
   const [pageTitle, setPageTitle] = useState<string | null>(null)
+  const [assistantOpen, setAssistantOpen] = useState(false)
   const { session, role } = useSession()
   const cartCount = countItems(useCart().data)
   const name = pageTitle ?? handle?.title
@@ -75,6 +77,9 @@ export function Layout() {
                 <span>Admin</span>
               </Link>
             )}
+            <Button variant="secondary" icon="chat" onClick={() => setAssistantOpen(true)}>
+              Ask the shop
+            </Button>
             <ThemeToggle />
           </>
         }
@@ -99,6 +104,7 @@ export function Layout() {
           </Link>
         }
       />
+      <AssistantSheet open={assistantOpen} onClose={() => setAssistantOpen(false)} />
       <ExpiryNotice />
       <main id="main" className="site-main page" tabIndex={-1}>
         <PageTitleContext.Provider value={setPageTitle}>
