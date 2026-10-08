@@ -3,6 +3,7 @@ import { PlaceholderPage } from '@/components/PlaceholderPage'
 import { ImportPage } from './ImportPage'
 import { ProductFormPage } from './ProductFormPage'
 import { ProductsAdminPage } from './ProductsAdminPage'
+import { SagaPage } from './SagaPage'
 import { SearchIndexPage } from './SearchIndexPage'
 import { StockPage } from './StockPage'
 import './admin.css'
@@ -12,6 +13,7 @@ const SECTIONS = [
   { to: 'stock', label: 'Stock' },
   { to: 'import', label: 'Import' },
   { to: 'search-index', label: 'Search index' },
+  { to: 'dead-letters', label: 'Dead letters' },
 ] as const
 
 // Loaded with `lazy` (see src/app/router.tsx): shoppers never download the admin console. The route is `admin/*`, so
@@ -37,6 +39,7 @@ export function AdminPage() {
           <Route path="stock" element={<StockPage />} />
           <Route path="import" element={<ImportPage />} />
           <Route path="search-index" element={<SearchIndexPage />} />
+          <Route path="dead-letters" element={<SagaPage />} />
           <Route path="*" element={<PlaceholderPage title="Not found" phase={17} />} />
         </Routes>
       </div>

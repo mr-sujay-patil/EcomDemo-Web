@@ -20,7 +20,7 @@ Phase 16 (PR #20, merge `d3da037`, tag `phase-16-complete`): all branch commits 
 - [x] Stock: set a level (not a delta)
 - [x] CSV import: header check, preview, `skipCount`
 - [x] Search index backfill: 202 + poll every 2 s
-- [ ] Saga support (optional, last)
+- [x] Saga support (dead letters, replay, replay log), built against the pin
 - [ ] `docs/modules/admin.md`; tests; E2E additions
 
 ## Next action

@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { catalogKeys } from '@/features/catalog/api'
 import { BACKFILL_DONE, BACKFILL_POLL_MS, fetchBackfill, importProducts, restartImport, startBackfill } from './batch'
+import { fetchDeadLetters, fetchReplays, replayDeadLetter, type DeadLetter } from './saga'
 import { fetchStock, setStock } from './stock'
 import { createProduct, deleteProduct, generateDescription, updateProduct, type ProductRequest } from './products'
 
@@ -93,4 +94,30 @@ export function useBackfill() {
     retry: false,
   })
   return { start, run }
+}
+
+export const sagaKeys = {
+  letters: ['admin', 'dead-letters'] as const,
+  replays: ['admin', 'replays'] as const,
+}
+
+export function useDeadLetters() {
+  return useQuery({ queryKey: sagaKeys.letters, queryFn: ({ signal }) => fetchDeadLetters(signal), staleTime: 0 })
+}
+
+export function useReplays() {
+  return useQuery({ queryKey: sagaKeys.replays, queryFn: ({ signal }) => fetchReplays(signal), staleTime: 0 })
+}
+
+export function useReplay() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: (letter: DeadLetter) => replayDeadLetter(letter),
+    // A 409 means someone else replayed it: the lists are stale either way.
+    onSettled: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: sagaKeys.letters }),
+        queryClient.invalidateQueries({ queryKey: sagaKeys.replays }),
+      ]),
+  })
 }
