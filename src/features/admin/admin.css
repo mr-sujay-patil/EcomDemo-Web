@@ -175,6 +175,9 @@
 }
 
 .admin-file {
+  /* A file input has a wide built-in minimum; without this it pushes a 320 px page sideways. */
+  width: 100%;
+  min-width: 0;
   color: var(--ink);
   font: inherit;
 }
