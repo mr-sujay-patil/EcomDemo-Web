@@ -8,6 +8,7 @@ import { TermsPage } from '@/features/content/TermsPage'
 import { ProductListPage } from '@/features/catalog/ProductListPage'
 import { ProductPage } from '@/features/catalog/ProductPage'
 import { SearchPage } from '@/features/search/SearchPage'
+import { RootRouteError, RouteError } from './ErrorPages'
 import { Layout, type RouteHandle } from './Layout'
 import { NotFoundPage } from './NotFoundPage'
 
@@ -46,70 +47,78 @@ const styleguide: RouteObject[] =
 export const routes: RouteObject[] = [
   {
     element: <Layout />,
+    // The layout itself broke: nothing of the shop can be assumed, so a page of its own, with no header or footer.
+    errorElement: <RootRouteError />,
     // Shown while a lazy route's code loads on the very first page view (before the layout exists).
     HydrateFallback: () => <p role="status">Loading…</p>,
     children: [
-      { index: true, element: <ProductListPage />, handle: { title: 'Products' } satisfies RouteHandle },
-      route('products/:id', 'Product', <ProductPage />),
-      route('search', 'Search', <SearchPage />),
-      // Signed in as a customer: the cart, checkout and orders. Signed out they go to /sign-in?next=…
       {
-        element: <RequireRole role="CUSTOMER" />,
+        // A route broke: its content is replaced by the error page, the layout around it (header, footer) stays usable.
+        errorElement: <RouteError />,
         children: [
+          { index: true, element: <ProductListPage />, handle: { title: 'Products' } satisfies RouteHandle },
+          route('products/:id', 'Product', <ProductPage />),
+          route('search', 'Search', <SearchPage />),
+          // Signed in as a customer: the cart, checkout and orders. Signed out they go to /sign-in?next=…
           {
-            path: 'cart',
-            handle: { title: 'Your cart' } satisfies RouteHandle,
-            lazy: async () => ({ Component: (await import('@/features/cart/CartPage')).CartPage }),
-          },
-          // Placing the order is the cart's button (one click, no address, web KI-008): /checkout is only an old address.
-          { path: 'checkout', element: <Navigate to="/cart" replace /> },
-          // List and detail share the /orders path: the list is the index, an order opens under it.
-          {
-            path: 'orders',
+            element: <RequireRole role="CUSTOMER" />,
             children: [
               {
-                index: true,
-                handle: { title: 'Your orders' } satisfies RouteHandle,
-                lazy: async () => ({ Component: (await import('@/features/orders/OrdersPage')).OrdersPage }),
+                path: 'cart',
+                handle: { title: 'Your cart' } satisfies RouteHandle,
+                lazy: async () => ({ Component: (await import('@/features/cart/CartPage')).CartPage }),
+              },
+              // Placing the order is the cart's button (one click, no address, web KI-008): /checkout is only an old address.
+              { path: 'checkout', element: <Navigate to="/cart" replace /> },
+              // List and detail share the /orders path: the list is the index, an order opens under it.
+              {
+                path: 'orders',
+                children: [
+                  {
+                    index: true,
+                    handle: { title: 'Your orders' } satisfies RouteHandle,
+                    lazy: async () => ({ Component: (await import('@/features/orders/OrdersPage')).OrdersPage }),
+                  },
+                  {
+                    path: ':id',
+                    handle: { title: 'Order' } satisfies RouteHandle,
+                    lazy: async () => ({ Component: (await import('@/features/checkout/OrderPage')).OrderPage }),
+                  },
+                ],
               },
               {
-                path: ':id',
-                handle: { title: 'Order' } satisfies RouteHandle,
-                lazy: async () => ({ Component: (await import('@/features/checkout/OrderPage')).OrderPage }),
+                path: 'account',
+                handle: { title: 'Your account' } satisfies RouteHandle,
+                lazy: async () => ({ Component: (await import('@/features/accounts/ProfilePage')).ProfilePage }),
               },
             ],
           },
+          lazyRoute('sign-in', 'Sign in', async () => (await import('@/features/accounts/SignInPage')).SignInPage),
+          lazyRoute(
+            'register',
+            'Create an account',
+            async () => (await import('@/features/accounts/RegisterPage')).RegisterPage,
+          ),
+          // Signed in as an admin: the console.
           {
-            path: 'account',
-            handle: { title: 'Your account' } satisfies RouteHandle,
-            lazy: async () => ({ Component: (await import('@/features/accounts/ProfilePage')).ProfilePage }),
+            element: <RequireRole role="ADMIN" />,
+            children: [
+              {
+                path: 'admin/*',
+                handle: { title: 'Admin' } satisfies RouteHandle,
+                lazy: async () => ({ Component: (await import('@/features/admin/AdminPage')).AdminPage }),
+              },
+            ],
           },
+          route('about', 'About', <AboutPage />),
+          route('returns', 'Returns', <ReturnsPage />),
+          route('shipping', 'Shipping', <ShippingPage />),
+          route('privacy', 'Privacy', <PrivacyPage />),
+          route('terms', 'Terms', <TermsPage />),
+          ...styleguide,
+          route('*', 'Page not found', <NotFoundPage />),
         ],
       },
-      lazyRoute('sign-in', 'Sign in', async () => (await import('@/features/accounts/SignInPage')).SignInPage),
-      lazyRoute(
-        'register',
-        'Create an account',
-        async () => (await import('@/features/accounts/RegisterPage')).RegisterPage,
-      ),
-      // Signed in as an admin: the console.
-      {
-        element: <RequireRole role="ADMIN" />,
-        children: [
-          {
-            path: 'admin/*',
-            handle: { title: 'Admin' } satisfies RouteHandle,
-            lazy: async () => ({ Component: (await import('@/features/admin/AdminPage')).AdminPage }),
-          },
-        ],
-      },
-      route('about', 'About', <AboutPage />),
-      route('returns', 'Returns', <ReturnsPage />),
-      route('shipping', 'Shipping', <ShippingPage />),
-      route('privacy', 'Privacy', <PrivacyPage />),
-      route('terms', 'Terms', <TermsPage />),
-      ...styleguide,
-      route('*', 'Page not found', <NotFoundPage />),
     ],
   },
 ]

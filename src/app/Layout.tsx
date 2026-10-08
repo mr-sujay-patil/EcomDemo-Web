@@ -2,6 +2,7 @@ import { lazy, Suspense, useEffect, useRef, useState, type MouseEvent } from 're
 import { Link, Outlet, ScrollRestoration, useLocation, useMatches } from 'react-router'
 import { Button, buttonClass } from '@/components/Button'
 import { Header } from '@/components/Header'
+import { UnhandledRejectionNotice } from './UnhandledRejectionNotice'
 import { Icon } from '@/components/Icon'
 import { Logo } from '@/components/Logo'
 import { site } from '@/content/site'
@@ -131,6 +132,7 @@ export function Layout() {
       <ExpiryNotice />
       <main id="main" className="site-main page" tabIndex={-1}>
         <PageTitleContext.Provider value={setPageTitle}>
+          <UnhandledRejectionNotice />
           <Outlet />
         </PageTitleContext.Provider>
       </main>
