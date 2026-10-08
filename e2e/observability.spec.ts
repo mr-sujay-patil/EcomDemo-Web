@@ -69,6 +69,9 @@ test.describe('when the catalogue is down', () => {
 
     const alert = page.getByRole('alert')
     await expect(alert).toContainText('temporarily unavailable')
+    // The backend said when to come back (Retry-After: 10): the shopper is told, in words, with no status code on the screen.
+    await expect(alert).toContainText('Try again in about 10 seconds.')
+    await expect(alert).not.toContainText('503')
     await expect(alert).toContainText('e2e-down-00000001')
     // The header and the footer are still there, so the shopper can go somewhere else.
     await expect(page.getByRole('banner')).toBeVisible()

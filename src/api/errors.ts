@@ -56,3 +56,16 @@ export function supportReference(error: unknown): string | null {
   const shown = error instanceof ApiError && (error.status === 0 || error.status >= 500)
   return shown ? (error.correlationId ?? null) : null
 }
+
+/**
+ * What to tell a shopper when the server is busy or down and said when to come back: "Try again in about 10 seconds."
+ * Only for a 503 that carries `Retry-After` (the catalogue's circuit breaker, a checkout that was shed); null otherwise.
+ * A minute or more is said in minutes. Never the status code: the voice rules keep numbers like 503 out of the screen.
+ */
+export function retryHint(error: unknown): string | null {
+  if (!(error instanceof ApiError) || error.status !== 503 || error.retryAfter === undefined) return null
+  const seconds = Math.max(1, Math.round(error.retryAfter))
+  if (seconds < 60) return `Try again in about ${seconds} ${seconds === 1 ? 'second' : 'seconds'}.`
+  const minutes = Math.round(seconds / 60)
+  return `Try again in about ${minutes} ${minutes === 1 ? 'minute' : 'minutes'}.`
+}

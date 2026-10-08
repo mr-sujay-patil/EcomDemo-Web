@@ -3,19 +3,22 @@
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
 - **Updated:** 2026-10-09
-- **State:** all planned phases (0 to 23) are merged and tagged (`phase-23-complete`, PR #31). Working on: `chore/phase-23-housekeeping` (tracker row 23, `RECENT.md`, this file).
-- **Branch:** `chore/phase-23-housekeeping`
-- **Step:** PR_OPEN (when the PR exists; see `gh pr list`)
-- **Backend pinned at:** commit `f088fd4f517cceda44e478c9ca3ba8d5de1f8c68`. Backend `origin/main` was `3c7ecf5` on 2026-10-09 (KI-052, KI-053: internal, nothing for the web). No stack runs now (start: `CUSTOMER_DB_PORT=15435 docker compose up --wait -d` in `../ecomdemo-backend-readonly`; stop: `docker compose --profile tools down`, no `-v`).
-- **Waiting for user:** review and `approved, merge it` for this chore. The owner's plan after it, in order: tag `v1.0` (the Phase 23 file asks for it; owner approved the order "housekeeping, then v1.0, then KI-030 and KI-031 as one fix PR"), then the fix PR for web KI-030 (the shelf and admin list are not paged) and KI-031 (503 with `Retry-After`).
+- **Task:** fix KI-030 (the product list is paged) and KI-031 (503 with `Retry-After`) in one `fix/` branch (the owner's rule 10 in CLAUDE.md allows grouping; each KI still gets its tag `ki-030-fixed`, `ki-031-fixed` after the merge)
+- **Branch:** `fix/ki-030-031-paging-and-retry-after`
+- **Step:** PR_OPEN (PR #34; see `gh pr list`)
+- **Backend pinned at:** commit `f088fd4f517cceda44e478c9ca3ba8d5de1f8c68`. The stack runs from `bash scripts/backend-stack.sh up` (containers `webstack-*`, gateway on `localhost:28080`; `eval "$(bash scripts/backend-stack.sh env)"` sets `API_TARGET` and `GATEWAY_CONTAINER`); stop it with `bash scripts/backend-stack.sh down` (never `-v`). It is STOPPED now.
+- **Waiting for user:** no (until the PR is raised). Carried: owner decisions on CLAUDE.md rule conflicts and branch protection; KI-032 message to relay; KI-033 (performance budget borderline).
 
-## Open items (nothing else is planned)
-- Owner decisions: reconcile CLAUDE.md workflow rules 9/10/3/5 with the hard rules (until then follow the hard rules); turn on branch protection "Require branches to be up to date before merging" and "Do not allow bypassing" on `main` (CI skips `verify` and `e2e` on pushes to main).
-- To relay to the backend team: KI-032 (message in PR #31), KI-019/020/021/022/024/025.
-- Defects: web KI-020 (specs assume seed stock; the local volumes are drained), KI-025, KI-026/028/029 (flakes under load), KI-027 (LCP warning), KI-030, KI-031, KI-032. The Phase 18 screen-reader pass and `E2E_ADMIN_*` are carried.
+## Checklist
+- [x] KI-030: `fetchProducts` reads every page (tests: products.test.ts, ProductListPage.test.tsx, e2e catalog.spec.ts)
+- [x] KI-031: `retryHint` in `ErrorPanel`; checkout 503 = "The shop is busy right now" + cart re-read (tests: errors.test.ts, checkout.test.tsx, ProductListPage.test.tsx, e2e observability.spec.ts)
+- [x] Regression proof: 14 of the new tests fail on the old source (stash of the 5 source files), pass with the fix
+- [x] e2e stubs of the product list use `productListUrl` (4 stubs had silently stopped intercepting)
+- [x] `npm run verify` 889 passed (a first run failed on the KI-029 flake, the rerun is clean); `e2e:docker` 990 passed, 3 failed (stock 0, KI-020), 0 CSP violations; `perf`: Lighthouse 95/94, flows could not run locally (stock 0)
+- [ ] CI green on PR #34 before asking the owner; tags `ki-030-fixed` and `ki-031-fixed` after the merge; stack is STOPPED
 
 ## Next action
-Wait for the owner. After the merge: confirm CI on the PR head was green, merge verification on `main`, no tag for a chore. Then, if the owner confirms, tag `v1.0` on the `main` commit, and start `fix/ki-030-031-…` (read `docs/KNOWN_ISSUES.md` rows KI-030 and KI-031 only).
+Wait for CI on PR #34. After the merge: verify `main`, tag `ki-030-fixed` and `ki-031-fixed`, stop the stack.
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.

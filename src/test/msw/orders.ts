@@ -40,7 +40,7 @@ export function fakeOrders({
   takeCart: () => void
   statuses?: Status[]
   reason?: string
-  refuse?: { status: number; message: string }
+  refuse?: { status: number; message: string; retryAfter?: number }
   drop?: 'before' | 'after'
 }) {
   const orders: Order[] = []
@@ -57,7 +57,13 @@ export function fakeOrders({
     http.post('/api/orders', () => {
       calls.push('POST /api/orders')
       if (refuse)
-        return HttpResponse.json({ status: refuse.status, message: refuse.message }, { status: refuse.status })
+        return HttpResponse.json(
+          { status: refuse.status, message: refuse.message },
+          {
+            status: refuse.status,
+            headers: refuse.retryAfter === undefined ? {} : { 'Retry-After': String(refuse.retryAfter) },
+          },
+        )
       if (drop === 'before') return HttpResponse.error()
       const order = make()
       return drop === 'after' ? HttpResponse.error() : HttpResponse.json(order, { status: 201 })

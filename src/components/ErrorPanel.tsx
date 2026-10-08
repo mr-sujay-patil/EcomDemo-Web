@@ -1,4 +1,4 @@
-import { ApiError, supportReference } from '@/api/errors'
+import { ApiError, retryHint, supportReference } from '@/api/errors'
 import { Alert } from './Alert'
 import { Button } from './Button'
 import { ErrorReference } from './ErrorReference'
@@ -7,9 +7,11 @@ import { ErrorReference } from './ErrorReference'
 export function ErrorPanel({ error, onRetry }: { error: unknown; onRetry: () => void }) {
   const message = error instanceof ApiError ? error.message : 'Something went wrong while loading this page.'
   const correlationId = supportReference(error)
+  const hint = retryHint(error)
   return (
     <Alert tone="danger" title={message}>
       <div className="stack">
+        {hint && <p>{hint}</p>}
         {correlationId && <ErrorReference reference={correlationId} />}
         <Button variant="secondary" size="sm" onClick={onRetry}>
           Retry

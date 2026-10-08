@@ -42,3 +42,44 @@ test.describe('with the gateway unreachable', () => {
     await expect(page.getByRole('listitem')).toHaveCount(0)
   })
 })
+
+test('a catalogue larger than one backend page is read to the end', async ({ page }) => {
+  // The backend pages `GET /api/products` (100 at most, id order, the next page in `Link`); the shelf joins every page so it can
+  // sort the whole catalogue by name. A stand-in backend with 250 products, so the seed's 14 do not hide a missing page.
+  const total = 250
+  const asked: Array<{ page: number; size: number }> = []
+  await page.route(/\/api\/products(\?.*)?$/, (route) => {
+    const url = new URL(route.request().url())
+    const number = Number(url.searchParams.get('page') ?? 0)
+    const size = Number(url.searchParams.get('size') ?? 50)
+    asked.push({ page: number, size })
+    const last = Math.ceil(total / size) - 1
+    const items = Array.from({ length: Math.max(0, Math.min(size, total - number * size)) }, (_, index) => {
+      const id = number * size + index + 1
+      return {
+        id,
+        name: `Product ${String(id).padStart(3, '0')}`,
+        description: 'A product',
+        price: 100 + id,
+        stockQuantity: 5,
+        category: 'Test',
+        imageUrl: null,
+      }
+    })
+    const next =
+      number < last
+        ? `</api/products?page=${number + 1}&size=${size}>; rel="next"`
+        : `</api/products?page=0&size=${size}>; rel="first"`
+    return route.fulfill({ json: items, headers: { 'X-Total-Count': String(total), Link: next } })
+  })
+
+  await page.goto('/')
+
+  await expect(page.getByText(`Showing 1–24 of ${total} products`)).toBeVisible()
+  // 250 products at 100 a page: three requests, each for the largest page the backend allows.
+  expect(asked).toEqual([
+    { page: 0, size: 100 },
+    { page: 1, size: 100 },
+    { page: 2, size: 100 },
+  ])
+})

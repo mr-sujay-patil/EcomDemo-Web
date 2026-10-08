@@ -64,5 +64,12 @@ export function usePlaceOrder() {
       void queryClient.invalidateQueries({ queryKey: cartKeys.all })
       void queryClient.invalidateQueries({ queryKey: orderKeys.list() })
     },
+    // A 503 means the shop shed this checkout (more than 8 at once: nothing written, Retry-After 1) or inventory was slow. The
+    // order is never sent again by itself (a POST is never retried, src/api/retry.ts); the cart is re-read so the screen shows
+    // what the server really holds: if the order did land, the cart is empty and the shopper finds it in Your orders.
+    onError: (error) => {
+      if (error instanceof ApiError && error.status === 503)
+        void queryClient.invalidateQueries({ queryKey: cartKeys.all })
+    },
   })
 }

@@ -185,6 +185,65 @@ describe('an order the server refuses up front', () => {
   })
 })
 
+describe('a shop that is busy', () => {
+  /** The warning (a polite status, not an alert: the order did not fail), found by its title among the page's other status regions. */
+  async function findBusyNotice() {
+    const notice = (await screen.findByText('The shop is busy right now')).closest('[role="status"]')
+    if (!(notice instanceof HTMLElement)) throw new Error('The busy notice is not a status region')
+    return notice
+  }
+
+  const busy = { status: 503, message: 'Too many checkouts at once.', retryAfter: 1 }
+
+  it('says the shop is busy, not that the order failed, keeps the cart and says when to come back', async () => {
+    const { user, orders } = await openCart({ refuse: busy })
+
+    await placeOrder(user)
+
+    const notice = await findBusyNotice()
+    expect(notice).toHaveTextContent('The shop is busy right now')
+    expect(notice).toHaveTextContent('Your cart is kept. Try again in about 1 second.')
+    expect(screen.queryByText('Your order was not placed')).not.toBeInTheDocument()
+    expect(notice).not.toHaveTextContent('503')
+    expect(screen.getByText('Test Kettle')).toBeInTheDocument()
+    expect(orders.calls.filter((call) => call === 'POST /api/orders')).toHaveLength(1)
+  })
+
+  it('says "in a moment" when the server gave no time', async () => {
+    const { user } = await openCart({ refuse: { status: 503, message: 'Busy.' } })
+
+    await placeOrder(user)
+
+    expect(await findBusyNotice()).toHaveTextContent('Your cart is kept. Try again in a moment.')
+  })
+
+  it('never sends the order again by itself, and the button works once the shop is free', async () => {
+    const { user, orders } = await openCart({ refuse: busy })
+    await placeOrder(user)
+    await screen.findByText('The shop is busy right now')
+
+    // Nothing resends it: one POST, however long the notice stays.
+    await new Promise((resolve) => setTimeout(resolve, 1200))
+    expect(orders.calls.filter((call) => call === 'POST /api/orders')).toHaveLength(1)
+    expect(screen.getByRole('button', { name: 'Place order' })).toBeEnabled()
+  })
+
+  it('asks the server for the cart again, so the screen shows what the server holds', async () => {
+    const { user } = await openCart({ refuse: busy })
+    const reads: string[] = []
+    const listener = ({ request }: { request: Request }) => {
+      if (request.method === 'GET' && new URL(request.url).pathname === '/api/cart') reads.push(request.url)
+    }
+    server.events.on('request:start', listener)
+
+    await placeOrder(user)
+    await screen.findByText('The shop is busy right now')
+
+    await waitFor(() => expect(reads.length).toBeGreaterThan(0))
+    server.events.removeListener('request:start', listener)
+  })
+})
+
 describe('a lost answer', () => {
   it('never asks twice, and shows the order that was made', async () => {
     const { orders, user, router } = await openCart({ drop: 'after' })
