@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type MouseEvent } from 'react'
-import { createSearchParams, Link, Outlet, ScrollRestoration, useLocation, useMatches, useNavigate } from 'react-router'
+import { Link, Outlet, ScrollRestoration, useLocation, useMatches } from 'react-router'
 import { buttonClass } from '@/components/Button'
 import { Header } from '@/components/Header'
 import { Icon } from '@/components/Icon'
@@ -7,6 +7,7 @@ import { Logo } from '@/components/Logo'
 import { site } from '@/content/site'
 import { AccountMenu } from '@/features/auth/AccountMenu'
 import { ExpiryNotice } from '@/features/auth/ExpiryNotice'
+import { SearchBox } from '@/features/search/SearchBox'
 import { useSession } from '@/features/auth/useSession'
 import { countItems, useCart } from '@/features/cart/api'
 import { PageTitleContext } from './pageTitle'
@@ -22,7 +23,6 @@ function isRouteHandle(handle: unknown): handle is RouteHandle {
 
 export function Layout() {
   const { pathname } = useLocation()
-  const navigate = useNavigate()
   const matches = useMatches()
   const handle = matches.map((match) => match.handle).findLast(isRouteHandle)
   // A page may name itself (a "Not permitted" standing in for the admin console); otherwise the route does.
@@ -56,11 +56,6 @@ export function Layout() {
     document.getElementById('main')?.focus()
   }
 
-  function search(query: string) {
-    const trimmed = query.trim()
-    void navigate({ pathname: '/search', search: trimmed ? `?${createSearchParams({ q: trimmed })}` : '' })
-  }
-
   return (
     <div className="site">
       <a className="skip-link" href="#main" onClick={skipToContent}>
@@ -72,7 +67,7 @@ export function Layout() {
             <Logo height={26} />
           </Link>
         }
-        onSearch={search}
+        search={<SearchBox />}
         tools={
           <>
             {role === 'ADMIN' && (

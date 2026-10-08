@@ -23,6 +23,13 @@ describe('Header', () => {
     expect(onSearch).toHaveBeenCalledWith('something to type on')
   })
 
+  it('shows a given search in place of its own form', () => {
+    render(<Header search={<div role="search">Custom search</div>} />)
+
+    expect(screen.getByText('Custom search')).toBeInTheDocument()
+    expect(screen.queryByRole('textbox', { name: 'Search products' })).not.toBeInTheDocument()
+  })
+
   it('offers Sign in when nobody is signed in, and the name when someone is', () => {
     const { rerender } = render(<Header />)
     expect(screen.getByRole('button', { name: 'Sign in' })).toBeInTheDocument()

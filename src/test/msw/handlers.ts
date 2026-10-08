@@ -74,9 +74,37 @@ export const productHandlers = {
   ),
 }
 
+type ProductSearchResponse = components['schemas']['ProductSearchResponse']
+
+export const searchHandlers = {
+  /**
+   * GET /api/products/search: every fixture, best match first. The order is the reverse of the catalogue's on purpose, so a
+   * test can tell "the server's ranking" from "the catalogue's order". Honours `limit`.
+   */
+  success: http.get<never, never, ProductSearchResponse>('/api/products/search', ({ request }) => {
+    const url = new URL(request.url)
+    const limit = Number(url.searchParams.get('limit') ?? 5)
+    const ranked = [...productFixtures].reverse().slice(0, limit)
+    return HttpResponse.json({
+      query: url.searchParams.get('q') ?? '',
+      results: ranked.map((product, index) => ({ product, similarity: 0.9 - index / 10 })),
+    })
+  }),
+
+  /** No embedding model configured, as the backend answers it. */
+  unavailable: http.get<never, never, ApiError>('/api/products/search', () =>
+    HttpResponse.json(
+      { status: 503, message: 'Semantic search is not configured.' },
+      { status: 503, headers: { 'Retry-After': '30' } },
+    ),
+  ),
+}
+
 /** The happy path for every endpoint; a test swaps one in with `server.use(...)`. */
 export const handlers = [
   productHandlers.success,
+  // Before the detail route: `/api/products/:id` would otherwise take `search` for an id.
+  searchHandlers.success,
   productHandlers.detail,
   // A signed-in customer's header asks for the cart on every page; most tests do not care what is in it.
   http.get('/api/cart', () => HttpResponse.json({ id: 1, items: [], totalAmount: 0 })),

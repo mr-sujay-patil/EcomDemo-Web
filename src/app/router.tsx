@@ -1,5 +1,4 @@
 import { createBrowserRouter, Navigate, type RouteObject } from 'react-router'
-import { PlaceholderPage } from '@/components/PlaceholderPage'
 import { RegisterPage } from '@/features/accounts/RegisterPage'
 import { RequireRole } from '@/features/auth/RequireRole'
 import { SignInPage } from '@/features/accounts/SignInPage'
@@ -10,6 +9,7 @@ import { ShippingPage } from '@/features/content/ShippingPage'
 import { TermsPage } from '@/features/content/TermsPage'
 import { ProductListPage } from '@/features/catalog/ProductListPage'
 import { ProductPage } from '@/features/catalog/ProductPage'
+import { SearchPage } from '@/features/search/SearchPage'
 import { Layout, type RouteHandle } from './Layout'
 import { NotFoundPage } from './NotFoundPage'
 
@@ -42,7 +42,7 @@ export const routes: RouteObject[] = [
     children: [
       { index: true, element: <ProductListPage />, handle: { title: 'Products' } satisfies RouteHandle },
       route('products/:id', 'Product', <ProductPage />),
-      route('search', 'Search', <PlaceholderPage title="Search" phase={15} />),
+      route('search', 'Search', <SearchPage />),
       // Signed in as a customer: the cart, checkout and orders. Signed out they go to /sign-in?next=…
       {
         element: <RequireRole role="CUSTOMER" />,

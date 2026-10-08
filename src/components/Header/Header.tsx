@@ -13,6 +13,8 @@ export type HeaderProps = {
   onSearch?: (query: string) => void
   /** Replaces the logo, for example with a router link around it. */
   brand?: ReactNode
+  /** Replaces the whole search form, for example with a box that suggests products as you type. */
+  search?: ReactNode
   /** Replaces the account button (a link, in the app). */
   account?: ReactNode
   /** Replaces the cart button (a link, in the app). The count badge is drawn over it either way. */
@@ -27,6 +29,7 @@ export function Header({
   userName,
   placeholder = 'Search, or describe what you need',
   onSearch,
+  search,
   brand,
   account,
   cart,
@@ -41,9 +44,11 @@ export function Header({
     <div className="ed-header-wrap">
       <header className="ed-header">
         {brand ?? <Logo height={26} />}
-        <form className="ed-header-search" role="search" onSubmit={submit}>
-          <TextField name="q" icon="search" placeholder={placeholder} aria-label="Search products" />
-        </form>
+        {search ?? (
+          <form className="ed-header-search" role="search" onSubmit={submit}>
+            <TextField name="q" icon="search" placeholder={placeholder} aria-label="Search products" />
+          </form>
+        )}
         <nav className="ed-header-nav" aria-label="Primary">
           {tools}
           {account ?? (

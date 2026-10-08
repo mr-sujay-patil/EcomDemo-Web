@@ -47,12 +47,6 @@ describe('routes', () => {
     })
   })
 
-  it('names the phase that builds a placeholder page', async () => {
-    renderRoute('/search')
-
-    expect(await screen.findByText('This page is built in Phase 15.')).toBeInTheDocument()
-  })
-
   it('leaves every owner-written paragraph marked TODO(owner)', async () => {
     renderRoute('/returns')
 
@@ -138,7 +132,7 @@ describe('layout', () => {
     const { router } = renderRoute('/about')
     await screen.findByRole('heading', { level: 1, name: 'About' })
 
-    await user.type(within(screen.getByRole('banner')).getByRole('textbox', { name: 'Search products' }), '   {Enter}')
+    await user.type(within(screen.getByRole('banner')).getByRole('combobox', { name: 'Search products' }), '   {Enter}')
 
     expect(await screen.findByRole('heading', { level: 1, name: 'Search' })).toBeInTheDocument()
     expect(router.state.location.search).toBe('')
@@ -160,11 +154,13 @@ describe('layout', () => {
     await screen.findByRole('heading', { level: 1, name: 'About' })
 
     await user.type(
-      within(screen.getByRole('banner')).getByRole('textbox', { name: 'Search products' }),
+      within(screen.getByRole('banner')).getByRole('combobox', { name: 'Search products' }),
       'something to type on{Enter}',
     )
 
-    expect(await screen.findByRole('heading', { level: 1, name: 'Search' })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Results for “something to type on”' }),
+    ).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/search')
     expect(new URLSearchParams(router.state.location.search).get('q')).toBe('something to type on')
   })
