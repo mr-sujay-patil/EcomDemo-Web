@@ -38,6 +38,17 @@ npm run dev             # http://localhost:5173
 
 `/api` requests go to the gateway through Vite's proxy, so the browser only ever talks to its own origin. Set `API_TARGET` (in the shell or a `.env` file, see `.env.example`) to point it somewhere else.
 
+### As a container
+
+The shop also ships as one small image: nginx serving the build, with `/api` forwarded to the gateway on the same origin. With the backend stack up:
+
+```bash
+docker compose up --build --wait     # the shop on http://localhost:8070 (WEB_PORT changes the port)
+docker compose down                  # stops only the shop; the backend is never touched
+```
+
+The container joins the backend's Docker network. Its name is `<backend compose project>_default`: `ecomdemo_default` for the backend team's checkout, `ecomdemo-backend-readonly_default` for the read-only clone. Set `BACKEND_NETWORK` to the one that is running (`docker network ls`). `npm run e2e:docker` finds it by itself, runs the whole suite against the container and takes `web` down again. Details: `docs/process/development-environment.md`.
+
 | Script | What it does |
 |---|---|
 | `npm run dev` | Dev server with hot reload on port 5173 |
@@ -52,6 +63,7 @@ npm run dev             # http://localhost:5173
 | `npm run verify` | Everything a PR must pass: type check, lint, format check, tests, then build |
 | `npm run e2e` | End-to-end smoke tests: builds and previews the app on 4173, then drives it in Chromium against the real backend (it must be running). Every screen is also checked at 360–1280 px in light and dark |
 | `npm run e2e:ui` | The same tests in Playwright's UI mode, to watch and debug them step by step |
+| `npm run e2e:docker` | Builds the image, starts only the `web` container beside the running backend stack, runs the whole E2E suite against `http://localhost:8070`, then stops `web` |
 | `npm run e2e:report` | Saves screenshots at 360 and 1280 px into `docs/test-reports/phase-XX/` (the phase comes from the branch, or `REPORT_PHASE=phase-XX`) |
 
 If `format:check` fails, run `npm run format` and commit the result. Editors pick up `.editorconfig`; with the ESLint and Prettier extensions installed they show lint errors as you type and can format on save. There is no pre-commit hook: CI enforces both from Phase 5.

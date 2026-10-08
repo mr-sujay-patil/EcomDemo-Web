@@ -53,7 +53,7 @@ test.describe('product images', () => {
 })
 
 test.describe('fonts', () => {
-  test('are served by this app as font/woff2, and the two preloaded faces are fetched', async ({ page }) => {
+  test('are served by this app as font/woff2, and the two preloaded faces are fetched', async ({ page, baseURL }) => {
     const fonts: { url: string; type: string | undefined }[] = []
     page.on('response', (response) => {
       if (response.url().endsWith('.woff2'))
@@ -65,7 +65,8 @@ test.describe('fonts', () => {
 
     expect(fonts.length).toBeGreaterThanOrEqual(2)
     for (const font of fonts) {
-      expect(new URL(font.url).origin, 'self-hosted: no Google Fonts, no CDN').toBe('http://localhost:4173')
+      // The origin the suite is pointed at: the preview server, or the container (`npm run e2e:docker`).
+      expect(new URL(font.url).origin, 'self-hosted: no Google Fonts, no CDN').toBe(new URL(baseURL ?? '').origin)
       expect(font.type).toBe('font/woff2')
     }
     await expect(page.locator('link[rel="preload"][as="font"]')).toHaveCount(2)

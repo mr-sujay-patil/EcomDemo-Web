@@ -1,0 +1,18 @@
+# Nothing the build does not need goes into the build context: it is faster, and no secret or local file can leak into a layer.
+node_modules
+dist
+coverage
+playwright-report
+test-results
+.git
+.github
+.env
+.env.*
+*.log
+docs
+design-system
+e2e
+api
+scripts/*.md
+ecomdemo-frontend-integration-guide.md
+*Zone.Identifier

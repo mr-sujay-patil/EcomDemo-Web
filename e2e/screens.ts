@@ -252,7 +252,10 @@ export const signedInFor: Record<string, Role> = {
 }
 
 /** Every route of src/app/router.tsx, as a user would reach it: the path, the h1 and the document title. */
-export const routePages = [
+/** The suite is pointed at a running container (`npm run e2e:docker`): the shipped image, which has no style guide. */
+export const againstContainer = Boolean(process.env.E2E_BASE_URL)
+
+const allRoutePages = [
   // Seeded by the backend's migration (catalog-service V2__seed_products.sql), as in e2e/catalog.spec.ts.
   { name: 'product-detail', path: '/products/1', h1: 'Mechanical Keyboard', title: 'Product', report: true },
   { name: 'search', path: '/search', h1: 'Search', title: 'Search', report: false },
@@ -272,6 +275,8 @@ export const routePages = [
   { name: 'styleguide', path: '/styleguide', h1: 'Style guide', title: 'Style guide', report: true },
   { name: 'not-found', path: '/no/such/page', h1: 'Page not found', title: 'Page not found', report: true },
 ] as const
+
+export const routePages = allRoutePages.filter((page) => !(againstContainer && page.name === 'styleguide'))
 
 /** Aborting a request makes Chrome log this console error itself; the app logs nothing. */
 export const abortedRequestError = /Failed to load resource: net::ERR_FAILED/

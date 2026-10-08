@@ -43,6 +43,18 @@ Only one backend stack can run at a time: both copies use the same container nam
 
 Swagger UI: http://localhost:8080/swagger-ui.html (pick a service top-right). The ADMIN account is seeded by a backend migration; its credentials are in the backend README. Use it only in Phase 17's tests, and never write it into this repository: tests read it from `E2E_ADMIN_USERNAME` / `E2E_ADMIN_PASSWORD` in the user's environment.
 
+## Running the web container (from Phase 19)
+
+`compose.yaml` in this repository starts one service, `web` (nginx serving the build, `/api` proxied to `gateway-service:8080`). It never starts, stops or edits a backend service or the backend's compose file: it only joins the network the backend's stack created, as an **external** network.
+
+    docker compose up --build --wait      # http://localhost:8070 (WEB_PORT)
+    docker compose down                   # `web` only
+
+- **The network's name** is `<backend compose project>_default`, and the project is the backend folder's name: `ecomdemo_default` for the backend team's checkout, `ecomdemo-backend-readonly_default` for the read-only clone. `compose.yaml` defaults to `ecomdemo_default`; set `BACKEND_NETWORK` for the other (`docker network ls`). `npm run e2e:docker` reads it from the running gateway container.
+- **Upstream:** `API_UPSTREAM` (default `http://gateway-service:8080`, the backend compose service name). nginx looks it up when a request arrives, so the container starts and stays healthy even when the gateway is down (`/api` then answers 502).
+- **Hardening:** non-root (uid 101), read-only root filesystem, all capabilities dropped, port bound to `127.0.0.1`. The image has no Node.
+- **CI** builds the image on every pull request and starts it once; a merge to `main` pushes `ghcr.io/mr-sujay-patil/ecomdemo-web` tagged with the commit SHA and `latest`.
+
 ## What must be installed inside WSL2
 
 - **Node.js, latest Active LTS**, through `nvm` (pinned in `.nvmrc` from Phase 1). npm comes with it. No yarn, no pnpm.

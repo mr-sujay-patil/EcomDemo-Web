@@ -1,0 +1,66 @@
+# Rendered at container start by the nginx image's entrypoint: ${API_UPSTREAM} and ${NGINX_LOCAL_RESOLVERS} (the DNS
+# server from /etc/resolv.conf, read by the image itself) are filled in from the environment. nginx's own $variables are
+# left alone, because the entrypoint substitutes only variables that exist in the environment.
+
+server {
+    listen 8080;
+    server_name _;
+    # No version in the Server header or in error pages.
+    server_tokens off;
+
+    root /usr/share/nginx/html;
+
+    gzip on;
+    gzip_vary on;
+    gzip_min_length 1024;
+    gzip_types text/plain text/css text/javascript application/javascript application/json image/svg+xml;
+
+    # The container's health: answered by nginx itself, so it says "this container is serving", not "the gateway is up".
+    location = /healthz {
+        access_log off;
+        default_type text/plain;
+        return 200 "ok\n";
+    }
+
+    # The API, on the page's own origin: the browser never makes a cross-origin call, so the backend needs no CORS.
+    location /api/ {
+        # The upstream sits in a variable so nginx starts even when the gateway is not up yet (a literal name that does
+        # not resolve at start stops nginx); it is looked up when a request arrives and again every 10 s.
+        resolver ${NGINX_LOCAL_RESOLVERS} valid=10s ipv6=off;
+        set $api_upstream ${API_UPSTREAM};
+        # A variable with no path in it: the request goes on exactly as it came (/api/products?page=0 stays that).
+        proxy_pass $api_upstream;
+
+        proxy_http_version 1.1;
+        # The gateway lets a browser write (POST, PUT, DELETE) only when Host matches the request's Origin, so Host is the
+        # one the browser used, port included. Rewriting it to the upstream's name made every write a 403 (web KI-017).
+        proxy_set_header Host $http_host;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        # Authorization and X-Correlation-Id are passed on untouched, as every request header is except the hop-by-hop
+        # ones; the gateway's X-Correlation-Id comes back to the browser the same way (a 5xx screen shows it).
+        proxy_pass_request_headers on;
+
+        proxy_connect_timeout 5s;
+        # The admin CSV import answers only when the whole file is done (guide: the shop finishes before it replies).
+        proxy_send_timeout 300s;
+        proxy_read_timeout 300s;
+        # The backend accepts a file of up to 16 MB (spring.servlet.multipart.max-file-size); nginx must not refuse one first.
+        client_max_body_size 16m;
+        # nginx keeps no cache of API answers (no proxy_cache is configured), and the gateway's own Cache-Control goes through
+        # untouched: an order's status or a cart is always the gateway's current word.
+    }
+
+    # Built files have a hash in their name: a changed file has a new name, so they can be kept for a year.
+    location /assets/ {
+        try_files $uri =404;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
+    # Every other path is the app (client-side routes: /products/1, /cart, /admin/stock...). A file that exists is served
+    # (favicon, robots); anything else gets index.html. index.html names the hashed files, so it must always be re-asked.
+    location / {
+        try_files $uri /index.html;
+        add_header Cache-Control "no-cache";
+    }
+}
