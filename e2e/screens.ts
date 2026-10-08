@@ -57,6 +57,55 @@ export async function stubAccount(page: Page, role: Role) {
         })
       : route.continue(),
   )
+  // My orders: the cancelled order with the long reason first, then a confirmed and a pending one, so the table is measured at its widest.
+  await page.route('**/api/orders', (route) =>
+    route.request().method() === 'GET'
+      ? route.fulfill({
+          json: [
+            {
+              id: 42,
+              placedAt: '2026-10-06T10:00:00Z',
+              username: 'e2e.person',
+              status: 'CANCELLED',
+              statusReason: 'Payment declined: 12000.00 exceeds the limit of 10000.00',
+              statusChangedAt: '2026-10-06T10:00:05Z',
+              totalAmount: 12000,
+              items: [
+                {
+                  productId: 3,
+                  productName: 'Ultra-wide curved monitor',
+                  unitPrice: 12000,
+                  quantity: 1,
+                  lineTotal: 12000,
+                },
+              ],
+            },
+            {
+              id: 41,
+              placedAt: '2026-10-05T09:30:00Z',
+              username: 'e2e.person',
+              status: 'CONFIRMED',
+              statusReason: '',
+              statusChangedAt: '2026-10-05T09:30:04Z',
+              totalAmount: 1234567.5,
+              items: [
+                { productId: 1, productName: 'Mechanical Keyboard', unitPrice: 250.25, quantity: 12, lineTotal: 3003 },
+              ],
+            },
+            {
+              id: 40,
+              placedAt: '2026-10-04T08:00:00Z',
+              username: 'e2e.person',
+              status: 'PENDING',
+              statusReason: '',
+              statusChangedAt: '2026-10-04T08:00:00Z',
+              totalAmount: 500,
+              items: [{ productId: 2, productName: 'USB-C Hub', unitPrice: 500, quantity: 1, lineTotal: 500 }],
+            },
+          ],
+        })
+      : route.continue(),
+  )
   // Order 42: cancelled, with a long reason and a long product name, so the layout specs measure the busiest order page.
   await page.route('**/api/orders/42', (route) =>
     route.fulfill({
@@ -136,9 +185,9 @@ export const routePages = [
   { name: 'product-detail', path: '/products/1', h1: 'Mechanical Keyboard', title: 'Product', report: true },
   { name: 'search', path: '/search', h1: 'Search', title: 'Search', report: false },
   { name: 'cart', path: '/cart', h1: 'Your cart', title: 'Your cart', report: true },
-  { name: 'orders', path: '/orders', h1: 'Your orders', title: 'Your orders', report: false },
+  { name: 'orders', path: '/orders', h1: 'Your orders', title: 'Your orders', report: true },
   { name: 'order-detail', path: '/orders/42', h1: 'Order #42', title: 'Order #42', report: true },
-  { name: 'account', path: '/account', h1: 'Your account', title: 'Your account', report: false },
+  { name: 'account', path: '/account', h1: 'Your account', title: 'Your account', report: true },
   { name: 'sign-in', path: '/sign-in', h1: 'Sign in', title: 'Sign in', report: true },
   { name: 'register', path: '/register', h1: 'Create an account', title: 'Create an account', report: true },
   { name: 'admin', path: '/admin', h1: 'Admin', title: 'Admin', report: false },
