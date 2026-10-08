@@ -79,6 +79,6 @@ Status: ⬜ Not started · 🟡 In progress · 🔵 PR open · ✅ Done (verifie
 | 18 | [Accessibility](phases/phase-18-accessibility.md) | axe-core + keyboard testing (WCAG 2.2 AA) + visual regression | `feature/phase-18-accessibility` | Quality | none | ✅ |
 | 19 | [Containerization](phases/phase-19-docker.md) | Docker + nginx (same-origin proxy to the gateway) | `feature/phase-19-docker` | Delivery | same-origin serving (CORS fix not required) | ✅ |
 | 20 | [Container Orchestration](phases/phase-20-kubernetes.md) | Kubernetes (the backend's kind cluster and ingress) | `feature/phase-20-kubernetes` | Delivery | backend k8s manifests and ingress | ✅ |
-| 21 | [Performance](phases/phase-21-performance.md) | Lighthouse CI + bundle budgets | `feature/phase-21-performance` | Quality | none | 🔵 |
-| 22 | [Security](phases/phase-22-security.md) | CSP + npm audit + Trivy | `feature/phase-22-security` | Quality | none | ⬜ |
+| 21 | [Performance](phases/phase-21-performance.md) | Lighthouse CI + bundle budgets | `feature/phase-21-performance` | Quality | none | ✅ |
+| 22 | [Security](phases/phase-22-security.md) | CSP + npm audit + Trivy | `feature/phase-22-security` | Quality | none | 🟡 |
 | 23 | [Observability](phases/phase-23-observability.md) | Error reporting + trace propagation | `feature/phase-23-observability` | Quality | `X-Correlation-Id`; backend tracing (Tempo) | ⬜ |

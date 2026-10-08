@@ -22,6 +22,48 @@ if (againstContainer) {
       }
     })
 
+    test('every response carries the security headers', async ({ request }) => {
+      // The page, a built file, a missing file, the health check and a proxied API answer (whatever its status).
+      const index = await request.get('/')
+      const asset = (await index.text()).match(/(?:src|href)="(\/assets\/[^"]+)"/)?.[1] ?? '/assets/missing.js'
+      for (const path of ['/', asset, '/assets/missing.js', '/healthz', '/api/products']) {
+        const headers = (await request.get(path)).headers()
+
+        expect(headers['x-content-type-options'], path).toBe('nosniff')
+        expect(headers['referrer-policy'], path).toBe('strict-origin-when-cross-origin')
+        expect(headers['cross-origin-opener-policy'], path).toBe('same-origin')
+        expect(headers['permissions-policy'], path).toContain('camera=()')
+        const policy = headers['content-security-policy'] ?? ''
+        for (const directive of [
+          "default-src 'self'",
+          "script-src 'self'",
+          "style-src 'self'",
+          "frame-ancestors 'none'",
+          "base-uri 'self'",
+          "form-action 'self'",
+        ]) {
+          expect(policy, `${path}: ${directive}`).toContain(directive)
+        }
+        // The point of the policy: nothing inline and nothing evaluated.
+        expect(policy, path).not.toMatch(/unsafe-inline|unsafe-eval/)
+      }
+    })
+
+    test('a font file carries no security headers (they only cost bytes there); a script has them', async ({
+      request,
+    }) => {
+      const page = await (await request.get('/')).text()
+      const script = page.match(/src="(\/assets\/[^"]+\.js)"/)?.[1] ?? '/assets/missing.js'
+      const stylesheet = page.match(/href="(\/assets\/[^"]+\.css)"/)?.[1] ?? '/assets/missing.css'
+      const font = (await (await request.get(stylesheet)).text()).match(/url\(([^)]+\.woff2)\)/)?.[1]
+
+      expect(font, 'the stylesheet names a font').toBeTruthy()
+      const fontHeaders = (await request.get(font!.replace(/^["']|["']$/g, ''))).headers()
+      expect(fontHeaders['content-security-policy']).toBeUndefined()
+      expect(fontHeaders['cache-control']).toContain('immutable')
+      expect((await request.get(script)).headers()['content-security-policy']).toContain("script-src 'self'")
+    })
+
     test('index.html is always re-asked, and a hashed asset is kept for a year', async ({ request }) => {
       const index = await request.get('/')
       expect(index.headers()['cache-control']).toBe('no-cache')

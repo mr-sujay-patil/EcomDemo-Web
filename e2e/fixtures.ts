@@ -22,7 +22,7 @@ const reactWarning = /\bReact\b|^Warning: /
  * Every spec imports `test` and `expect` from here, never from '@playwright/test', so the console
  * guard runs in every test: a console.error, a React warning or an uncaught exception fails it.
  */
-export const test = base.extend<Options & { consoleGuard: void; imageStub: void }>({
+export const test = base.extend<Options & { consoleGuard: void; cspGuard: void; imageStub: void }>({
   allowedConsoleErrors: [[], { option: true }],
   realImages: [false, { option: true }],
   imageStub: [
@@ -33,6 +33,28 @@ export const test = base.extend<Options & { consoleGuard: void; imageStub: void 
         )
       }
       await use()
+    },
+    { auto: true },
+  ],
+  // The browser reports each thing the Content-Security-Policy blocked as a `securitypolicyviolation` event (and logs it).
+  // Listening to the event names the directive and the URL; a test fails on any. Against the dev preview server there is
+  // no policy, so none can happen there: the container run (`npm run e2e:docker`) is the one that proves it.
+  cspGuard: [
+    async ({ page }, use) => {
+      const violations: string[] = []
+      await page.exposeFunction('__reportCspViolation', (text: string) => violations.push(text))
+      await page.addInitScript(() => {
+        document.addEventListener('securitypolicyviolation', (event) => {
+          const report = (window as unknown as { __reportCspViolation: (text: string) => void }).__reportCspViolation
+          report(
+            `${event.effectiveDirective} blocked ${event.blockedURI || 'inline'} (${event.sourceFile}:${event.lineNumber})`,
+          )
+        })
+      })
+
+      await use()
+
+      expect(violations, 'the Content-Security-Policy must block nothing the app does').toEqual([])
     },
     { auto: true },
   ],

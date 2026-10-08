@@ -42,6 +42,11 @@ jobs:
       - name: Verify
         run: npm run verify
 
+      # Fails on a HIGH or CRITICAL advisory in any dependency (dev tools included) unless audit-allowlist.json accepts it with a
+      # reason and an expiry date. Needs the registry, so it can also fail on a day a new advisory is published: that is the point.
+      - name: Audit the dependencies
+        run: npm run audit:deps
+
       - name: Measure coverage
         run: npm run test:coverage
 
@@ -227,7 +232,43 @@ jobs:
           test "$(docker inspect --format '{{.State.Health.Status}}' web)" = healthy
           curl --fail --silent --show-error http://localhost:8070/healthz
           curl --fail --silent --show-error http://localhost:8070/products/1 | grep -q '<div id="root">'
+          # The security headers (docs/security.md); the E2E suite against the container checks them on more paths.
+          headers="$(curl --silent --show-error --head http://localhost:8070/)"
+          for header in Content-Security-Policy Referrer-Policy X-Content-Type-Options Permissions-Policy Cross-Origin-Opener-Policy; do
+            echo "$headers" | grep -qi "^$header:" || { echo "missing header: $header"; exit 1; }
+          done
+          echo "$headers" | grep -qi "^content-security-policy:.*script-src 'self';"
           docker rm --force web
+
+      # The software bill of materials: every package in the image (Alpine and nginx's, and the app's files) in CycloneDX.
+      # Made before the scan and uploaded even when the scan fails, so the list is there to read when something is flagged.
+      - name: Make the SBOM of the image
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ecomdemo-web:ci
+          version: v0.75.0
+          format: cyclonedx
+          output: sbom.cdx.json
+
+      - name: Upload the SBOM
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: sbom
+          path: sbom.cdx.json
+          retention-days: 90
+
+      # HIGH and CRITICAL findings that have a fix available fail the job (a finding with no fix yet cannot be acted on).
+      # .trivyignore.yaml accepts one, with a written statement and an expiry date.
+      - name: Scan the image for vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: ecomdemo-web:ci
+          version: v0.75.0
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: '1'
+          trivyignores: .trivyignore.yaml
 
   # Publishes the image, only for a merge to main and only after every check above passed.
   publish:

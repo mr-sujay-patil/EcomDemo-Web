@@ -14,6 +14,8 @@ export default defineConfig([
 
   // Generated from the backend's OpenAPI snapshots by `npm run api:generate`: never hand-edited, so never linted.
   globalIgnores(['src/api/generated/']),
+  // Static files copied as they are (public/theme-init.js: plain browser script, six lines, no module).
+  globalIgnores(['public/']),
 
   // Every file: ESLint's and typescript-eslint's recommended rules, the type-aware ones included.
   js.configs.recommended,

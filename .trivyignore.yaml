@@ -1,0 +1,10 @@
+# Image findings Trivy is told to accept. Empty on purpose: every HIGH or CRITICAL finding that has a fix fails the `image` job.
+# To accept one, add it with the reason it cannot hurt here and a date when the acceptance ends (Trivy stops ignoring it then,
+# and the build fails again until it is fixed or renewed in a pull request):
+#
+# vulnerabilities:
+#   - id: CVE-2026-00000
+#     paths: ["usr/lib/libexample.so.1"]
+#     statement: "Why this cannot be reached in the shop's image."
+#     expired_at: 2026-12-31
+vulnerabilities: []
