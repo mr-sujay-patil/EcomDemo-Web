@@ -36,7 +36,7 @@ test.describe('every route, by direct URL', () => {
   test('an admin sub-path loads the admin area', async ({ page }) => {
     await visit(page, '/admin/products/new', 'ADMIN')
 
-    await expect(page.getByRole('heading', { level: 1, name: 'Admin' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: 'New product' })).toBeVisible()
   })
 })
 
@@ -143,7 +143,7 @@ test.describe('code splitting', () => {
     expect(chunks).toEqual(['OrderPage'])
 
     await visit(page, '/admin', 'ADMIN')
-    await expect(page.getByRole('heading', { level: 1, name: 'Admin' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: 'Products' })).toBeVisible()
     expect(chunks).toEqual(['OrderPage', 'AdminPage'])
   })
 })

@@ -1,6 +1,58 @@
-import { PlaceholderPage } from '@/components/PlaceholderPage'
+import { usePageTitle } from '@/app/pageTitle'
+import { NavLink, Navigate, Route, Routes } from 'react-router'
+import { ImportPage } from './ImportPage'
+import { ProductFormPage } from './ProductFormPage'
+import { ProductsAdminPage } from './ProductsAdminPage'
+import { SagaPage } from './SagaPage'
+import { SearchIndexPage } from './SearchIndexPage'
+import { StockPage } from './StockPage'
+import './admin.css'
 
-// Loaded with `lazy` (see src/app/router.tsx): shoppers never download the admin console.
+const SECTIONS = [
+  { to: 'products', label: 'Products' },
+  { to: 'stock', label: 'Stock' },
+  { to: 'import', label: 'Import' },
+  { to: 'search-index', label: 'Search index' },
+  { to: 'dead-letters', label: 'Dead letters' },
+] as const
+
+// Loaded with `lazy` (see src/app/router.tsx): shoppers never download the admin console. The route is `admin/*`, so
+// the sections are routed here, inside the one lazy chunk.
 export function AdminPage() {
-  return <PlaceholderPage title="Admin" phase={17} />
+  return (
+    <div className="admin">
+      <nav className="admin-nav" aria-label="Admin sections">
+        <ul>
+          {SECTIONS.map(({ to, label }) => (
+            <li key={to}>
+              <NavLink to={to}>{label}</NavLink>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <div className="admin-main">
+        <Routes>
+          <Route index element={<Navigate to="products" replace />} />
+          <Route path="products" element={<ProductsAdminPage />} />
+          <Route path="products/new" element={<ProductFormPage />} />
+          <Route path="products/:id" element={<ProductFormPage />} />
+          <Route path="stock" element={<StockPage />} />
+          <Route path="import" element={<ImportPage />} />
+          <Route path="search-index" element={<SearchIndexPage />} />
+          <Route path="dead-letters" element={<SagaPage />} />
+          <Route path="*" element={<AdminNotFound />} />
+        </Routes>
+      </div>
+    </div>
+  )
+}
+
+function AdminNotFound() {
+  usePageTitle('Not found')
+  return (
+    <div className="stack">
+      <h1>Not found</h1>
+      <p>There is no such page in the console. Pick a section from the list.</p>
+    </div>
+  )
 }

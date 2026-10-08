@@ -10,7 +10,7 @@ How the approved EcomDemo design (`design-system/`) became code. The visual rule
 | `src/styles/fonts/` | Seven self-hosted `woff2` files and their licences. No Google Fonts, no CDN |
 | `src/styles/base.css` | The page: body, headings, links, focus ring, `.page`, `.stack`, `.reserve`, `.skip-link`, `.todo`, and the few classes components share (`.ed-card`, `.ed-panel`, `.ed-caption`, `.ed-mono`) |
 | `src/components/<Name>/` | One folder per component: `<Name>.tsx`, `<Name>.css`, `index.ts`, `<Name>.test.tsx`. Seventeen: Icon, Logo, Button, StatusBadge, Chip, TextField, QuantityStepper, Price, ProductTile, ProductCard, CartLine, OrderSummary, SagaTimeline, AssistantMessage, StaffNote, Alert, Header |
-| `src/components/{ErrorPanel,PlaceholderPage,Todo}.tsx` | App-level pieces built from the components (not part of the design system's seventeen) |
+| `src/components/{ErrorPanel,Todo}.tsx` | App-level pieces built from the components (not part of the design system's seventeen) |
 | `src/app/useTheme.ts`, `ThemeToggle.tsx` | The theme |
 | `src/features/styleguide/` | `/styleguide`, every component in its states |
 | `scripts/check-tokens.mjs` | The token check, run by `npm run verify` |

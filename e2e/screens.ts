@@ -144,6 +144,78 @@ export async function stubAccount(page: Page, role: Role) {
       json: { id: 1, username: 'e2e.person', fullName: 'E2E Person', role, createdAt: '2026-10-06T10:00:00Z' },
     }),
   )
+  if (role === 'ADMIN') await stubConsole(page)
+}
+
+/**
+ * What the admin console asks for, answered here for the same reason as the rest of this function: the real gateway
+ * refuses the stub's token. Three products (one long name, one without a category), their stock, and two dead letters.
+ */
+async function stubConsole(page: Page) {
+  const products = [
+    {
+      id: 1,
+      name: 'Mechanical Keyboard',
+      description: 'Hot-swappable switches',
+      price: 8999,
+      stockQuantity: 25,
+      category: 'PERIPHERALS',
+      imageUrl: null,
+    },
+    {
+      id: 2,
+      name: 'Ultra-wide curved monitor with an unreasonably long product name to test wrapping',
+      description: '',
+      price: 125000.5,
+      stockQuantity: 0,
+      category: null,
+      imageUrl: null,
+    },
+    {
+      id: 3,
+      name: 'USB-C Hub',
+      description: '7-in-1',
+      price: 2499,
+      stockQuantity: 40,
+      category: 'ACCESSORIES',
+      imageUrl: null,
+    },
+  ]
+  await page.route('**/api/products', (route) =>
+    route.request().method() === 'GET' ? route.fulfill({ json: products }) : route.continue(),
+  )
+  await page.route('**/api/products/1', (route) => route.fulfill({ json: products[0] }))
+  await page.route('**/api/inventory?*', (route) =>
+    route.fulfill({ json: products.map((product) => ({ productId: product.id, quantity: product.stockQuantity })) }),
+  )
+  const letter = (offset: number, replayed: boolean) => ({
+    topic: 'order.events.DLT',
+    partition: 0,
+    offset,
+    key: 'order-7',
+    timestamp: '2026-10-08T10:00:00Z',
+    originalTopic: 'order.events',
+    exceptionClass: 'java.lang.IllegalStateException',
+    exceptionMessage: 'Cannot reserve stock for an order that was already closed by the saga deadline sweeper',
+    payload: '{"orderId":7,"reason":"timeout"}',
+    replayed,
+  })
+  await page.route('**/api/admin/dead-letters', (route) => route.fulfill({ json: [letter(1, false), letter(2, true)] }))
+  await page.route('**/api/admin/dead-letters/replays', (route) =>
+    route.fulfill({
+      json: [
+        {
+          dltTopic: 'order.events.DLT',
+          dltPartition: 0,
+          dltOffset: 2,
+          key: 'order-7',
+          originalTopic: 'order.events',
+          replayedAt: '2026-10-08T11:00:00Z',
+          replayedBy: 'admin',
+        },
+      ],
+    }),
+  )
 }
 
 /**
@@ -190,7 +262,7 @@ export const routePages = [
   { name: 'account', path: '/account', h1: 'Your account', title: 'Your account', report: true },
   { name: 'sign-in', path: '/sign-in', h1: 'Sign in', title: 'Sign in', report: true },
   { name: 'register', path: '/register', h1: 'Create an account', title: 'Create an account', report: true },
-  { name: 'admin', path: '/admin', h1: 'Admin', title: 'Admin', report: false },
+  { name: 'admin', path: '/admin', h1: 'Products', title: 'Products', report: false },
   { name: 'about', path: '/about', h1: 'About', title: 'About', report: true },
   { name: 'returns', path: '/returns', h1: 'Returns', title: 'Returns', report: false },
   { name: 'shipping', path: '/shipping', h1: 'Shipping', title: 'Shipping', report: false },
@@ -416,6 +488,51 @@ export const screens: Screen[] = [
     ready: async (page) => {
       await page.getByRole('button', { name: 'Account: E2E' }).click()
       await expect(page.getByRole('link', { name: 'My orders' })).toBeVisible()
+    },
+  },
+  {
+    name: 'admin-products',
+    path: '/admin/products',
+    signedInAs: 'ADMIN',
+    report: true,
+    ready: async (page) => {
+      await expect(page.getByRole('row', { name: /USB-C Hub/ })).toBeVisible()
+    },
+  },
+  {
+    name: 'admin-product-form',
+    path: '/admin/products/1',
+    signedInAs: 'ADMIN',
+    report: true,
+    ready: async (page) => {
+      await expect(page.getByLabel('Name')).toHaveValue('Mechanical Keyboard')
+    },
+  },
+  {
+    name: 'admin-stock',
+    path: '/admin/stock',
+    signedInAs: 'ADMIN',
+    report: true,
+    ready: async (page) => {
+      await expect(page.getByRole('row', { name: /USB-C Hub/ })).toBeVisible()
+    },
+  },
+  {
+    name: 'admin-import',
+    path: '/admin/import',
+    signedInAs: 'ADMIN',
+    report: true,
+    ready: async (page) => {
+      await expect(page.getByLabel('CSV file')).toBeVisible()
+    },
+  },
+  {
+    name: 'admin-dead-letters',
+    path: '/admin/dead-letters',
+    signedInAs: 'ADMIN',
+    report: true,
+    ready: async (page) => {
+      await expect(page.getByRole('table', { name: 'Replay log' })).toBeVisible()
     },
   },
   {

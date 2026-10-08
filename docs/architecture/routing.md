@@ -38,7 +38,7 @@ The skip link focuses `<main>` itself (the browser scrolls to `#main` on its own
 | `/about`, `/returns`, `/shipping`, `/privacy`, `/terms` | their names | 6 (structure), owner (words) | the human surfaces a store needs from day one; every paragraph is a `TODO(owner)` |
 | `*` | Page not found | 6 | any other address; links back to `/` |
 
-Placeholders show their final `h1` and one line naming the phase that builds them (`PlaceholderPage`). The assistant (Phase 16) is a widget on every page, not a route, so it has no row here; it will be loaded with `lazy` import the same way when it exists.
+No route is a placeholder any more (the last one, `/admin`, became the console in Phase 17). The assistant (Phase 16) is a widget on every page, not a route, so it has no row here; it will be loaded with `lazy` import the same way when it exists.
 
 ## Code splitting
 
