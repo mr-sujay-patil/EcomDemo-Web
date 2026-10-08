@@ -1,0 +1,90 @@
+# Keeps a tarball of the backend's built Docker images in the Actions cache, so the `e2e` job in ci.yml can load them
+# instead of building eight services from source (~200 s of every pull request run).
+#
+# WHY A WORKFLOW OF ITS OWN. GitHub scopes caches by branch: a cache saved on main can be restored by main AND by every pull
+# request, while a cache saved by a pull request is visible to that pull request only. A pull request run that saved the images
+# would help nobody else. Scheduled and manual runs always run on the default branch, so what this saves is visible everywhere.
+# Modelled on the backend repository's nvd-data.yml.
+#
+# THE KEY is backend-images-<commit sha of the backend>. ci.yml computes the same key after checking the backend out at
+# BACKEND_TAG. When the pin moves to another commit, run this workflow by hand (Actions > Backend images > Run workflow), or the
+# first pull request after the move builds from source (a ::notice:: says so) and the next scheduled run fills the cache.
+#
+# KEEP IN SYNC: the BACKEND_TAG default below must be the same value as in ci.yml (the e2e job's env). Both read the
+# repository variable BACKEND_TAG first.
+#
+# Run it by hand to seed the cache right away.
+
+name: Backend images
+
+on:
+  schedule:
+    # Daily at 04:23 UTC. Not on the hour: scheduled workflows queue up at :00 across GitHub. Daily also keeps the cache from
+    # being evicted for not being used for 7 days.
+    - cron: '23 4 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Two runs at once would each build and save their own copy for nothing.
+concurrency:
+  group: backend-images
+  cancel-in-progress: false
+
+jobs:
+  cache:
+    name: Cache the backend images
+    runs-on: ubuntu-latest
+    # A cold build of the eight services has taken ~200 s on a hosted runner; this leaves room for a slow day.
+    timeout-minutes: 45
+    env:
+      BACKEND_TAG: ${{ vars.BACKEND_TAG || 'f088fd4f517cceda44e478c9ca3ba8d5de1f8c68' }}
+    steps:
+      - name: Check out the backend at ${{ env.BACKEND_TAG }} (read only)
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          repository: mr-sujay-patil/ecomdemo
+          ref: ${{ env.BACKEND_TAG }}
+          path: ecomdemo-backend-readonly
+          persist-credentials: false
+
+      - name: Find the backend commit
+        id: backend
+        run: echo "sha=$(git -C ecomdemo-backend-readonly rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
+      # `lookup-only` asks whether the key exists and downloads nothing, so the daily run of an unchanged pin costs seconds.
+      - name: Is the cache already there?
+        id: exists
+        uses: actions/cache/restore@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: backend-images.tar
+          key: backend-images-${{ steps.backend.outputs.sha }}
+          lookup-only: true
+
+      # The compose file needs an .env to interpolate. Images do not contain it (the real run writes its own with generated
+      # secrets), so the example file is enough to build.
+      - name: Build the backend images
+        if: ${{ steps.exists.outputs.cache-hit != 'true' }}
+        working-directory: ecomdemo-backend-readonly
+        run: |
+          cp .env.example .env
+          # The third-party images (postgres, kafka, redis, ...) are pulled so `docker save` has them; the services are built.
+          docker compose pull --ignore-buildable
+          docker compose build
+
+      # Every image the stack runs, once each (postgres is listed once per database).
+      - name: Save the images as a tarball
+        if: ${{ steps.exists.outputs.cache-hit != 'true' }}
+        working-directory: ecomdemo-backend-readonly
+        run: |
+          docker save $(docker compose config --images | sort -u) --output ../backend-images.tar
+          ls -lh ../backend-images.tar | tee -a "$GITHUB_STEP_SUMMARY"
+
+      # Restore and save are separate steps (not the all-in-one actions/cache), so saving is a decision made here, from main.
+      - name: Save the cache
+        if: ${{ steps.exists.outputs.cache-hit != 'true' }}
+        uses: actions/cache/save@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
+        with:
+          path: backend-images.tar
+          key: backend-images-${{ steps.backend.outputs.sha }}
