@@ -5,7 +5,7 @@ import { buttonClass } from '@/components/Button'
 import { CartLine } from '@/components/CartLine'
 import { ErrorPanel } from '@/components/ErrorPanel'
 import { OrderSummary } from '@/components/OrderSummary'
-import { ApiError } from '@/api/errors'
+import { ApiError, retryHint } from '@/api/errors'
 import { usePlaceOrder } from '@/features/checkout/api'
 import { parseStockRefusal } from '@/features/checkout/stockRefusal'
 import { countItems, useAddToCart, useCart, useRemoveItem, useSetQuantity } from './api'
@@ -68,19 +68,27 @@ export function CartPage() {
     place.error instanceof ApiError && place.error.status === 409 ? parseStockRefusal(place.error.message) : null
   const refusedLine = refusal ? items.find((item) => item.productName === refusal.productName) : undefined
   const failure = setQuantity.error ?? remove.error ?? add.error ?? (refusedLine ? null : place.error)
+  // The shop is busy (a checkout it shed, or a slow stock check): not "your order failed". The cart is kept, and the answer says
+  // when to try again; the button stays, and the order is never sent twice by itself.
+  const busy = failure === place.error && failure instanceof ApiError && failure.status === 503
+  const dismiss = () => {
+    setQuantity.reset()
+    remove.reset()
+    add.reset()
+    place.reset()
+  }
   return (
     <div className="stack">
       <h1>Your cart</h1>
-      {failure ? (
+      {failure && busy ? (
+        <Alert tone="warning" title="The shop is busy right now" onClose={dismiss}>
+          Your cart is kept. {retryHint(failure) ?? 'Try again in a moment.'}
+        </Alert>
+      ) : failure ? (
         <Alert
           tone="danger"
           title={failure === place.error ? 'Your order was not placed' : 'Your cart was not changed'}
-          onClose={() => {
-            setQuantity.reset()
-            remove.reset()
-            add.reset()
-            place.reset()
-          }}
+          onClose={dismiss}
         >
           {failure.message}
         </Alert>
