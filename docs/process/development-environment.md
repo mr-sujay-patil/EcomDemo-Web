@@ -6,7 +6,7 @@ Goal: the machine is never the reason a result is in doubt. The web app is light
 
 | | |
 |---|---|
-| **Pinned backend** | **commit `f088fd4f517cceda44e478c9ca3ba8d5de1f8c68`** on the backend's `main` (backend PR #75, tagged `ki-011-fixed`, 2026-10-08). The backend publishes no `phase-*` tag after `phase-34-complete`, so the pin is a commit. Previous pin: `phase-34-complete` (backend PR #59, merge `9173309`, 2026-10-06) |
+| **Pinned backend** | **commit `82ef5989594c30330850594f388967b8f080ce8a`** on the backend's `main` (backend PR #81, tagged `ki-049-fixed`). The backend publishes no `phase-*` tag after `phase-34-complete`, so the pin is a commit. Previous pins: `f088fd4` (backend PR #75, 2026-10-08), then `phase-34-complete` (backend PR #59, merge `9173309`, 2026-10-06) |
 | Why this one | the backend team asked the web to follow `main` after Phase 34: the catalogue is paged (`page`, `size`, `X-Total-Count`, `Link`), catalogue reads and checkout can answer `503` with `Retry-After`, the dead-letter shape changed (`dltTimestamp`), `/actuator` left port 8080, ports bind to 127.0.0.1. Earlier: `phase-34-complete` added product images (web KI-002): `ProductResponse.imageUrl`, a gateway-relative path or `null`, and the anonymous `GET /api/products/{id}/image`. It keeps everything from `phase-33-complete` (RS256 tokens, login throttling `429` + `Retry-After`) and `ki-041-fixed` (CORS preflights) |
 | Delta since `phase-33-complete` | `docs/backend/phase-34-delta.md` (earlier: `docs/backend/phase-33-delta.md`) |
 
@@ -23,7 +23,7 @@ Everything lives **inside the WSL2 Linux filesystem**, never under `/mnt/c/...` 
 The read-only clone is set up once, in Phase 0:
 
     git clone https://github.com/mr-sujay-patil/ecomdemo ../ecomdemo-backend-readonly
-    git -C ../ecomdemo-backend-readonly checkout f088fd4f517cceda44e478c9ca3ba8d5de1f8c68
+    git -C ../ecomdemo-backend-readonly checkout 82ef5989594c30330850594f388967b8f080ce8a
     git -C ../ecomdemo-backend-readonly remote set-url --push origin no-push   # a mistaken push fails locally
 
 Reading it is allowed (files, `git log`, `git fetch --tags`, checking out a newer tag when the pin moves). Writing is never allowed: no commits, branches, pushes, PRs, issues or comments on the backend. Never check out a tag in `~/projects/ecomdemo`: that would move the backend team's work.
@@ -52,7 +52,7 @@ The web's stack and the backend team's no longer collide (the wrapper renames an
 
        bash scripts/backend-stack.sh up      # about 2 minutes cold; gateway on :28080 (see the section above)
 
-   The clone needs a `.env` with four values since Phase 33: `JWT_SIGNING_KEY` and `GATEWAY_CLIENT_SECRET`, `APP_CLIENT_SECRET`, `CATALOG_CLIENT_SECRET` (without them anonymous browsing fails with 500). The user creates it once from the backend's `.env.example`, using the one-line generator in that file; it is untracked, never committed, never printed. `JWT_SECRET` is no longer read.
+   The clone needs a `.env` with five values (the fifth, `REDIS_PASSWORD`, since backend KI-050 at `82ef598`: compose refuses to start without it and there is no default; generate one with `openssl rand -hex 16`; never commit or print it). The first four, since Phase 33: `JWT_SIGNING_KEY` and `GATEWAY_CLIENT_SECRET`, `APP_CLIENT_SECRET`, `CATALOG_CLIENT_SECRET` (without them anonymous browsing fails with 500). The user creates it once from the backend's `.env.example`, using the one-line generator in that file; it is untracked, never committed, never printed. `JWT_SECRET` is no longer read.
 3. Leave the stack as you found it: if you started it, say so in the test report and stop it at the end with `bash scripts/backend-stack.sh down` (never `-v`).
 
 Swagger UI: http://localhost:28080/swagger-ui.html (8080 on the backend team's own stack) (pick a service top-right). The ADMIN account is seeded by a backend migration; its credentials are in the backend README. Use it only in Phase 17's tests, and never write it into this repository: tests read it from `E2E_ADMIN_USERNAME` / `E2E_ADMIN_PASSWORD` in the user's environment.

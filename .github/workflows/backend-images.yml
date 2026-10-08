@@ -39,7 +39,7 @@ jobs:
     # A cold build of the eight services has taken ~200 s on a hosted runner; this leaves room for a slow day.
     timeout-minutes: 45
     env:
-      BACKEND_TAG: ${{ vars.BACKEND_TAG || 'f088fd4f517cceda44e478c9ca3ba8d5de1f8c68' }}
+      BACKEND_TAG: ${{ vars.BACKEND_TAG || '82ef5989594c30330850594f388967b8f080ce8a' }}
     steps:
       - name: Check out the backend at ${{ env.BACKEND_TAG }} (read only)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -63,12 +63,14 @@ jobs:
           lookup-only: true
 
       # The compose file needs an .env to interpolate. Images do not contain it (the real run writes its own with generated
-      # secrets), so the example file is enough to build.
+      # secrets), so the example file, plus a placeholder Redis password, is enough to build.
       - name: Build the backend images
         if: ${{ steps.exists.outputs.cache-hit != 'true' }}
         working-directory: ecomdemo-backend-readonly
         run: |
           cp .env.example .env
+          # Compose refuses to read the file without a Redis password (backend KI-050); any value does, since no image contains it.
+          sed -i 's|^REDIS_PASSWORD=.*|REDIS_PASSWORD=image-build-only|' .env
           # The third-party images (postgres, kafka, redis, ...) are pulled so `docker save` has them; the services are built.
           docker compose pull --ignore-buildable
           docker compose build
