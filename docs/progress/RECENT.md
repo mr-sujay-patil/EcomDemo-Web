@@ -15,6 +15,17 @@
 **Follow-ups (not done, out of scope):** <suggestions deferred to later phases>
 -->
 
+## Phase 16: AI Shopping Assistant (tag: phase-16-complete, PR pending)
+**What exists now:** A secondary header button "Ask the shop" (icon only under 640 px) opens a native `<dialog>` sheet: signed out it links to sign-in, an admin is told it is for customers, a customer types a message (Enter sends, 1000 max) and gets "Shop assistant" answers with "Checked: …" titles and one "Thinking…" caption. A `pendingAction` is an offer (product, server price, quantity) with Add it / Not now; only Add it calls `confirm`, then the cart refetches. 404 says expired; 503 says not available and offers a search of the same words.
+**Key code:** `src/features/assistant/` (`assistant.ts`, `useConversation.ts`, `AssistantSheet.tsx`, `assistant.css`), the button and sheet in `app/Layout.tsx` (+ `.site-ask` in `Layout.css`), `docs/modules/assistant.md`, decisions [Phase 16], web KI-021.
+**Config & infrastructure:** no new dependencies. Coverage floor 99.9 / 97.7 / 100 / 100. `src/test/setup.ts` has a stand-in for modal `<dialog>` (and `Element.scrollTo`) because jsdom lacks them. `assistantHandlers`, `assistantReply` in `src/test/msw/handlers.ts`. `stubProposedProduct`, `assistant-sheet` and `assistant-unavailable` screens in `e2e/screens.ts`.
+**Tests:** 729 unit and component (was 704); E2E 370, 369 pass and 1 fails on stock data (web KI-020) (was 344: `e2e/assistant.spec.ts` 6 and two screens in the matrix).
+**Backend tested against:** `phase-34-complete`, started with `CUSTOMER_DB_PORT=15435` (a Windows app holds 5435). A model IS configured, but the seeded products are not in the search index, so the assistant answers "the store does not sell …" (see the report).
+**Gotchas:** A stubbed sign-in's token is refused by the real gateway even on public calls (401 ends the session), so every request a stubbed screen makes must be stubbed too (the proposal's `GET /api/products/1`). A two-regex `allowedConsoleErrors` is read by Playwright as `[value, options]`: pass one regex. After the browser's last control Tab goes to the browser's own UI, so "focus trapped" means "never on the page behind", not "never leaves the sheet".
+**Owner TODOs open:** unchanged from Phase 14.
+**Backend asks:** web KI-021 (OpenAPI omits the `null` of `pendingAction`); the ADMIN backfill so the assistant can find products (a manual step, not a defect). Web KI-019 and KI-020 still to relay.
+**Follow-ups (not done, out of scope):** streaming; history beyond the session; an "Ask about this product" entry from a product page.
+
 ## Phase 15: Semantic Search (tag: phase-15-complete, PR pending)
 **What exists now:** The header search box is a combobox: after a 300 ms pause it shows the top five suggestions (arrow keys, Enter opens one; Enter with none highlighted goes to `/search?q=…`). `/search` takes `q`, `category`, `minPrice`, `maxPrice` from the URL, asks `GET /api/products/search` for 20, and shows the results in the server's order with no similarity. A 503 gives an `info` Alert and a word match over the loaded catalogue, and the caption says which mode was used. The old Phase 15 placeholder is gone.
 **Key code:** `src/features/search/` (`search.ts`, `api.ts`, `useDebouncedValue.ts`, `SearchBox.tsx`, `SearchPage.tsx`, `search.css`), the `search` slot on `components/Header`, `docs/modules/search.md`, decisions [Phase 15].
@@ -25,14 +36,3 @@
 **Owner TODOs open:** unchanged from Phase 14.
 **Backend asks:** none.
 **Follow-ups (not done, out of scope):** search analytics (the phase says no); a result count above 20 would need backend paging; web KI-019 and KI-020 still to relay.
-
-## Phase 14: Orders and Profile (tag: phase-14-complete, PR pending)
-**What exists now:** `/orders` is a table of the customer's orders (id, placed, items, total, status badge, the reason for a cancelled one), newest first, ten a page; an order opens at `/orders/:id` (the Phase 13 page). Another customer's order and an unknown id both say "Order not found". `/account` shows username and member-since, edits the full name (`PUT /api/customers/me`; the header follows), and says there is no password change.
-**Key code:** `src/features/orders/` (`OrdersPage.tsx`, `orders.css`), `src/features/accounts/ProfilePage.tsx` + `api.ts` (`fetchMe`, `updateMe`), `session.updateProfile`, `OrderPage` (403 and 404 alike), `docs/modules/orders.md`, `docs/modules/account.md`, decisions [Phase 14].
-**Config & infrastructure:** no new dependencies. Coverage floor 99.88 / 97.5 / 100 / 100. `stubAccount` in `e2e/screens.ts` also stubs `GET /api/orders` (three orders, one cancelled with a long reason) for the screen matrix and screenshots.
-**Tests:** 662 unit and component (was 641); E2E 310, 309 pass and 1 fails on stock data (web KI-020) (was 305: `e2e/orders.spec.ts` adds 5 specs, 3 orders and 2 profile; the orders and account screens are now in the screenshot report).
-**Backend tested against:** `phase-34-complete` pin, but the stack used was the backend team's running one, ahead of the pin (its dead-letter schema has `dltTimestamp`). `npm run e2e` stops at `api:check` on that stack; the Playwright suite was run directly. Backend `origin/main` is past the pin by KI-002/040/044/045/046 fixes and docs, none for orders or customers.
-**Gotchas:** The narrow orders table renders the status twice (wide column and under the date; CSS shows one), so unit tests see both. A visually hidden `<caption>` fails the clipped-text check: the table is named with `aria-label`. The session is in memory: a second person in an E2E reaches an order through `/sign-in?next=`. The shared backend's Laptop Sleeve has stock 0, so the "refused order" checkout spec cannot run (web KI-020).
-**Owner TODOs open:** `src/content/site.ts`; every paragraph of About, Returns, Shipping, Privacy, Terms; `src/content/notes.ts` `orderConfirmedNote`; no `StaffNote` on the shelf or product page.
-**Backend asks:** none new (web KI-019 from Phase 12 still to relay; no password change is backend KI-018).
-**Follow-ups (not done, out of scope):** a status filter on My orders; load the account pages lazily (main bundle 518 kB); make the stock-refusal E2E independent of seed data (web KI-020).

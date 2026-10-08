@@ -77,7 +77,14 @@ export function Layout() {
                 <span>Admin</span>
               </Link>
             )}
-            <Button variant="secondary" icon="chat" onClick={() => setAssistantOpen(true)}>
+            <Button
+              variant="secondary"
+              icon="chat"
+              className="site-ask"
+              // The words are hidden in a narrow header (see Layout.css), so the name is given here.
+              aria-label="Ask the shop"
+              onClick={() => setAssistantOpen(true)}
+            >
               Ask the shop
             </Button>
             <ThemeToggle />

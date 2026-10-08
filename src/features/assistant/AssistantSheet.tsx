@@ -16,35 +16,29 @@ import './assistant.css'
  * The conversation lives in the component that renders this, so closing the sheet does not lose it.
  */
 export function AssistantSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const dialog = useRef<HTMLDialogElement>(null)
+  const dialog = useRef<HTMLDialogElement | null>(null)
   const field = useRef<HTMLTextAreaElement>(null)
 
+  // Opening is the owner's `open` going true; closing is always the dialog's own (Escape, Close, the backdrop), which
+  // reaches the owner through `onClose`, so there is nothing to do here when `open` goes false.
   useEffect(() => {
-    const element = dialog.current
-    if (!element) return
-    if (open && !element.open) {
-      element.showModal()
-      field.current?.focus()
-    } else if (!open && element.open) {
-      element.close()
-    }
+    if (!open) return
+    dialog.current?.showModal()
+    field.current?.focus()
   }, [open])
-
-  // A click on the backdrop lands on the dialog element itself, not on anything inside it. A mouse convenience only: the
-  // keyboard has Escape and the Close button, so this is a listener and not a handler on a non-interactive element.
-  useEffect(() => {
-    const element = dialog.current
-    if (!element) return
-    const onClick = (event: MouseEvent) => {
-      if (event.target === element) element.close()
-    }
-    element.addEventListener('click', onClick)
-    return () => element.removeEventListener('click', onClick)
-  }, [])
 
   return (
     <dialog
-      ref={dialog}
+      ref={(element) => {
+        dialog.current = element
+        // A click on the backdrop lands on the dialog element itself, not on anything inside it. A mouse convenience only:
+        // the keyboard has Escape and the Close button, so this is a listener and not a handler on a non-interactive element.
+        const onClick = (event: MouseEvent) => {
+          if (event.target === element) element?.close()
+        }
+        element?.addEventListener('click', onClick)
+        return () => element?.removeEventListener('click', onClick)
+      }}
       className="assistant-sheet"
       aria-labelledby="assistant-title"
       // Escape and the Close button both end in the dialog's own `close` event, so the owner's state follows the dialog.
@@ -91,8 +85,8 @@ function Conversation({ field, close }: { field: React.RefObject<HTMLTextAreaEle
 
   // Keep the newest message in view.
   useEffect(() => {
-    const element = thread.current
-    if (element) element.scrollTop = element.scrollHeight
+    // The browser clamps a top beyond the end to the end.
+    thread.current?.scrollTo({ top: Number.MAX_SAFE_INTEGER })
   }, [turns.length, thinking, unavailable])
 
   function submit(event?: FormEvent) {
@@ -132,11 +126,7 @@ function Conversation({ field, close }: { field: React.RefObject<HTMLTextAreaEle
           <div className="assistant-note" role="status">
             <p>The assistant isn&apos;t available right now.</p>
             <Link
-              to={
-                conversation.lastMessage
-                  ? `/search?q=${encodeURIComponent(conversation.lastMessage.slice(0, 200))}`
-                  : '/search'
-              }
+              to={`/search?q=${encodeURIComponent(conversation.lastMessage.slice(0, 200))}`}
               className={buttonClass({ variant: 'secondary', size: 'sm' })}
               onClick={close}
             >

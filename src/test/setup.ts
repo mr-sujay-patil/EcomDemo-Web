@@ -43,3 +43,6 @@ if (typeof HTMLDialogElement.prototype.showModal !== 'function') {
   })
   afterEach(() => openDialogs.clear())
 }
+
+// jsdom does not scroll: `Element.scrollTo` is missing (the assistant thread scrolls to its newest message).
+if (typeof Element.prototype.scrollTo !== 'function') Element.prototype.scrollTo = () => undefined

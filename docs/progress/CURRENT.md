@@ -5,7 +5,7 @@
 - **Updated:** 2026-10-08
 - **Phase:** 16 — AI Shopping Assistant
 - **Branch:** `feature/phase-16-assistant`
-- **Step:** BRANCHED
+- **Step:** PR_OPEN
 - **PR:** none yet
 - **Backend pinned at:** `phase-34-complete`. No stack runs now: start it from `../ecomdemo-backend-readonly` with `CUSTOMER_DB_PORT=15435 docker compose up --build --wait -d` (Windows app SignalRgb holds 5435) and stop it at the end with `docker compose --profile tools down` (no `-v`).
 - **Waiting for user:** no
@@ -14,13 +14,13 @@
 Phase 15 (PR #19, merge `cff22cd`, tag `phase-15-complete`): CI green on the fixed head; on `main` `npm run verify` 704/704, `npm run e2e` 343/344: the one failure is web KI-020's stock-refusal spec (Laptop Sleeve stock is 0 on the persistent stack). Backend sync 2026-10-08: `origin/main` is past the pin by KI-002/003/040/044/045/046 fixes and docs (KI-003 is compose loopback ports) and a comment edit in `ProductIndexer`; nothing for the assistant. Pin stays `phase-34-complete`.
 
 ## Checklist (from the phase file's "What you'll implement")
-- [ ] `POST /api/assistant/chat` (`message` 1-1000, `conversationId?`); keep the returned `conversationId` for the session
-- [ ] Assistant sheet: native `<dialog>`, "Ask the shop" secondary button in the header; 400 px, full screen under 480 px; focus trapped, Escape closes, focus returns
-- [ ] Messages with `AssistantMessage`: customer right-aligned; assistant labelled "Shop assistant" with "Checked: …" sources; one "Thinking…" caption; no sparkles, glow, gradients, typing animation
-- [ ] Confirm before act: `pendingAction` shows the product with "Add it" / "Not now"; Add calls `POST /api/assistant/actions/{id}/confirm`, then refreshes the cart; 404 says expired or already confirmed
-- [ ] 503: "not available right now" and a way to search instead
-- [ ] `docs/modules/assistant.md`
-- [ ] Tests: nothing reaches the cart without the click; 404 on confirm; 503; focus trap and Escape; E2E additions (`e2e/`)
+- [x] `POST /api/assistant/chat` (`message` 1-1000, `conversationId?`); keep the returned `conversationId` for the session
+- [x] Assistant sheet: native `<dialog>`, "Ask the shop" secondary button in the header; 400 px, full screen under 480 px; focus trapped, Escape closes, focus returns
+- [x] Messages with `AssistantMessage`: customer right-aligned; assistant labelled "Shop assistant" with "Checked: …" sources; one "Thinking…" caption; no sparkles, glow, gradients, typing animation
+- [x] Confirm before act: `pendingAction` shows the product with "Add it" / "Not now"; Add calls `POST /api/assistant/actions/{id}/confirm`, then refreshes the cart; 404 says expired or already confirmed
+- [x] 503: "not available right now" and a way to search instead
+- [x] `docs/modules/assistant.md`
+- [x] Tests: nothing reaches the cart without the click; 404 on confirm; 503; focus trap and Escape; E2E additions (`e2e/`)
 
 ## Next action
 Probe the running stack for an LLM (`POST /api/assistant/chat` as a customer) to know whether the full path can be tested here; read `src/components/AssistantMessage`, the header and `docs/backend/integration-guide.md` (assistant section), then implement the checklist item by item with small Conventional Commits, ticking each here. Then the full testing protocol, report, PR, STOP.

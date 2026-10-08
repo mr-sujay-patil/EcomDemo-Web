@@ -208,6 +208,34 @@ describe('talking to the assistant', () => {
     await waitFor(() => expect(fake.chats).toEqual([{ message: 'Hello there' }]))
   })
 
+  it('does not send a second message while the first is still being answered', async () => {
+    const chats: string[] = []
+    server.use(
+      http.post<never, { message: string }>('/api/assistant/chat', async ({ request }) => {
+        chats.push((await request.json()).message)
+        await delay(150)
+        return HttpResponse.json(assistantReply())
+      }),
+    )
+    const { user } = await openSheet()
+
+    await user.type(message(), 'First{Enter}')
+    await user.type(message(), 'Second{Enter}')
+    await screen.findByText('The Test Kettle boils fast.')
+
+    expect(chats).toEqual(['First'])
+  })
+
+  it('does not send a message of only spaces on Enter', async () => {
+    const fake = fakeAssistant()
+    const { user } = await openSheet()
+
+    await user.type(message(), '   {Enter}')
+    await delay(50)
+
+    expect(fake.chats).toEqual([])
+  })
+
   it('limits a message to 1000 characters, as the backend does', async () => {
     await openSheet()
 

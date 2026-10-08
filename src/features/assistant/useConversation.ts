@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
-import { ApiError } from '@/api/errors'
 import { cartKeys } from '@/features/cart/api'
 import { confirmAction, sendChat, type PendingCartAddition } from './assistant'
 
@@ -50,12 +49,11 @@ export function useConversation() {
       ])
     },
     onError: (error) => {
-      if (error instanceof ApiError && error.status === 503) {
+      if (error.status === 503) {
         setUnavailable(true)
         return
       }
-      const message = error instanceof ApiError ? error.message : 'Something went wrong. Try again.'
-      setTurns((all) => [...all, { id: id(), role: 'note', text: message }])
+      setTurns((all) => [...all, { id: id(), role: 'note', text: error.message }])
     },
   })
 
@@ -81,7 +79,7 @@ export function useConversation() {
       await queryClient.invalidateQueries({ queryKey: cartKeys.all })
     },
     onError: (error, { turnId }) => {
-      if (error instanceof ApiError && error.status === 404) {
+      if (error.status === 404) {
         setProposal(turnId, 'expired')
         setTurns((all) => [
           ...all,
@@ -95,8 +93,7 @@ export function useConversation() {
       }
       // Anything else: the suggestion may still be good, so it stays offered and the person can try again.
       setProposal(turnId, 'offered')
-      const message = error instanceof ApiError ? error.message : 'Something went wrong. Try again.'
-      setTurns((all) => [...all, { id: id(), role: 'note', text: message }])
+      setTurns((all) => [...all, { id: id(), role: 'note', text: error.message }])
     },
   })
 
