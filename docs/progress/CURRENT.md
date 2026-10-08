@@ -3,22 +3,18 @@
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
 - **Updated:** 2026-10-09
-- **Task:** fix KI-030 (the product list is paged) and KI-031 (503 with `Retry-After`) in one `fix/` branch (the owner's rule 10 in CLAUDE.md allows grouping; each KI still gets its tag `ki-030-fixed`, `ki-031-fixed` after the merge)
-- **Branch:** `fix/ki-030-031-paging-and-retry-after`
-- **Step:** PR_OPEN (PR #34; see `gh pr list`)
-- **Backend pinned at:** commit `f088fd4f517cceda44e478c9ca3ba8d5de1f8c68`. The stack runs from `bash scripts/backend-stack.sh up` (containers `webstack-*`, gateway on `localhost:28080`; `eval "$(bash scripts/backend-stack.sh env)"` sets `API_TARGET` and `GATEWAY_CONTAINER`); stop it with `bash scripts/backend-stack.sh down` (never `-v`). It is STOPPED now.
-- **Waiting for user:** no (until the PR is raised). Carried: owner decisions on CLAUDE.md rule conflicts and branch protection; KI-032 message to relay; KI-033 (performance budget borderline).
+- **Task:** chore: move the backend pin to commit `82ef5989594c30330850594f388967b8f080ce8a` (backend `main`, `ki-049-fixed`; the owner added `REDIS_PASSWORD` to the clone's `.env` and said to proceed)
+- **Branch:** `chore/pin-backend-82ef598`
+- **Step:** PR_OPEN (see `gh pr list`)
+- **Backend pinned at:** the commit above. The stack runs with `bash scripts/backend-stack.sh up` (needs `REDIS_PASSWORD` in the clone's `.env`); it is STOPPED now (never `down -v`).
+- **Waiting for user:** review and `approved, merge it` for the pin PR. After the merge: dispatch **Actions > Backend images > Run workflow** (or `gh workflow run "Backend images"`) so the cache exists for the new commit; verify `main`; no tag for a chore.
+- Phase 22 and 23 and KI-030/031 are merged and tagged. Open: owner decisions (CLAUDE.md rule conflicts, branch protection), KI-032 to relay, KI-033 (perf budget borderline), flakes KI-026/028/029, KI-020/025 (specs assume seed stock; the local volumes are drained).
 
-## Checklist
-- [x] KI-030: `fetchProducts` reads every page (tests: products.test.ts, ProductListPage.test.tsx, e2e catalog.spec.ts)
-- [x] KI-031: `retryHint` in `ErrorPanel`; checkout 503 = "The shop is busy right now" + cart re-read (tests: errors.test.ts, checkout.test.tsx, ProductListPage.test.tsx, e2e observability.spec.ts)
-- [x] Regression proof: 14 of the new tests fail on the old source (stash of the 5 source files), pass with the fix
-- [x] e2e stubs of the product list use `productListUrl` (4 stubs had silently stopped intercepting)
-- [x] `npm run verify` 889 passed (a first run failed on the KI-029 flake, the rerun is clean); `e2e:docker` 990 passed, 3 failed (stock 0, KI-020), 0 CSP violations; `perf`: Lighthouse 95/94, flows could not run locally (stock 0)
-- [ ] CI green on PR #34 before asking the owner; tags `ki-030-fixed` and `ki-031-fixed` after the merge; stack is STOPPED
+## Results at the new pin
+Backend quick checks at `82ef598`: `size=2` gives 200 + `X-Total-Count` + `Link`, `size=101` gives 400, `/actuator/health` gives 401. `api:check`: matches all 5 snapshots (no contract change, nothing regenerated). `npm run verify`: 889 passed. `npm run e2e:docker`: 989 passed, 4 failed, 1 skipped: 3 stock (KI-020) + the KI-028 visual flake (passes alone, twice).
 
 ## Next action
-Wait for CI on PR #34. After the merge: verify `main`, tag `ki-030-fixed` and `ki-031-fixed`, stop the stack.
+Wait for CI on the PR: the `e2e` job builds the backend at the new commit with a generated `REDIS_PASSWORD` (first real test of that step; it cannot use the image cache, keyed on the old commit).
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.

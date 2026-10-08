@@ -69,9 +69,9 @@ jobs:
     permissions:
       contents: read
     env:
-      # The backend this app is tested against: a commit of its `main` (tagged `ki-011-fixed`), pinned by SHA because a tag can be moved.
+      # The backend this app is tested against: a commit of its `main` (tagged `ki-049-fixed`), pinned by SHA because a tag can be moved.
       # The name stays BACKEND_TAG; any ref works. Override with a repository variable when the pin moves.
-      BACKEND_TAG: ${{ vars.BACKEND_TAG || 'f088fd4f517cceda44e478c9ca3ba8d5de1f8c68' }}
+      BACKEND_TAG: ${{ vars.BACKEND_TAG || '82ef5989594c30330850594f388967b8f080ce8a' }}
     steps:
       # The same side-by-side layout as a laptop, so e2e/global-setup.ts finds ../ecomdemo-backend-readonly.
       - name: Check out the code
@@ -106,6 +106,10 @@ jobs:
           secret="$(openssl rand -hex 32)"
           echo "::add-mask::$secret"
           sed -i "s|^JWT_SECRET=.*|JWT_SECRET=$secret|" .env
+          # Since backend KI-050 Redis requires a password and compose refuses to start without one (no default).
+          secret="$(openssl rand -hex 16)"
+          echo "::add-mask::$secret"
+          sed -i "s|^REDIS_PASSWORD=.*|REDIS_PASSWORD=$secret|" .env
 
       # The backend publishes no per-service images to GHCR yet (web KI-015). Building eight of them from source took ~200 s,
       # so a tarball of the built images is cached per backend commit. Only .github/workflows/backend-images.yml saves it
