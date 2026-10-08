@@ -6,7 +6,7 @@
 - **Phase:** 19 — Containerization
 - **Branch:** `feature/phase-19-docker`
 - **Step:** PR_OPEN
-- **PR:** pending (see `gh pr list`)
+- **PR:** #24 (CI green on the pushed head: verify, e2e, image; publish skipped on a PR by design)
 - **Backend pinned at:** `phase-34-complete`. No stack runs now: start it from `../ecomdemo-backend-readonly` with `CUSTOMER_DB_PORT=15435 docker compose up --build --wait -d` (Windows app SignalRgb holds 5435) and stop it at the end with `docker compose --profile tools down` (no `-v`).
 - **Waiting for user:** YES: review of the Phase 19 PR; reply `approved, merge it` to merge. Carried: the manual screen-reader pass (`docs/accessibility.md`), the `E2E_ADMIN_*` credentials, relay web KI-019/020/021/022 (and KI-024 before any pin move) to the backend team, decide on `chore/pin-backend-<tag>`.
 
@@ -22,7 +22,7 @@ Phase 18 (PR #22, merge `640d11c`, tag `phase-18-complete`; PR #23 Dependabot me
 - [x] docs (README, development-environment, decisions, KNOWN_ISSUES KI-024), test report, RECENT rotated
 
 ## Next action
-Wait for the owner's review. The backend stack is RUNNING (started from the clone with `CUSTOMER_DB_PORT=15435`); stop it with `docker compose --profile tools down` (no `-v`) unless the owner needs it. On `approved, merge it`: wait for CI to pass on the PR head and read it (the new `image` job especially), `gh pr merge <n> --merge` (no `--delete-branch`); then READ the `publish` run on `main` and check the image exists in GHCR (Settings → Actions permissions, or package visibility, are the usual failures); merge verification on `main` (`npm ci && npm run verify`, `npm run e2e:docker` with the stack up, read the result before tagging); tag `phase-19-complete`; stop the stack. The first commit of the next branch updates the tracker row (19 ✅) and this file. Before the next phase: fetch the backend clone and compare with the pin. Next phase only on `continue`: Phase 20 (read its file first).
+Wait for the owner's review. The backend stack is STOPPED (started from the clone with `CUSTOMER_DB_PORT=15435`, taken down without `-v`); the merge verification needs it again. On `approved, merge it`: wait for CI to pass on the PR head and read it (the new `image` job especially), `gh pr merge <n> --merge` (no `--delete-branch`); then READ the `publish` run on `main` and check the image exists in GHCR (Settings → Actions permissions, or package visibility, are the usual failures); merge verification on `main` (`npm ci && npm run verify`, `npm run e2e:docker` with the stack up, read the result before tagging); tag `phase-19-complete`; stop the stack. The first commit of the next branch updates the tracker row (19 ✅) and this file. Before the next phase: fetch the backend clone and compare with the pin. Next phase only on `continue`: Phase 20 (read its file first).
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.
