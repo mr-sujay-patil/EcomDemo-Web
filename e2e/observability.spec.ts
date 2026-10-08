@@ -5,28 +5,49 @@ import { expect, test } from './fixtures'
 
 const traceparent = /^00-[0-9a-f]{32}-[0-9a-f]{16}-01$/
 
-test('every fetch to /api carries a traceparent and an X-Correlation-Id', async ({ page }) => {
-  const calls: Array<{ url: string; headers: Record<string, string> }> = []
-  // `fetch` only: an <img> (the product photos) is a plain browser request that no script touches, so it carries neither header.
+const correlationId = /^[A-Za-z0-9_-]{8,64}$/
+
+type Call = { url: string; headers: Record<string, string> }
+
+/** Records the `fetch` calls to /api. `fetch` only: an <img> (the product photos) is a plain browser request that no script touches. */
+function recordApiCalls(page: import('@playwright/test').Page): Call[] {
+  const calls: Call[] = []
   page.on('request', (request) => {
     if (request.resourceType() === 'fetch' && new URL(request.url()).pathname.startsWith('/api/'))
       calls.push({ url: request.url(), headers: request.headers() })
   })
+  return calls
+}
+
+// Tracing starts after the first paint (src/app/startTracing.ts, web KI-033), and says so with <html data-tracing="on">.
+const tracingIsOn = (page: import('@playwright/test').Page) =>
+  expect(page.locator('html')).toHaveAttribute('data-tracing', 'on')
+
+test('every fetch to /api carries an X-Correlation-Id, and a traceparent from the moment tracing has started', async ({
+  page,
+}) => {
+  const calls = recordApiCalls(page)
 
   await page.goto('/')
   await expect(page.getByRole('heading', { level: 1, name: 'Everything for the desk' })).toBeVisible()
+  // The shelf's own first calls were made before tracing started: they have the correlation id, and no traceparent.
+  expect(calls.length).toBeGreaterThan(0)
+  for (const { url, headers } of calls) expect(headers['x-correlation-id'], url).toMatch(correlationId)
+
+  await tracingIsOn(page)
+  calls.length = 0
   await page
     .getByRole('link', { name: /Mechanical Keyboard/ })
     .first()
     .click()
   await expect(page.getByRole('heading', { level: 1, name: 'Mechanical Keyboard' })).toBeVisible()
 
+  // Every call from here on has both, and one trace per call.
   expect(calls.length).toBeGreaterThan(0)
   for (const { url, headers } of calls) {
     expect(headers['traceparent'], url).toMatch(traceparent)
-    expect(headers['x-correlation-id'], url).toMatch(/^[A-Za-z0-9_-]{8,64}$/)
+    expect(headers['x-correlation-id'], url).toMatch(correlationId)
   }
-  // One trace per call: the trace ids are all different.
   const traceIds = calls.map(({ headers }) => headers['traceparent']?.split('-')[1])
   expect(new Set(traceIds).size).toBe(traceIds.length)
 })
@@ -39,7 +60,12 @@ test('nothing but /api calls carries a traceparent', async ({ page }) => {
   })
 
   await page.goto('/')
-  await expect(page.getByRole('heading', { level: 1, name: 'Everything for the desk' })).toBeVisible()
+  await tracingIsOn(page)
+  await page
+    .getByRole('link', { name: /Mechanical Keyboard/ })
+    .first()
+    .click()
+  await expect(page.getByRole('heading', { level: 1, name: 'Mechanical Keyboard' })).toBeVisible()
 
   expect(others).toEqual([])
 })
@@ -121,21 +147,19 @@ test.describe('with the catalogue service really stopped', () => {
     const reference = (await alert.locator('code').innerText()).trim()
     // The gateway reuses the id the page sent (src/api/client.ts) and echoes it, so the reference is one of the ids in the requests.
     expect([...sent.keys()]).toContain(reference)
-    // For docs/troubleshooting.md: the reference on screen, and the trace the same request started (DevTools > Network > traceparent).
-    console.log(`E2E_REFERENCE=${reference}`)
-    console.log(`E2E_TRACEPARENT=${sent.get(reference)}`)
+    // The shelf's first call was made before tracing started (web KI-033): it has no traceparent.
+    expect(sent.get(reference)).toBe('')
 
-    // The screenshots of the report (docs/test-reports/phase-23/): the shelf with the catalogue really down.
-    for (const [name, size, scheme] of [
-      ['1280-light', { width: 1280, height: 800 }, 'light'],
-      ['360-light', { width: 360, height: 800 }, 'light'],
-      ['1280-dark', { width: 1280, height: 800 }, 'dark'],
-      ['360-dark', { width: 360, height: 800 }, 'dark'],
-    ] as const) {
-      await page.setViewportSize(size)
-      await page.emulateMedia({ colorScheme: scheme })
-      await expect(alert).toBeVisible()
-      await page.screenshot({ path: `docs/test-reports/phase-23/shelf-service-down-${name}.png`, fullPage: true })
-    }
+    // Retry is a call made after tracing started: it carries a traceparent, which is the way to a trace for a failure on first load
+    // (docs/troubleshooting.md, Path 2). The new reference on screen is that call's.
+    await expect(page.locator('html')).toHaveAttribute('data-tracing', 'on')
+    await alert.getByRole('button', { name: 'Retry' }).click()
+    await expect(alert.locator('code')).not.toHaveText(reference)
+    const retryReference = (await alert.locator('code').innerText()).trim()
+    expect([...sent.keys()]).toContain(retryReference)
+    expect(sent.get(retryReference)).toMatch(traceparent)
+    // For docs/troubleshooting.md: the reference on screen, and the trace the same request started.
+    console.log(`E2E_REFERENCE=${retryReference}`)
+    console.log(`E2E_TRACEPARENT=${sent.get(retryReference)}`)
   })
 })
