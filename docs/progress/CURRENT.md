@@ -5,7 +5,7 @@
 - **Updated:** 2026-10-08
 - **Phase:** 15 — Semantic Search
 - **Branch:** `feature/phase-15-search`
-- **Step:** BRANCHED
+- **Step:** IMPLEMENTING
 - **PR:** none yet
 - **Backend pinned at:** `phase-34-complete`. No stack runs now: start it from `../ecomdemo-backend-readonly` (`docker compose up --build --wait`) and stop it at the end with `docker compose --profile tools down` (no `-v`).
 - **Waiting for user:** no
@@ -14,10 +14,10 @@
 Phase 14 (PR #18, merge `8cf2be8`, tag `phase-14-complete`): CI `verify` and `e2e` green on the PR; on `main` `npm run verify` 662/662 tests, `npm run e2e` 310/310 against the pinned stack (KI-020's spec passed on the fresh stack). Backend sync 2026-10-08: `origin/main` is past the pin by KI-002/040/044/045/046 fixes and docs, plus a comment-only edit in `ProductIndexer`; nothing changes the search contract. Pin stays `phase-34-complete`.
 
 ## Checklist (from the phase file's "What you'll implement")
-- [ ] Header search box: ~300 ms debounce, top-5 suggestions, Enter goes to `/search?q=…`
-- [ ] `/search` page: `GET /api/products/search` (q ≤ 200, category, minPrice, maxPrice, limit 1-20); query and filters in the URL; results in returned order; no similarity shown
-- [ ] 503: info `Alert` + client-side fallback over the loaded catalogue (name, description); the page says which mode it used
-- [ ] Stale requests cancelled via the query's `signal`
+- [x] Header search box: ~300 ms debounce, top-5 suggestions, Enter goes to `/search?q=…`
+- [x] `/search` page: `GET /api/products/search` (q ≤ 200, category, minPrice, maxPrice, limit 1-20); query and filters in the URL; results in returned order; no similarity shown
+- [x] 503: info `Alert` + client-side fallback over the loaded catalogue (name, description); the page says which mode it used
+- [x] Stale requests cancelled via the query's `signal`
 - [ ] `docs/modules/search.md`
 - [ ] Tests: debounce (fake timers), URL state, stale-response cancellation, 503 fallback; E2E additions (`e2e/`)
 

@@ -95,10 +95,10 @@ test.describe('the header search', () => {
     await page.goto('/about')
     await expect(page.getByRole('heading', { level: 1, name: 'About' })).toBeVisible()
 
-    await page.getByRole('banner').getByRole('textbox', { name: 'Search products' }).fill('something to type on')
+    await page.getByRole('banner').getByRole('combobox', { name: 'Search products' }).fill('something to type on')
     await page.keyboard.press('Enter')
 
-    await expect(page.getByRole('heading', { level: 1, name: 'Search' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name: 'Results for “something to type on”' })).toBeVisible()
     await expect(page).toHaveURL(/\/search\?q=something\+to\+type\+on$/)
   })
 })
