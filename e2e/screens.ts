@@ -210,6 +210,26 @@ export const notFoundResponseError = /Failed to load resource: the server respon
 /** The browser logs a 503 response itself too: search by description answers it when no embedding model is configured. */
 export const unavailableResponseError = /Failed to load resource: the server responded with a status of 503/
 
+/**
+ * The product a stubbed assistant proposal names. The sheet reads it for the proposal's photo and category, and the gateway
+ * refuses the stubbed sign-in's token even on a public call, so the answer is stubbed too.
+ */
+export async function stubProposedProduct(page: Page) {
+  await page.route('**/api/products/1', (route) =>
+    route.fulfill({
+      json: {
+        id: 1,
+        name: 'Mechanical Keyboard',
+        description: 'Hot-swappable 75% keyboard with tactile switches',
+        price: 8999,
+        stockQuantity: 22,
+        category: 'PERIPHERALS',
+        imageUrl: null,
+      },
+    }),
+  )
+}
+
 /** A product as the search endpoint returns it. A test double for the screenshots: the real ranking depends on the backend's model. */
 const searchHit = (id: number, name: string, price: number, category: string) => ({
   product: { id, name, description: `${name}, for the desk.`, price, stockQuantity: 12, category, imageUrl: null },
@@ -263,6 +283,57 @@ export const screens: Screen[] = [
     ready: async (page) => {
       await expect(page.getByText('3 products, best match first')).toBeVisible()
     },
+  },
+  {
+    // The assistant sheet with a question, a cited answer and a proposal waiting for the click (stubbed: the real answer depends on the model).
+    name: 'assistant-sheet',
+    path: '/about',
+    signedInAs: 'CUSTOMER',
+    prepare: async (page) => {
+      await stubProposedProduct(page)
+      await page.route('**/api/assistant/chat', (route) =>
+        route.fulfill({
+          json: {
+            conversationId: '2f1c7a36-5a5e-4c55-9d0e-0f1a8f0f3b9e',
+            answer:
+              'The Mechanical Keyboard has tactile switches and a numeric pad, which suits a desk used for typing all day. I can add one to your cart.',
+            sources: [{ type: 'PRODUCT', id: '1', title: 'Mechanical Keyboard' }],
+            toolsUsed: ['searchProducts', 'addToCart'],
+            pendingAction: {
+              id: '0b6f0c1e-1a2b-4c3d-8e9f-000000000001',
+              productId: 1,
+              productName: 'Mechanical Keyboard',
+              quantity: 1,
+              unitPrice: 8999,
+            },
+          },
+        }),
+      )
+    },
+    ready: async (page) => {
+      await page.getByRole('button', { name: 'Ask the shop' }).click()
+      await page.getByRole('textbox', { name: 'Your message' }).fill('Something to type on all day')
+      await page.getByRole('button', { name: 'Send' }).click()
+      await expect(page.getByRole('button', { name: 'Add it' })).toBeVisible()
+    },
+  },
+  {
+    // The assistant sheet when the backend has no model: the plain note and the way out.
+    name: 'assistant-unavailable',
+    path: '/about',
+    signedInAs: 'CUSTOMER',
+    prepare: async (page) => {
+      await page.route('**/api/assistant/chat', (route) =>
+        route.fulfill({ status: 503, json: { status: 503, message: 'The assistant is not configured.' } }),
+      )
+    },
+    ready: async (page) => {
+      await page.getByRole('button', { name: 'Ask the shop' }).click()
+      await page.getByRole('textbox', { name: 'Your message' }).fill('Which headphones suit a flight?')
+      await page.getByRole('button', { name: 'Send' }).click()
+      await expect(page.getByText("The assistant isn't available right now.")).toBeVisible()
+    },
+    allowedConsoleErrors: [unavailableResponseError],
   },
   {
     // The header box with its suggestions open (stubbed hits).

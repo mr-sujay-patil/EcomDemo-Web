@@ -82,6 +82,10 @@ The look comes from the approved design in [`design-system/`](design-system/), p
 
 The header search box suggests the top five products as you type (after a 300 ms pause) and Enter opens `/search?q=…`, whose query and filters (`category`, `minPrice`, `maxPrice`) live in the URL, so a search can be shared. Results are ranked by meaning by the backend (`GET /api/products/search`) and shown in its order. When the backend has no embedding model configured it answers 503; the page then says search by description is not available and matches the words against product names and descriptions instead. See [`docs/modules/search.md`](docs/modules/search.md).
 
+## Ask the shop
+
+A secondary button in the header opens the assistant: a sheet (a native `<dialog>`, 400 px wide, the whole screen under 480 px) where a signed-in customer asks in plain words and gets an answer with what it checked. When the assistant proposes a product, nothing changes in the cart until the customer presses **Add it**; **Not now** leaves it. If the backend has no model, the sheet says the assistant isn't available and offers a search instead. See [`docs/modules/assistant.md`](docs/modules/assistant.md).
+
 ## API contract
 
 The backend's OpenAPI documents are the contract. Three commands keep the types honest (details: [`docs/architecture/api-layer.md`](docs/architecture/api-layer.md)); they need the backend running at the pinned tag:

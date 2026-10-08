@@ -1,5 +1,6 @@
 import { http, HttpResponse } from 'msw'
 import type { components } from '@/api/generated/catalog'
+import type { AssistantReply } from '@/features/assistant/assistant'
 import { orderFixture } from './orders'
 
 type ProductResponse = components['schemas']['ProductResponse']
@@ -97,6 +98,30 @@ export const searchHandlers = {
       { status: 503, message: 'Semantic search is not configured.' },
       { status: 503, headers: { 'Retry-After': '30' } },
     ),
+  ),
+}
+
+export const CONVERSATION_ID = '2f1c7a36-5a5e-4c55-9d0e-0f1a8f0f3b9e'
+
+/** An assistant answer; the parts a test does not set are an answer with no sources and no proposal. */
+export const assistantReply = (overrides: Partial<AssistantReply> = {}): AssistantReply => ({
+  conversationId: CONVERSATION_ID,
+  answer: 'The Test Kettle boils fast.',
+  sources: [],
+  toolsUsed: [],
+  pendingAction: null,
+  ...overrides,
+})
+
+export const assistantHandlers = {
+  chat: http.post<never, { message: string; conversationId?: string | null }, AssistantReply>(
+    '/api/assistant/chat',
+    () => HttpResponse.json(assistantReply()),
+  ),
+
+  /** No model configured on the backend. */
+  unavailable: http.post<never, never, ApiError>('/api/assistant/chat', () =>
+    HttpResponse.json({ status: 503, message: 'The assistant is not configured.' }, { status: 503 }),
   ),
 }
 

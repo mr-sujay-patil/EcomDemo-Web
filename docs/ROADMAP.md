@@ -73,8 +73,8 @@ Status: ⬜ Not started · 🟡 In progress · 🔵 PR open · ✅ Done (verifie
 | 12 | [Cart](phases/phase-12-cart.md) | Mutations + cache invalidation | `feature/phase-12-cart` | Shopping | cart API | ✅ |
 | 13 | [Checkout and Order Tracking](phases/phase-13-checkout.md) | Polling a saga (status state machine) | `feature/phase-13-checkout` | Shopping | orders API; saga deadline | ✅ |
 | 14 | [Orders and Profile](phases/phase-14-orders-profile.md) | Nested routes + detail views | `feature/phase-14-orders-profile` | Shopping | no password change (backend KI-018) | ✅ |
-| 15 | [Semantic Search](phases/phase-15-search.md) | Debounced search + URL state | `feature/phase-15-search` | Shopping | search endpoint; `503` when not configured | 🔵 |
-| 16 | [AI Shopping Assistant](phases/phase-16-assistant.md) | Chat UI + confirm-before-act | `feature/phase-16-assistant` | Shopping | an LLM configured on the backend | ⬜ |
+| 15 | [Semantic Search](phases/phase-15-search.md) | Debounced search + URL state | `feature/phase-15-search` | Shopping | search endpoint; `503` when not configured | ✅ |
+| 16 | [AI Shopping Assistant](phases/phase-16-assistant.md) | Chat UI + confirm-before-act | `feature/phase-16-assistant` | Shopping | an LLM configured on the backend | 🔵 |
 | 17 | [Admin Console](phases/phase-17-admin.md) | Role-gated area + file upload | `feature/phase-17-admin` | Admin | ADMIN endpoints (guide section 7) | ⬜ |
 | 18 | [Accessibility](phases/phase-18-accessibility.md) | axe-core + keyboard testing (WCAG 2.2 AA) + visual regression | `feature/phase-18-accessibility` | Quality | none | ⬜ |
 | 19 | [Containerization](phases/phase-19-docker.md) | Docker + nginx (same-origin proxy to the gateway) | `feature/phase-19-docker` | Delivery | same-origin serving (CORS fix not required) | ⬜ |
