@@ -1,0 +1,20 @@
+# http://shop.localhost:18080 serves the shop. The backend's own Ingress (no host: everything else, `localhost:18080`)
+# stays exactly as it is: a request with the Host `shop.localhost` matches this rule, any other Host matches theirs.
+# Browsers resolve *.localhost to 127.0.0.1 with no hosts-file edit. Traefik is the backend's (ingressClass `traefik`).
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: ecomdemo-web
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: shop.localhost
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: ecomdemo-web
+                port:
+                  name: http

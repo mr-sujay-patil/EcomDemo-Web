@@ -55,6 +55,18 @@ Swagger UI: http://localhost:8080/swagger-ui.html (pick a service top-right). Th
 - **Hardening:** non-root (uid 101), read-only root filesystem, all capabilities dropped, port bound to `127.0.0.1`. The image has no Node.
 - **CI** builds the image on every pull request and starts it once; a merge to `main` pushes `ghcr.io/mr-sujay-patil/ecomdemo-web` tagged with the commit SHA and `latest`.
 
+## Running the shop in the backend's kind cluster (from Phase 20)
+
+The cluster is the backend's: kind cluster `ecomdemo` (context `kind-ecomdemo`), namespace `ecomdemo`, Traefik on host port 18080 (from the backend's `scripts/k8s-up.sh`). **It is the backend team's working environment and may run a newer backend than the pin or hold used-up data (web KI-025).** This repository only adds four objects to it (`k8s/`: a Deployment, Service, ConfigMap and Ingress, all named `ecomdemo-web`) and never edits or deletes a backend object.
+
+    bash scripts/k8s-up.sh      # build, `kind load docker-image`, apply, wait; the shop on http://shop.localhost:18080
+    npm run e2e:k8s             # up, the whole suite through the Ingress (a pod deleted mid-run), then the disruptive specs
+    bash scripts/k8s-down.sh    # deletes exactly the four objects
+
+- `shop.localhost:18080` is the shop; `localhost:18080` stays the backend's own door. Browsers resolve `*.localhost` to 127.0.0.1; Node does not on this machine, so `e2e:k8s` preloads `scripts/localhost-dns.cjs`.
+- Both scripts refuse to run unless context `kind-ecomdemo` has the `ecomdemo` namespace (and, for `up`, a `gateway-service`).
+- The backend's `scripts/k8s-down.sh` deletes the whole cluster, the shop with it; `k8s-up.sh` here brings it back.
+
 ## What must be installed inside WSL2
 
 - **Node.js, latest Active LTS**, through `nvm` (pinned in `.nvmrc` from Phase 1). npm comes with it. No yarn, no pnpm.

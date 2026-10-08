@@ -49,6 +49,10 @@ docker compose down                  # stops only the shop; the backend is never
 
 The container joins the backend's Docker network. Its name is `<backend compose project>_default`: `ecomdemo_default` for the backend team's checkout, `ecomdemo-backend-readonly_default` for the read-only clone. Set `BACKEND_NETWORK` to the one that is running (`docker network ls`). `npm run e2e:docker` finds it by itself, runs the whole suite against the container and takes `web` down again. Details: `docs/process/development-environment.md`.
 
+### In the backend's kind cluster
+
+With the backend's kind cluster up, `bash scripts/k8s-up.sh` adds the shop to it (two replicas behind the cluster's Traefik): **http://shop.localhost:18080**, while `localhost:18080` stays the backend's own. `bash scripts/k8s-down.sh` removes only what it added.
+
 | Script | What it does |
 |---|---|
 | `npm run dev` | Dev server with hot reload on port 5173 |
@@ -64,6 +68,7 @@ The container joins the backend's Docker network. Its name is `<backend compose 
 | `npm run e2e` | End-to-end smoke tests: builds and previews the app on 4173, then drives it in Chromium against the real backend (it must be running). Every screen is also checked at 360–1280 px in light and dark |
 | `npm run e2e:ui` | The same tests in Playwright's UI mode, to watch and debug them step by step |
 | `npm run e2e:docker` | Builds the image, starts only the `web` container beside the running backend stack, runs the whole E2E suite against `http://localhost:8070`, then stops `web` |
+| `npm run e2e:k8s` | Puts the image in the backend's kind cluster (`scripts/k8s-up.sh`), runs the whole suite through `http://shop.localhost:18080` with one pod deleted mid-run, then a pod deletion and a rolling update under traffic with zero failed requests |
 | `npm run e2e:report` | Saves screenshots at 360 and 1280 px into `docs/test-reports/phase-XX/` (the phase comes from the branch, or `REPORT_PHASE=phase-XX`) |
 
 If `format:check` fails, run `npm run format` and commit the result. Editors pick up `.editorconfig`; with the ESLint and Prettier extensions installed they show lint errors as you type and can format on save. There is no pre-commit hook: CI enforces both from Phase 5.

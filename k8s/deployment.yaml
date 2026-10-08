@@ -1,0 +1,93 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ecomdemo-web
+spec:
+  replicas: 2
+  revisionHistoryLimit: 5
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      # A new pod must be ready before an old one goes: with two replicas, one is always serving.
+      maxSurge: 1
+      maxUnavailable: 0
+  template:
+    spec:
+      # nginx's graceful stop (the image sets SIGQUIT) finishes the requests it has; this is the most it may take.
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101 # the image's `nginx` user
+        runAsGroup: 101
+        # Makes the emptyDir volumes below writable by that group.
+        fsGroup: 101
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: web
+          image: ecomdemo-web
+          # Loaded into the node by scripts/k8s-up.sh (`kind load docker-image`), like the backend's images: never pulled.
+          imagePullPolicy: Never
+          ports:
+            - name: http
+              containerPort: 8080
+          envFrom:
+            - configMapRef:
+                name: ecomdemo-web-config
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ['ALL']
+          # A static site has nothing to warm up: ready as soon as nginx answers, and alive as long as it does.
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 2
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+            failureThreshold: 3
+          lifecycle:
+            preStop:
+              exec:
+                # Traefik learns that a pod is going a moment after the pod starts to stop. Keep serving for that moment, so a
+                # request already on its way is not sent to a pod that has closed its door (no failed request on a deletion
+                # or a rolling update).
+                command: ['sleep', '8']
+          resources:
+            requests:
+              cpu: 20m
+              memory: 24Mi
+            limits:
+              cpu: 200m
+              memory: 64Mi
+          volumeMounts:
+            # The only places nginx writes (the root filesystem is read-only): its pid and temp files, and the config the
+            # image renders from the template at start.
+            - name: tmp
+              mountPath: /tmp
+            - name: cache
+              mountPath: /var/cache/nginx
+            - name: conf
+              mountPath: /etc/nginx/conf.d
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 16Mi
+        - name: cache
+          emptyDir:
+            sizeLimit: 16Mi
+        - name: conf
+          emptyDir:
+            sizeLimit: 1Mi
