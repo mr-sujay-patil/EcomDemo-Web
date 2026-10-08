@@ -1,6 +1,34 @@
+import { NavLink, Navigate, Route, Routes } from 'react-router'
 import { PlaceholderPage } from '@/components/PlaceholderPage'
+import { ProductFormPage } from './ProductFormPage'
+import { ProductsAdminPage } from './ProductsAdminPage'
+import './admin.css'
 
-// Loaded with `lazy` (see src/app/router.tsx): shoppers never download the admin console.
+const SECTIONS = [{ to: 'products', label: 'Products' }] as const
+
+// Loaded with `lazy` (see src/app/router.tsx): shoppers never download the admin console. The route is `admin/*`, so
+// the sections are routed here, inside the one lazy chunk.
 export function AdminPage() {
-  return <PlaceholderPage title="Admin" phase={17} />
+  return (
+    <div className="admin">
+      <nav className="admin-nav" aria-label="Admin sections">
+        <ul>
+          {SECTIONS.map(({ to, label }) => (
+            <li key={to}>
+              <NavLink to={to}>{label}</NavLink>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <div className="admin-main">
+        <Routes>
+          <Route index element={<Navigate to="products" replace />} />
+          <Route path="products" element={<ProductsAdminPage />} />
+          <Route path="products/new" element={<ProductFormPage />} />
+          <Route path="products/:id" element={<ProductFormPage />} />
+          <Route path="*" element={<PlaceholderPage title="Not found" phase={17} />} />
+        </Routes>
+      </div>
+    </div>
+  )
 }

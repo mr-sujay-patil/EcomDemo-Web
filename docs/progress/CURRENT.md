@@ -14,9 +14,9 @@
 Phase 16 (PR #20, merge `d3da037`, tag `phase-16-complete`): all branch commits in `main`; CI on `main` green; `npm ci && npm run verify` exit 0 on `main` (2026-10-08). E2E not re-run locally (no stack); CI e2e passed. Backend sync 2026-10-08: `origin/main` is 31 commits past the pin (KI-002/003/004/040/044 fixes). New for the web: KI-004 gateway circuit breaker answers 503 + `Retry-After: 10` + `ApiError` on catalogue reads; KI-040 dead-letter replay identity adds `dltTimestamp` (matters to the optional saga support). Pin stays `phase-34-complete`.
 
 ## Checklist (from the phase file's "What you'll implement")
-- [ ] `/admin/*` lazy-loaded, ADMIN only; CUSTOMER sees "Not permitted"
-- [ ] Products: list, create, full-replace edit, delete with typed confirmation
-- [ ] Draft description (never auto-saved; 503 handled)
+- [x] `/admin/*` lazy-loaded, ADMIN only; CUSTOMER sees "Not permitted"
+- [x] Products: list, create, full-replace edit, delete with typed confirmation
+- [x] Generate description (owner chose: warn, then Restore previous; web KI-022)
 - [ ] Stock: set a level (not a delta)
 - [ ] CSV import: header check, preview, `skipCount`
 - [ ] Search index backfill: 202 + poll every 2 s
@@ -24,7 +24,7 @@ Phase 16 (PR #20, merge `d3da037`, tag `phase-16-complete`): all branch commits 
 - [ ] `docs/modules/admin.md`; tests; E2E additions
 
 ## Next action
-Read `docs/phases/phase-17-admin.md` in full and guide section 7 (`grep -n "Admin console APIs" docs/backend/integration-guide.md`), then plan and build the first checklist item.
+Slice 2: stock (`GET /api/inventory?productIds=`, `PUT /api/inventory/{id}` sets a level), then CSV import, search-index backfill, optional saga support, `docs/modules/admin.md`, E2E (`e2e/admin.spec.ts`), test report. Components live in `src/features/admin/`; sections are routed inside `AdminPage.tsx`.
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.
