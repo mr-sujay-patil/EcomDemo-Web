@@ -1,6 +1,6 @@
 import type { Page } from '@playwright/test'
 import { expect, test } from './fixtures'
-import { notFoundResponseError } from './screens'
+import { notFoundResponseError, productListUrl } from './screens'
 
 // Assumed data: the backend's seed migration (catalog-service V2__seed_products.sql, ids 1-10).
 // Other rows may exist (backend smoke tests add some), so these specs pick seeded products and never assume a total.
@@ -91,7 +91,7 @@ test.describe('pages', () => {
       category: 'STUB',
       imageUrl: null,
     }))
-    await page.route('**/api/products', (route) => route.fulfill({ json: thirty }))
+    await page.route(productListUrl, (route) => route.fulfill({ json: thirty }))
   })
 
   test('next page shows the rest, the URL says so, and a reload stays on it', async ({ page }) => {
@@ -187,7 +187,7 @@ test.describe('error and retry', () => {
 
   test('the Retry button loads the shelf after the gateway comes back', async ({ page }) => {
     let up = false
-    await page.route('**/api/products', (route) =>
+    await page.route(productListUrl, (route) =>
       up
         ? route.continue()
         : route.fulfill({

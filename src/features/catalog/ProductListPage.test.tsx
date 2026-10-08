@@ -387,4 +387,46 @@ describe('adding to the cart from the shelf', () => {
 
     expect(screen.queryByRole('button', { name: 'Add to cart' })).not.toBeInTheDocument()
   })
+
+  it('shows a catalogue larger than one page of the backend, all of it', async () => {
+    const everything = manyProducts(250)
+    server.use(
+      http.get('/api/products', ({ request }) => {
+        const url = new URL(request.url)
+        const page = Number(url.searchParams.get('page') ?? 0)
+        const size = Number(url.searchParams.get('size') ?? 50)
+        const last = Math.ceil(everything.length / size) - 1
+        const next =
+          page < last
+            ? `</api/products?page=${page + 1}&size=${size}>; rel="next"`
+            : `</api/products?page=0&size=${size}>; rel="first"`
+        return HttpResponse.json(everything.slice(page * size, (page + 1) * size), {
+          headers: { 'X-Total-Count': String(everything.length), Link: next },
+        })
+      }),
+    )
+    renderRoute('/')
+
+    expect(await screen.findByText('Showing 1–24 of 250 products')).toBeInTheDocument()
+    expect(screen.getByText('Page 1 of 11')).toBeInTheDocument()
+  })
+
+  it('says when to try again when the catalogue is down for a while', async () => {
+    server.use(
+      http.get('/api/products', () =>
+        HttpResponse.json(
+          { status: 503, message: 'The product catalogue is temporarily unavailable. Please try again shortly.' },
+          { status: 503, headers: { 'Retry-After': '10', 'X-Correlation-Id': 'catalogue-down-0001' } },
+        ),
+      ),
+    )
+    renderRoute('/')
+
+    const alert = await screen.findByRole('alert')
+    expect(alert).toHaveTextContent('The product catalogue is temporarily unavailable.')
+    expect(alert).toHaveTextContent('Try again in about 10 seconds.')
+    expect(alert).toHaveTextContent('catalogue-down-0001')
+    expect(alert).not.toHaveTextContent('503')
+    expect(within(alert).getByRole('button', { name: 'Retry' })).toBeEnabled()
+  })
 })

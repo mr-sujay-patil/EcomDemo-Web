@@ -181,7 +181,7 @@ export async function stubConsole(page: Page) {
       imageUrl: null,
     },
   ]
-  await page.route('**/api/products', (route) =>
+  await page.route(productListUrl, (route) =>
     route.request().method() === 'GET' ? route.fulfill({ json: products }) : route.continue(),
   )
   await page.route('**/api/products/1', (route) => route.fulfill({ json: products[0] }))
@@ -253,6 +253,14 @@ export const signedInFor: Record<string, Role> = {
 
 /** Every route of src/app/router.tsx, as a user would reach it: the path, the h1 and the document title. */
 /** The suite is pointed at a running container (`npm run e2e:docker`): the shipped image, which has no style guide. */
+/**
+ * The product list URL, with or without a query: the shelf asks for `/api/products?page=0&size=100` (it reads every page of the
+ * paged backend), and a glob such as `**` + `/api/products` does not match a URL with a query, so a stub written with it would stop
+ * intercepting and the test would reach the real backend. A stub that sends no `Link` or `X-Total-Count` header is an unpaged
+ * backend: the shelf asks once and takes the answer as the whole catalogue.
+ */
+export const productListUrl = /\/api\/products(\?.*)?$/
+
 export const againstContainer = Boolean(process.env.E2E_BASE_URL)
 
 const allRoutePages = [
@@ -315,7 +323,7 @@ const searchHit = (id: number, name: string, price: number, category: string) =>
 
 /** Makes every product request fail as if the gateway were unreachable. */
 export async function gatewayUnreachable(page: Page) {
-  await page.route('**/api/products', (route) => route.abort('failed'))
+  await page.route(productListUrl, (route) => route.abort('failed'))
 }
 
 /**
