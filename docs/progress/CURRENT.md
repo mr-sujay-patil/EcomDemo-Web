@@ -6,9 +6,9 @@
 - **Phase:** 16 — AI Shopping Assistant
 - **Branch:** `feature/phase-16-assistant`
 - **Step:** PR_OPEN
-- **PR:** none yet
+- **PR:** #20 (CI running on the head)
 - **Backend pinned at:** `phase-34-complete`. No stack runs now: start it from `../ecomdemo-backend-readonly` with `CUSTOMER_DB_PORT=15435 docker compose up --build --wait -d` (Windows app SignalRgb holds 5435) and stop it at the end with `docker compose --profile tools down` (no `-v`).
-- **Waiting for user:** no
+- **Waiting for user:** YES: review of the Phase 16 PR; the ADMIN embeddings backfill for the full assistant path; relay web KI-019, KI-020 and KI-021 to the backend team
 
 ## Merge verification before this phase
 Phase 15 (PR #19, merge `cff22cd`, tag `phase-15-complete`): CI green on the fixed head; on `main` `npm run verify` 704/704, `npm run e2e` 343/344: the one failure is web KI-020's stock-refusal spec (Laptop Sleeve stock is 0 on the persistent stack). Backend sync 2026-10-08: `origin/main` is past the pin by KI-002/003/040/044/045/046 fixes and docs (KI-003 is compose loopback ports) and a comment edit in `ProductIndexer`; nothing for the assistant. Pin stays `phase-34-complete`.
@@ -23,7 +23,7 @@ Phase 15 (PR #19, merge `cff22cd`, tag `phase-15-complete`): CI green on the fix
 - [x] Tests: nothing reaches the cart without the click; 404 on confirm; 503; focus trap and Escape; E2E additions (`e2e/`)
 
 ## Next action
-Probe the running stack for an LLM (`POST /api/assistant/chat` as a customer) to know whether the full path can be tested here; read `src/components/AssistantMessage`, the header and `docs/backend/integration-guide.md` (assistant section), then implement the checklist item by item with small Conventional Commits, ticking each here. Then the full testing protocol, report, PR, STOP.
+Wait for the owner's review. On `approved, merge it`: wait for CI to pass (read it; the e2e job runs on a fresh backend), `gh pr merge 20 --merge` (no `--delete-branch`); merge verification on `main` (`npm ci && npm run verify`; start the stack with `CUSTOMER_DB_PORT=15435 docker compose up --build --wait -d` in `../ecomdemo-backend-readonly`, run `npm run e2e`, read the result before tagging; the checkout stock spec may fail on a used database, web KI-020); tag `phase-16-complete`; stop the stack (`docker compose --profile tools down`, no `-v`). The first commit of the next branch updates the tracker row (16 ✅) and this file. Before the next phase: fetch the backend clone and compare with the pin. Next phase only on `continue`: Phase 17 (read its file first).
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.
