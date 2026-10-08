@@ -35,6 +35,8 @@ status=0
 
 npx lhci collect --config=lighthouserc.cjs || exit 1
 node scripts/perf-report.mjs current
+# GitHub's artifact upload skips hidden folders: keep the raw runs where it will take them.
+rm -rf perf-results/lhci && cp -r .lighthouseci perf-results/lhci
 npx lhci assert --config=lighthouserc.cjs || status=1
 
 node scripts/perf-flows.mjs || status=1

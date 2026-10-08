@@ -54,6 +54,21 @@ const lines = [
       `| ${row.path} | ${row.runs} | ${row.score} | ${(row.fcp / 1000).toFixed(2)} s | ${(row.lcp / 1000).toFixed(2)} s | ${Math.round(row.tbt)} ms | ${row.cls.toFixed(3)} | ${kb(row.script)} | ${kb(row.font)} | ${kb(row.total)} |`,
   ),
 ]
+// What each page's LCP is, and how fast this machine is: the same build measures differently on a slower machine, and the
+// reason is in these lines (the LCP element, the CPU benchmark, how long the API took to answer).
+const why = ['', 'Behind the numbers (first run of each page):']
+for (const [path, group] of pages) {
+  const run = group[0]
+  const element =
+    run.audits['largest-contentful-paint-element']?.details?.items?.[0]?.items?.[0]?.node?.snippet ?? 'unknown'
+  const phases = run.audits['largest-contentful-paint-element']?.details?.items?.[1]?.items ?? []
+  const api = (run.audits['network-requests']?.details?.items ?? []).find((item) => item.url.includes('/api/products'))
+  why.push(
+    `- ${path}: LCP element ${element.slice(0, 90)}; phases ${phases.map((phase) => `${phase.phase} ${Math.round(phase.timing)} ms`).join(', ')}; ` +
+      `CPU benchmark index ${run.environment.benchmarkIndex}; first API answer took ${api ? Math.round((api.networkEndTime - api.networkRequestTime) * 10) / 10 : '?'} ms (as observed, before simulation)`,
+  )
+}
+lines.push(...why)
 console.log(lines.join('\n'))
 mkdirSync('perf-results', { recursive: true })
 writeFileSync(`perf-results/lighthouse-${label}.md`, `${lines.join('\n')}\n`)
