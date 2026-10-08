@@ -3,18 +3,26 @@
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
 - **Updated:** 2026-10-08
-- **Task:** chore: move the backend pin to `f088fd4` (owner: "pin main's current commit")
-- **Branch:** `chore/pin-backend-f088fd4`
-- **Step:** PR_OPEN (when the PR exists; see `gh pr list`)
-- **Backend pinned at:** commit `f088fd4f517cceda44e478c9ca3ba8d5de1f8c68` (was `phase-34-complete`). The compose stack from `../ecomdemo-backend-readonly` is RUNNING at that commit (`CUSTOMER_DB_PORT=15435 docker compose up --build --wait -d`); stop it with `docker compose --profile tools down` (no `-v`).
-- **Waiting for user:** review and `approved, merge it` for the pin PR. Then, in the owner's order: **Part 2** (CI wall-clock: backend image cache + `backend-images.yml`, no repeat checks on push to main, unit tests once, Playwright cache, report perf layer cache; do not touch audit/image/Trivy; step timings of the latest e2e run go in the PR description; owner must turn on branch protection themselves), then **Part 1** (CLAUDE.md workflow rules: show the conflicts first, they were listed and the owner has not answered the 4 questions about rules 9, 10, 3 and PR sequencing).
-- Phase 22 is DONE (tag `phase-22-complete`, PR #27); its summary is not yet in `RECENT.md` (add it in the next phase's first commit). Carried: the screen-reader pass, `E2E_ADMIN_*`, relaying KI-019/020/021/022/024/025, web KI-027, KI-028, KI-029, KI-030 (paging), KI-031 (503 Retry-After).
+- **Phase:** 23 — Observability
+- **Branch:** `feature/phase-23-observability`
+- **Step:** IMPLEMENT
+- **PR:** none yet
+- **Backend pinned at:** commit `f088fd4f517cceda44e478c9ca3ba8d5de1f8c68` (backend `main`, tag `ki-011-fixed`). No stack runs now: start it from `../ecomdemo-backend-readonly` with `CUSTOMER_DB_PORT=15435 docker compose up --build --wait -d` (Windows app SignalRgb holds 5435); stop it at the end with `docker compose --profile tools down` (no `-v`; the volumes' stock is used up: web KI-020).
+- **Waiting for user:** no. The phase's manual step: stop and restart one backend service for the failure test (ask first). Carried: the screen-reader pass, `E2E_ADMIN_*`, relaying KI-019/020/021/022/024/025, web KI-027, 028, 029, **030 (shelf not paged), 031 (503 Retry-After)**. Owner decisions pending: reconcile CLAUDE.md workflow rules 9/10/3/5 with the hard rules; branch protection settings on `main`.
 
-## Results at the new pin
-`api:check` failed on 3 schemas, regenerated (`api:snapshot`, `api:generate`): catalogue paging + 400, `dltTimestamp`, inventory reserve/release removed (2 entries dropped from `notForTheFrontend`). `npm run verify` 853 passed. `npm run e2e` 1002 passed, 3 failed (`checkout` x2, `keyboard-flows`): stock of Desk Mat and Laptop Sleeve is 0 on this machine (web KI-020).
+## Merge verification before this phase
+Phase 22 (PR #27, merge `165402d`, tag `phase-22-complete`): tip in `main`; `npm ci && npm run verify` exit 0 (855); CI on `main` green incl. publish. Chores since: PR #28 (pin `f088fd4`), #29 (CI speed: backend image cache, verify/e2e on pull requests only, `backend-images.yml`), #30 (CLAUDE.md workflow rules). Backend sync (2026-10-08): `origin/main` `33d6f1a`, 3 commits past the pin, all backend CI/workflow rules; nothing for the web; pin stays.
+
+## Checklist (from the phase file's "What you'll implement")
+- [ ] Error boundaries: root (full page, "Reference: …", link home) and per route (layout stays usable); router `errorElement`s use the same components; global unhandled-rejection handler shows the reference `Alert` once
+- [ ] The reference is the `X-Correlation-Id` the client sent and the gateway echoed; copy to clipboard
+- [ ] OpenTelemetry Web: fetch instrumentation propagating `traceparent` on `/api` only; no third-party exporter; optional dev OTLP only if the backend collector accepts browser traffic (else stop, rule 10)
+- [ ] Web Vitals logged in dev, recorded in the test report; no analytics service
+- [ ] `docs/troubleshooting.md`: reference on screen to the request in Grafana (Loki by correlation id, Tempo by trace), worked example from a real failure
+- [ ] E2E: backend service down shows the reference page; every `/api` request carries `traceparent` and `X-Correlation-Id`
 
 ## Next action
-Wait for the owner. After the merge: verify `main` (CI), no tag for a chore, then start Part 2 on `chore/ci-speed` only when told.
+Read the integration guide's error/correlation sections, `src/api/client.ts` and `errors.ts`, the router's current error pages; then plan the boundaries.
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.
