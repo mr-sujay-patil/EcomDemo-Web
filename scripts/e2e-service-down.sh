@@ -7,7 +7,9 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-service="${SERVICE:-ecomdemo-catalog-service}"
+# The container prefix follows the gateway's name: ecomdemo-* by default, webstack-* from scripts/backend-stack.sh (GATEWAY_CONTAINER).
+prefix="${GATEWAY_CONTAINER:-ecomdemo-gateway-service}"
+service="${SERVICE:-${prefix%-gateway-service}-catalog-service}"
 if [ "$(docker inspect --format '{{.State.Running}}' "$service" 2>/dev/null)" != true ]; then
   echo "$service is not running. Start the backend stack first." >&2
   exit 1

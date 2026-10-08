@@ -8,7 +8,7 @@
 set -uo pipefail
 cd "$(dirname "$0")/.."
 
-gateway=ecomdemo-gateway-service
+gateway="${GATEWAY_CONTAINER:-ecomdemo-gateway-service}"
 network="${BACKEND_NETWORK:-$(docker inspect "$gateway" --format '{{range $name, $_ := .NetworkSettings.Networks}}{{$name}} {{end}}' 2>/dev/null | awk '{print $1}')}"
 if [ -z "$network" ]; then
   echo "The backend is not running: no container named $gateway. Start its stack first (docs/process/development-environment.md)." >&2

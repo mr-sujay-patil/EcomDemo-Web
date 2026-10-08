@@ -30,20 +30,32 @@ Reading it is allowed (files, `git log`, `git fetch --tags`, checking out a newe
 
 > ⚠️ **Logs reach Loki only from the compose project `ecomdemo`.** The backend's Alloy config keeps containers whose project label is exactly `ecomdemo`; a clone in `ecomdemo-backend-readonly` has a project of that name, so Loki stays empty (traces are fine). To read logs here, mount a copy of `docker/alloy/config.alloy` with the project name changed through a local override file (outside both repositories); never run this clone as project `ecomdemo` (its volumes are the backend team's). Details: `docs/troubleshooting.md`.
 
+## Running the backend stack next to the backend team's
+
+The backend's compose file gives every container a fixed name (`ecomdemo-<service>`) and publishes the default host ports (8080, 3000, 5432...). Two stacks cannot share them: whoever starts second is blocked, and a web session had been blocking the backend team's own stack. So **start this clone's stack with the wrapper, not with `docker compose up`**:
+
+    bash scripts/backend-stack.sh up        # builds if needed, starts, waits until healthy
+    eval "$(bash scripts/backend-stack.sh env)"   # API_TARGET=http://localhost:28080, GATEWAY_CONTAINER=webstack-gateway-service
+    bash scripts/backend-stack.sh down      # stops and removes the containers, never the volumes
+    bash scripts/backend-stack.sh config    # what would run: each container name and host port
+
+It leaves the clone untouched and starts it with a generated Compose override: containers become `webstack-<service>` and every published host port moves up by 20000 (gateway **28080**, Grafana 23000, Loki 23100, Tempo 23200, Prometheus 39090, the databases 25432 to 25437). The project name stays `ecomdemo-backend-readonly`, so networks and volumes are separate from the backend team's `ecomdemo`. Nothing inside the stack refers to a container name (the services reach each other by service name), so nothing else changes. With the shifted ports the web tools need `API_TARGET` (the dev proxy, the E2E pre-check) and `GATEWAY_CONTAINER` (`npm run e2e:docker`, `npm run perf`, `npm run e2e:service-down` find the gateway by container name): that is what `env` prints. The Windows app on 5435 no longer matters (the customer database is on 25435), so `CUSTOMER_DB_PORT` is not needed.
+
+CI is unaffected: it runs on its own runner with the backend's defaults.
+
 ## Running the backend stack
 
-Only one backend stack can run at a time: both copies use the same container names and ports.
+The web's stack and the backend team's no longer collide (the wrapper renames and moves ports, above), but two copies of the **web's** stack still cannot run at once.
 
-1. `docker ps --format '{{.Names}}' | grep -x ecomdemo-gateway-service`: if it is running, **use that stack** and do not start a second one. Record which tag it runs in the test report (ask the user if unsure).
+1. `docker ps --format '{{.Names}}' | grep -x webstack-gateway-service`: if it is running, **use that stack**. Record which commit it runs in the test report. The backend team's own stack (`ecomdemo-gateway-service`, port 8080) is theirs: never stop or use it from here, unless the owner says so.
 2. Otherwise start it from the read-only clone:
 
-       cd ../ecomdemo-backend-readonly
-       docker compose up --build --wait      # about 2 minutes cold; gateway on :8080
+       bash scripts/backend-stack.sh up      # about 2 minutes cold; gateway on :28080 (see the section above)
 
    The clone needs a `.env` with four values since Phase 33: `JWT_SIGNING_KEY` and `GATEWAY_CLIENT_SECRET`, `APP_CLIENT_SECRET`, `CATALOG_CLIENT_SECRET` (without them anonymous browsing fails with 500). The user creates it once from the backend's `.env.example`, using the one-line generator in that file; it is untracked, never committed, never printed. `JWT_SECRET` is no longer read.
-3. Leave the stack as you found it: if you started it, say so in the test report and stop it at the end with `docker compose --profile tools down` (never `-v`).
+3. Leave the stack as you found it: if you started it, say so in the test report and stop it at the end with `bash scripts/backend-stack.sh down` (never `-v`).
 
-Swagger UI: http://localhost:8080/swagger-ui.html (pick a service top-right). The ADMIN account is seeded by a backend migration; its credentials are in the backend README. Use it only in Phase 17's tests, and never write it into this repository: tests read it from `E2E_ADMIN_USERNAME` / `E2E_ADMIN_PASSWORD` in the user's environment.
+Swagger UI: http://localhost:28080/swagger-ui.html (8080 on the backend team's own stack) (pick a service top-right). The ADMIN account is seeded by a backend migration; its credentials are in the backend README. Use it only in Phase 17's tests, and never write it into this repository: tests read it from `E2E_ADMIN_USERNAME` / `E2E_ADMIN_PASSWORD` in the user's environment.
 
 ## Running the web container (from Phase 19)
 
