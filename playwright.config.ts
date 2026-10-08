@@ -11,6 +11,8 @@ export default defineConfig({
   // No retries locally: a flaky test should fail loudly. CI (Phase 5) retries, and the retry records a trace.
   retries: process.env.CI ? 2 : 0,
   reporter: [['list'], ['html', { open: 'never' }]],
+  // Pictures are compared exactly (e2e/visual.spec.ts): animations stopped, the text caret hidden, no tolerance for a stray pixel.
+  expect: { toHaveScreenshot: { animations: 'disabled', caret: 'hide', maxDiffPixels: 0 } },
   use: {
     baseURL,
     trace: 'on-first-retry',

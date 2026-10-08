@@ -91,6 +91,16 @@ describe('the account menu', () => {
     expect(screen.queryByRole('button', { name: 'Account: Asha' })).not.toBeInTheDocument()
   })
 
+  it('names the header sign-in link itself, because its word is hidden in a narrow header', async () => {
+    renderRoute('/about')
+    await screen.findByRole('heading', { level: 1, name: 'About' })
+
+    const link = within(screen.getByRole('banner')).getByRole('link', { name: 'Sign in' })
+
+    // jsdom applies no CSS, so the name must come from the attribute, not from text a stylesheet can hide.
+    expect(link).toHaveAttribute('aria-label', 'Sign in')
+  })
+
   it('does not appear for someone who is signed out', async () => {
     renderRoute('/about')
     await screen.findByRole('heading', { level: 1, name: 'About' })

@@ -6,12 +6,20 @@ import { colorSchemes, openScreen, screens } from './screens'
 // enlarges the page.
 const conditions = [
   // 200% browser zoom on a 1280 px window is a 640 px wide viewport in CSS pixels.
-  { name: '200% zoom on a desktop window', viewport: { width: 640, height: 400 }, rootFontSize: null },
+  { name: '200% zoom on a desktop window', viewport: { width: 640, height: 400 }, css: 'html { }' },
   // 400% zoom on a 1280 px window is a 320 px wide viewport: the smallest width WCAG asks content to reflow to.
-  { name: '400% zoom on a desktop window', viewport: { width: 320, height: 256 }, rootFontSize: null },
+  { name: '400% zoom on a desktop window', viewport: { width: 320, height: 256 }, css: 'html { }' },
   // A person who sets a larger default font size: the root size is 20 px instead of 16 (125%).
-  { name: 'a 20 px root font size on a phone', viewport: { width: 360, height: 800 }, rootFontSize: 20 },
-  { name: 'a 20 px root font size on a desktop', viewport: { width: 1280, height: 800 }, rootFontSize: 20 },
+  {
+    name: 'a 20 px root font size on a phone',
+    viewport: { width: 360, height: 800 },
+    css: 'html { font-size: 20px !important; }',
+  },
+  {
+    name: 'a 20 px root font size on a desktop',
+    viewport: { width: 1280, height: 800 },
+    css: 'html { font-size: 20px !important; }',
+  },
 ] as const
 
 for (const screen of screens) {
@@ -22,9 +30,7 @@ for (const screen of screens) {
 
         test('has no sideways scroll and no clipped text', async ({ page }) => {
           await openScreen(page, screen)
-          if (condition.rootFontSize) {
-            await page.addStyleTag({ content: `html { font-size: ${condition.rootFontSize}px !important; }` })
-          }
+          await page.addStyleTag({ content: condition.css })
 
           await expectNoOverflow(page)
         })

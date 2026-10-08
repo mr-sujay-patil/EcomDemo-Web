@@ -74,6 +74,16 @@ describe('the header search box', () => {
     expect(box()).toHaveAttribute('aria-expanded', 'true')
   })
 
+  it('puts nothing focusable inside an option, so no control is nested in another', async () => {
+    const { user } = setup()
+    await screen.findByRole('heading', { level: 1, name: 'About' })
+    await user.type(box(), 'desk')
+
+    for (const option of await screen.findAllByRole('option')) {
+      expect(option.querySelector('a, button, input, select, textarea, [tabindex]')).toBeNull()
+    }
+  })
+
   it('moves through the suggestions with the arrow keys and opens the highlighted product on Enter', async () => {
     const { user, router } = setup()
     await screen.findByRole('heading', { level: 1, name: 'About' })
