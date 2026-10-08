@@ -53,7 +53,7 @@ The web's stack and the backend team's no longer collide (the wrapper renames an
        bash scripts/backend-stack.sh up      # about 2 minutes cold; gateway on :28080 (see the section above)
 
    The clone needs a `.env` with five values (the fifth, `REDIS_PASSWORD`, since backend KI-050 at `82ef598`: compose refuses to start without it and there is no default; generate one with `openssl rand -hex 16`; never commit or print it). The first four, since Phase 33: `JWT_SIGNING_KEY` and `GATEWAY_CLIENT_SECRET`, `APP_CLIENT_SECRET`, `CATALOG_CLIENT_SECRET` (without them anonymous browsing fails with 500). The user creates it once from the backend's `.env.example`, using the one-line generator in that file; it is untracked, never committed, never printed. `JWT_SECRET` is no longer read.
-3. Leave the stack as you found it: if you started it, say so in the test report and stop it at the end with `bash scripts/backend-stack.sh down` (never `-v`).
+3. Keep the stack running for the whole working session (CLAUDE.md workflow rule 3). If you started it, say so in the test report, and stop it when the work ends with `bash scripts/backend-stack.sh down` (never `-v`).
 
 Swagger UI: http://localhost:28080/swagger-ui.html (8080 on the backend team's own stack) (pick a service top-right). The ADMIN account is seeded by a backend migration; its credentials are in the backend README. Use it only in Phase 17's tests, and never write it into this repository: tests read it from `E2E_ADMIN_USERNAME` / `E2E_ADMIN_PASSWORD` in the user's environment.
 

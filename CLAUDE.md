@@ -11,9 +11,10 @@ The storefront and admin console for the EcomDemo backend, built by a separate t
 1. Every unit of work gets its own branch cut from the latest `main`, and all its changes are made only there:
    a phase → `feature/phase-XX-<slug>`; a defect from `docs/KNOWN_ISSUES.md` → `fix/ki-XXX-<slug>`;
    a process or docs change outside both → `chore/<slug>` (only when the user asks for it).
+   A `fix/` branch may close several defects that share a cause or code (`fix/ki-030-031-<slug>`): each gets its own regression test and its own `ki-XXX-fixed` tag.
 2. When the phase or fix is complete: push and raise a PR to `main`, then **STOP** for the user's review.
 3. **Never merge** unless the user says `approved, merge it`. Only merge commits (`gh pr merge --merge`), never squash or rebase.
-4. Start the next phase or fix only after the user says to continue **and** merge verification proves every change of the previous one is in `main`. One open PR at a time.
+4. Start the next phase or fix only after the user says to continue **and** merge verification proves every change of the previous one is in `main`. Merge verification means the local `npm ci && npm run verify` on `main` passes **and** the CI run on `main` is green; tags are made only then. One open PR at a time.
 5. **Never delete any branch** (local or remote). Never use `--delete-branch`.
 6. **Never commit to `main`** (the only exception is the Phase 0 bootstrap commit). Never force-push, never rewrite history.
 7. Implement **only** the current phase's or fix's scope. Suggest extras; don't build them. A defect found along the way goes into `docs/KNOWN_ISSUES.md`; it isn't fixed in passing.
@@ -72,20 +73,22 @@ Don't read other phase files or archives unless needed. Don't paste full logs or
 
 ## Workflow rules to reduce cycle time
 
+Where a rule here and a hard rule above disagree, the hard rule wins.
+
 ### Local checks
 1. While iterating, run only the relevant checks (typecheck, lint, or the affected unit tests). Run the full npm run verify once, just before opening the PR.
 2. To reproduce a CI failure, run the exact command from .github/workflows/ci.yml.
 
 ### End-to-end tests
-3. Keep the backend stack (../ecomdemo-backend-readonly) running between e2e iterations. Rebuild it only when BACKEND_TAG changes.
+3. Keep the backend stack (../ecomdemo-backend-readonly) running for the whole working session, between e2e iterations. Start it with `bash scripts/backend-stack.sh up` (its own container names and ports, so it cannot collide with the backend team's stack). Rebuild it only when BACKEND_TAG changes. Stop it with `bash scripts/backend-stack.sh down` (never `-v`) when the work ends with nothing next, and say in the report that you started and stopped it.
 4. While debugging, run only the failing spec (npx playwright test <file>). Run the full npm run e2e once, at the end.
-5. Run npm run perf only if the change could affect bundle size, page load, or the cart and order flows. Otherwise skip it and state why in the PR description.
+5. Run npm run perf whenever the change could affect bundle size, page load, the nginx config, or the cart and order flows (anything under `src/api`, `src/features/catalog`, cart or checkout). For any other change skip it and write "perf skipped: <why>" in the PR description. CI runs it on every pull request regardless.
 6. Never use fixed waits (page.waitForTimeout). Use Playwright's auto-waiting assertions.
 
 ### Long-running commands and CI
 7. Run any command expected to take more than a few minutes (full e2e, perf, backend build, waiting on CI) in the background, then check its status. Do not block on it in the foreground or let it hit a tool timeout.
 8. Before asking me to approve a PR, confirm its CI run is green. If it is red, fix it first.
-9. After a merge, do not wait for the main-branch run unless the next task depends on the published image.
+9. After a merge, run the local `npm run verify` on `main` and wait for the CI run on `main`. Tag (`phase-XX-complete`, `ki-XXX-fixed`) only when it is green, and start no next task until then; if it is red, stop and report. A chore has no tag, but its `main` run must still be green before the next task.
 
 ### PRs
-10. Group related fixes into a single PR where reasonable, instead of one PR per fix.
+10. Group related fixes into a single `fix/` PR when they share a cause or code, as in hard rule 1; unrelated defects keep their own branch.
