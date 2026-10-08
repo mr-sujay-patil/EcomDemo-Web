@@ -71,6 +71,8 @@ Swagger UI: http://localhost:28080/swagger-ui.html (8080 on the backend team's o
 
 ## Running the shop in the backend's kind cluster (from Phase 20)
 
+> ⚠️ **The backend's kind cluster is HTTPS now, and the commands below describe the old HTTP cluster: they do not work against it until they are changed (web KI-034).** The backend team's note: the API is at **`https://localhost:18443`**; `http://localhost:18080` no longer serves the API and answers `301` to the HTTPS address. The certificate is issued by a local CA, so a client must trust it: after the backend's `scripts/k8s-up.sh` the CA's public certificate is at `.local/ecomdemo-ca.crt` in the backend clone (pass it to `curl --cacert`, or set `NODE_EXTRA_CA_CERTS` for Node; the backend README section "TLS at the Ingress" has the commands for Linux/WSL2 and Windows browsers). A running kind cluster cannot gain the HTTPS port, so it must be recreated (`scripts/k8s-down.sh`, then `scripts/k8s-up.sh`, **the backend's own scripts**): the cluster the backend team uses was already recreated, so **the shop deployed here in Phase 20 is gone**. The certificate covers **`localhost` and `127.0.0.1` only**, not `shop.localhost`, so the shop's Ingress host cannot be served over HTTPS until the backend adds that name (the ask is web KI-034). **Docker Compose is unchanged** (`http://localhost:8080` in the backend's own stack; the web's wrapper keeps its shifted ports, see above). Not touched by this: CI (it never uses the cluster).
+
 The cluster is the backend's: kind cluster `ecomdemo` (context `kind-ecomdemo`), namespace `ecomdemo`, Traefik on host port 18080 (from the backend's `scripts/k8s-up.sh`). **It is the backend team's working environment and may run a newer backend than the pin or hold used-up data (web KI-025).** This repository only adds four objects to it (`k8s/`: a Deployment, Service, ConfigMap and Ingress, all named `ecomdemo-web`) and never edits or deletes a backend object.
 
     bash scripts/k8s-up.sh      # build, `kind load docker-image`, apply, wait; the shop on http://shop.localhost:18080
@@ -97,11 +99,12 @@ The cluster is the backend's: kind cluster `ecomdemo` (context `kind-ecomdemo`),
 
 | Port | What | Note |
 |---|---|---|
-| 8080 | backend gateway | the only backend port this app uses |
+| 8080 | backend gateway (the backend team's own stack) | the only backend port this app uses; this app's own copy of the stack, from `scripts/backend-stack.sh`, serves the gateway on 28080 |
 | 5173 | `npm run dev` | Vite default |
 | 4173 | `npm run preview` (production build) | Vite default; Playwright runs against it |
 | 8070 | this app's nginx container (`WEB_PORT`, Phase 19) | 8080–8087 and 8090 belong to the backend |
-| 18080 | the kind Ingress (backend) | this app gets its own host rule, `shop.localhost`, in Phase 20 |
+| 18080 | the kind Ingress (backend); since the HTTPS change it only redirects (`301`) to 18443 | this app gets its own host rule, `shop.localhost`, in Phase 20 |
+| 18443 | the kind Ingress over HTTPS (backend) | the API in the cluster since the backend's HTTPS change; the certificate is for `localhost` and `127.0.0.1` only (web KI-034) |
 
 Never use 3000: it is the backend's Grafana.
 
