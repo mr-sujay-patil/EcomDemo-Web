@@ -17,7 +17,7 @@ A phase is **not done** until all of this passes on the feature branch before th
 6. **Every width, both themes.** Every screen the phase touches is checked at **360, 480, 768, 1024 and 1280 px** in light and dark: no clipped text, no sideways scroll, no overlapping controls, actions aligned across a row. Automated from Phase 3 (a Playwright viewport matrix with an overflow assertion); screenshots at 360 and 1280 go into `docs/test-reports/phase-XX/`.
 7. **Failure-scenario checks** where the phase is about resilience: a backend service stopped, a slow network (Playwright throttling), a 401 mid-session, a 429 from the gateway, a `503` from search or the assistant.
 8. **Test report.** Commit `docs/test-reports/phase-XX.md` on the feature branch: the machine, Node and npm versions, the backend tag, the commands run, results (counts per type), key output excerpts, the screenshots, and any item needing manual verification, with steps for the user. Summarize it in the PR.
-9. **Clean up.** Stop dev and preview servers and any containers this repo started. Leave the backend stack as you found it (say so in the report if you started it; stop it without `-v`).
+9. **Clean up.** Stop dev and preview servers and any containers this repo started. The backend stack may stay up during a working session (CLAUDE.md workflow rule 3); stop it without `-v` when the work ends, and say in the report whether you started it.
 10. **Honesty rule.** Never report a check as passed without running it. If something cannot be verified automatically (for example, whether a screen *feels* hand-made), mark it ⚠️ and give manual steps.
 
 ## Context-friendly testing
