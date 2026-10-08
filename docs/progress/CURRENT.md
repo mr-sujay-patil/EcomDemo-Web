@@ -3,18 +3,18 @@
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
 - **Updated:** 2026-10-09
-- **Task:** fix KI-029 (the flaky first admin test: `saga.test.tsx`, also `products.test.tsx`), the owner said `fix KI-029`
-- **Branch:** `fix/ki-029-saga-test-flake`
-- **Step:** PR_OPEN (PR #38; see `gh pr list`)
-- **Backend pinned at:** commit `82ef5989594c30330850594f388967b8f080ce8a`. No stack runs now (this fix is unit tests only; `scripts/backend-stack.sh up` when needed, never `down -v`).
-- **Waiting for user:** review and `approved, merge it` for PR #38. Then (rule 9, strict): local `verify` on `main` and the CI run on `main` green, then tag `ki-029-fixed`, and start nothing before that.
-- Open, not started: KI-034 (k8s HTTPS, blocked on the backend's answer about `shop.localhost` in the certificate), KI-033 (perf budget borderline, the owner decides), KI-032 (gateway request log, relay), KI-026/028 (flakes), KI-020/025; owner: branch protection settings on `main`.
+- **Task:** fix KI-033 (the performance budget is borderline since Phase 23's tracing): the owner chose option 1, start tracing after the first paint
+- **Branch:** `fix/ki-033-tracing-after-first-paint`
+- **Step:** PR_OPEN (PR #39; see `gh pr list`)
+- **Backend pinned at:** commit `82ef5989594c30330850594f388967b8f080ce8a`. The stack is STOPPED (`scripts/backend-stack.sh up` to start it, never `down -v`).
+- **Waiting for user:** review and `approved, merge it` for PR #39. Then (strict rule 9): local `verify` on `main`, the CI run on `main` green, tag `ki-033-fixed`, start nothing before. **Watch the next several PRs' `perf` step**: one green run does not prove KI-033 fixed (it failed about 1 PR in 4); if it fails again, the next option is lowering the minimum to 0.89 (the owner's call).
+- Open, not started: KI-034 (k8s HTTPS, blocked on the backend: `shop.localhost` in the certificate), KI-032 (gateway request log, for the owner to relay), KI-026/028 (flakes), KI-020/025; owner: the two branch-protection settings on `main`.
 
 ## Result
-Reproduced by saturating the CPUs (2 busy loops per core): before, the saga test failed in 3 of 6 runs. Preload alone: 1 of 12. Preload and `asyncUtilTimeout: 4000`: 0 of 15 (all `src/features/admin` files). No unit test can reproduce a timing flake deterministically, so the regression evidence is that load test, in the PR.
+Local `perf` after the change: shelf 96 (TBT 0 ms, was 12 to 44), product page 93 (TBT 3 ms, was 6 to 16); shelf JavaScript on the wire 131.6 KB (was 147.3; the Lighthouse total counts the idle-loaded tracing chunk too: 153.0 KB, under 170). The signed-in flows could not run locally (stock 0). E2E: the observability and catalog specs pass; the real-outage spec passes (Retry carries the `traceparent`; Tempo has that trace).
 
 ## Next action
-Wait for CI on PR #38 and the owner's `approved, merge it`.
+Wait for CI on PR #39 and the owner's `approved, merge it`.
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.

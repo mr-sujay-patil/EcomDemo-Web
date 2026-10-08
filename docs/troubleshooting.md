@@ -7,10 +7,14 @@ When something breaks, the shopper sees a calm page with **Reference: `<id>`** a
 | What | Where it comes from | What it finds |
 |---|---|---|
 | **Reference** = `X-Correlation-Id` | made by the browser for every call (`src/api/client.ts`), reused by the gateway, echoed in the response, written by every backend service into its log lines (`correlation_id`) | the **log lines** (Loki) of the services that handled the request |
-| **Trace id** | made by the browser for every call to `/api` (`src/app/tracing.ts`), sent as `traceparent: 00-<trace id>-<span id>-01`; the gateway and every service continue it | the **trace** (Tempo): which services ran, in what order, how long each took |
+| **Trace id** | made by the browser for every call to `/api` **made after the first paint** (`src/app/tracing.ts`, started by `src/app/startTracing.ts`; see below), sent as `traceparent: 00-<trace id>-<span id>-01`; the gateway and every service continue it | the **trace** (Tempo): which services ran, in what order, how long each took |
 | `traceId` in a log line | the same trace id, written by each service next to the correlation id | the step from a log line to its trace |
 
 So a correlation id is a request's name in the logs, and a trace id is its name in Tempo. A request that reached a service has both in the same log line, which links the two. A reference on screen is a failed call's correlation id; a render error (a bug in the page, no request) gets a fresh id that is **only** in the browser console of the person who saw it (`[reference <id>]`, with the error).
+
+## When tracing starts, and what it means for the first calls
+
+Tracing is its own chunk of JavaScript, loaded after the page's first paint, when the browser is idle (web KI-033: loaded up front it pushed the Lighthouse score to the edge of its budget). `<html data-tracing="on">` says it is running (`failed` if its code could not load; the page works either way). **A call made before that, such as the shelf's first request on a fresh page load, has an `X-Correlation-Id` and no `traceparent`; every call after it has both.** So for a failure on first load, the reference still finds the logs of the services that saw it, but the trace id is not in the request. Two ways to a trace id in that case: press **Retry** (the new call carries a `traceparent` and its own new reference), or find the trace by time and route (TraceQL, Path 2).
 
 ## Before you start
 
@@ -39,16 +43,18 @@ This is the case the phase was about, and **the reference alone does not lead an
 
 When a catalogue service is down, the gateway answers `503` after its 2-second limit (circuit breaker, `/fallback/catalog`). No backend service sees the request, and the **gateway writes no request log line** (the backend lists this as its KI-035; `CorrelationIdWebFilter` stamps the id but, being reactive, puts it in no log). So searching Loki for the reference finds **nothing**, and so does searching by trace id. What remains is the trace:
 
-1. In the browser: DevTools, Network, the failed `/api/products` request, **Request Headers, `traceparent`**. Its second field is the trace id. (This is the one thing a support person cannot get from the shopper, who has only the reference. The page does not show the trace id.)
+1. In the browser: DevTools, Network, the failed `/api/products` request, **Request Headers, `traceparent`**. Its second field is the trace id. **A failure on first load has none** (tracing starts after the first paint): press Retry and take the `traceparent` of the new request, or go to step 3. (This is the one thing a support person cannot get from the shopper, who has only the reference. The page does not show the trace id.)
 2. Tempo, by that trace id.
 3. Without the trace id: TraceQL by what the failure looks like, for example `{ resource.service.name = "gateway-service" && name = "http get /fallback/catalog" }` around the time the shopper reports.
 
-**Worked example, the real failure.** The catalogue service container was stopped (`scripts/e2e-service-down.sh`, which always starts it again) and the shelf opened:
+**Worked example, the real failure (as of Phase 23, when tracing started before the first call).** The catalogue service container was stopped (`scripts/e2e-service-down.sh`, which always starts it again) and the shelf opened:
 
 - The page showed *"The product catalogue is temporarily unavailable. Please try again shortly."* and **Reference `83132222-06d4-460f-bd71-9969d951d972`** (screenshots: `docs/test-reports/phase-23/shelf-service-down-*.png`; the header and footer stayed usable).
 - The request carried `X-Correlation-Id: 83132222-06d4-460f-bd71-9969d951d972` and `traceparent: 00-ee7bf1ed09212e483437da129dd02560-c7359b900dfa278f-01`; the response echoed the same correlation id.
 - **Loki:** no line for `correlation_id="83132222-…"`, none for `trace_id="ee7bf1ed…"`, in any service. As expected: nothing past the gateway ran.
 - **Tempo, trace `ee7bf1ed09212e483437da129dd02560`:** `gateway-service`, `http get /fallback/catalog`, 1068 ms, with a short `evalsha` (the rate limiter's Redis call). The browser's trace id is the trace, so the browser really started it.
+
+**The same failure with tracing after the first paint (web KI-033), a second real run.** The catalogue container stopped, the shelf opened: the first call had a correlation id and **no `traceparent`**. Pressing Retry made a call with **`X-Correlation-Id: 911d2dbb-8ce5-4919-a094-8dadca732bd9`** and **`traceparent: 00-459cd510c7427270a26ed3d58dbee04b-17d23017bf0d1b96-01`**; the page showed that call's reference. **Tempo, trace `459cd510c7427270a26ed3d58dbee04b`:** `gateway-service`, `http get /fallback/catalog`, 257 ms (the breaker was already open, so quicker than the first call's two seconds), with the short `evalsha`. Loki still had nothing for the reference or the trace id (the gateway logs no request).
 
 What would close the gap is for the **gateway to log one line per request** with the correlation id and the trace id, or to put the correlation id on its server span. That is a backend change; it is recorded as web KI-032 for the owner to relay. Until then, Path 2 needs the trace id or the time.
 
