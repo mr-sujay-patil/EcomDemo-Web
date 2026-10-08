@@ -9,7 +9,7 @@ Finding a product by what it is for. The header box suggests as you type; `/sear
 | `search.ts` | the call (`searchProducts`), the URL state (`parseSearch`, `toSearchParams`), and the word-matching fallback (`filterCatalogue`) |
 | `api.ts` | `useSearchResults` (the page, limit 20), `useSuggestions` (the header, limit 5), `isSearchUnavailable` (a 503) |
 | `useDebouncedValue.ts` | a value that settles after it stops changing for N ms |
-| `SearchBox.tsx` | the header's combobox: debounced suggestions, arrow keys, Enter, Escape |
+| `SearchBox.tsx` | the header's combobox: debounced suggestions, arrow keys, Enter, Escape. An option is a plain row (no link or button inside it: axe `nested-interactive`); pressing it opens the product, and focus never leaves the input |
 | `SearchPage.tsx` | `/search`: the filter form, the results, the fallback |
 
 ## Rules

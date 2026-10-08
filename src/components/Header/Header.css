@@ -19,6 +19,9 @@
 .ed-header-nav {
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 100%;
   gap: var(--space-2);
   margin-left: auto;
 }
@@ -36,7 +39,7 @@
     flex-basis: 100%;
     max-width: none;
   }
-  .ed-header-nav .ed-btn--ghost span {
+  .ed-header-nav .ed-btn--ghost:has(> svg) span {
     display: none;
   }
 }

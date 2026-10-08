@@ -151,7 +151,7 @@ export async function stubAccount(page: Page, role: Role) {
  * What the admin console asks for, answered here for the same reason as the rest of this function: the real gateway
  * refuses the stub's token. Three products (one long name, one without a category), their stock, and two dead letters.
  */
-async function stubConsole(page: Page) {
+export async function stubConsole(page: Page) {
   const products = [
     {
       id: 1,

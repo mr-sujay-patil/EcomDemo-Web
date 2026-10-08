@@ -1,4 +1,4 @@
-import { fireEvent, screen, within } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { server } from '@/test/msw/server'
@@ -74,6 +74,16 @@ describe('the header search box', () => {
     expect(box()).toHaveAttribute('aria-expanded', 'true')
   })
 
+  it('puts nothing focusable inside an option, so no control is nested in another', async () => {
+    const { user } = setup()
+    await screen.findByRole('heading', { level: 1, name: 'About' })
+    await user.type(box(), 'desk')
+
+    for (const option of await screen.findAllByRole('option')) {
+      expect(option.querySelector('a, button, input, select, textarea, [tabindex]')).toBeNull()
+    }
+  })
+
   it('moves through the suggestions with the arrow keys and opens the highlighted product on Enter', async () => {
     const { user, router } = setup()
     await screen.findByRole('heading', { level: 1, name: 'About' })
@@ -108,21 +118,10 @@ describe('the header search box', () => {
     await screen.findByRole('heading', { level: 1, name: 'About' })
     await user.type(box(), 'desk')
 
-    await user.click(await screen.findByRole('link', { name: /Test Sofa/, hidden: true }))
+    await user.click(await screen.findByRole('option', { name: /Test Sofa/, hidden: true }))
 
     expect(router.state.location.pathname).toBe('/products/2')
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
-  })
-
-  it('keeps the list open while focus moves to a suggestion inside the box', async () => {
-    const { user } = setup()
-    await screen.findByRole('heading', { level: 1, name: 'About' })
-    await user.type(box(), 'desk')
-    const link = await screen.findByRole('link', { name: /Test Sofa/, hidden: true })
-
-    fireEvent.blur(box(), { relatedTarget: link })
-
-    expect(screen.getByRole('listbox')).toBeVisible()
   })
 
   it('goes to /search?q=… on Enter with nothing highlighted, and closes the list', async () => {

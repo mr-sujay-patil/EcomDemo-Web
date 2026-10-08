@@ -22,18 +22,18 @@
   display: none;
 }
 
-.search-suggestion a {
+.search-suggestion {
   display: flex;
+  cursor: pointer;
   align-items: center;
   gap: var(--space-3);
   padding: var(--space-2);
   border-radius: var(--radius-sm);
   color: var(--ink-strong);
-  text-decoration: none;
 }
 
-.search-suggestion.is-active a,
-.search-suggestion a:hover {
+.search-suggestion.is-active,
+.search-suggestion:hover {
   background: var(--brand-soft);
 }
 

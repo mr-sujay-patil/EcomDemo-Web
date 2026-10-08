@@ -8,7 +8,9 @@ import './auth.css'
 /**
  * The signed-in person's menu in the header: their first name, then My orders, Account and Sign out. A disclosure
  * (a button that shows a list), not an ARIA menu: these are links, and links are announced as links. Escape or a
- * click outside closes it, Escape returns focus to the button, and following a link closes it.
+ * click outside closes it, Escape returns focus to the button, and following a link closes it. So does focus moving
+ * to anything outside it (Tab or Shift+Tab past it): an open list left behind would cover the page where focus lands
+ * (WCAG 2.4.11, focus not obscured; at a phone width it sits on the search box).
  */
 export function AccountMenu() {
   const { profile, signOut } = useSession()
@@ -26,15 +28,21 @@ export function AccountMenu() {
     function onPointerDown(event: PointerEvent) {
       if (root.current && event.target instanceof Node && !root.current.contains(event.target)) setOpenOn(null)
     }
+    // `focusin`, not a blur: Safari does not focus a link that is clicked, and a blur there would close the list before the click.
+    function onFocusIn(event: FocusEvent) {
+      if (root.current && event.target instanceof Node && !root.current.contains(event.target)) setOpenOn(null)
+    }
     function onKeyDown(event: KeyboardEvent) {
       if (event.key !== 'Escape') return
       setOpenOn(null)
       button.current?.focus()
     }
     document.addEventListener('pointerdown', onPointerDown)
+    document.addEventListener('focusin', onFocusIn)
     document.addEventListener('keydown', onKeyDown)
     return () => {
       document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('focusin', onFocusIn)
       document.removeEventListener('keydown', onKeyDown)
     }
   }, [open])

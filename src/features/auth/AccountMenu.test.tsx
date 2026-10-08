@@ -1,4 +1,4 @@
-import { screen, within } from '@testing-library/react'
+import { act, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { describe, expect, it } from 'vitest'
 import { renderRoute } from '@/test/render'
@@ -32,6 +32,28 @@ describe('the account menu', () => {
     expect(screen.getByRole('link', { name: 'My orders' })).toHaveAttribute('href', '/orders')
     expect(screen.getByRole('link', { name: 'Account' })).toHaveAttribute('href', '/account')
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeInTheDocument()
+  })
+
+  it('closes when focus moves to something outside it, so it never covers where focus lands', async () => {
+    const user = userEvent.setup()
+    const { button } = await open(user)
+
+    act(() => screen.getByRole('combobox', { name: 'Search products' }).focus())
+
+    expect(button).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByRole('link', { name: 'My orders' })).not.toBeInTheDocument()
+  })
+
+  it('stays open while focus moves between its own items', async () => {
+    const user = userEvent.setup()
+    const { button } = await open(user)
+
+    await user.tab()
+    expect(screen.getByRole('link', { name: 'My orders' })).toHaveFocus()
+    await user.tab()
+
+    expect(screen.getByRole('link', { name: 'Account' })).toHaveFocus()
+    expect(button).toHaveAttribute('aria-expanded', 'true')
   })
 
   it('closes when the button is pressed again', async () => {
@@ -89,6 +111,16 @@ describe('the account menu', () => {
     expect(store.getSnapshot()).toEqual({ session: null, endedBy: 'signed-out' })
     expect(within(screen.getByRole('banner')).getByRole('link', { name: 'Sign in' })).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: 'Account: Asha' })).not.toBeInTheDocument()
+  })
+
+  it('names the header sign-in link itself, because its word is hidden in a narrow header', async () => {
+    renderRoute('/about')
+    await screen.findByRole('heading', { level: 1, name: 'About' })
+
+    const link = within(screen.getByRole('banner')).getByRole('link', { name: 'Sign in' })
+
+    // jsdom applies no CSS, so the name must come from the attribute, not from text a stylesheet can hide.
+    expect(link).toHaveAttribute('aria-label', 'Sign in')
   })
 
   it('does not appear for someone who is signed out', async () => {

@@ -26,6 +26,10 @@
   max-width: 100%;
 }
 
+.sg-case:has(.sg-wide) {
+  flex: 1 1 100%;
+}
+
 .sg-card {
   width: min(100%, 17rem);
 }
