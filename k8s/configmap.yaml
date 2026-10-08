@@ -7,4 +7,4 @@ data:
   # nginx's resolver does not use the pod's DNS search path, so the short name `gateway-service` (which a Java service or
   # curl resolves fine) is "could not be resolved" to nginx and every /api request is a 502.
   # nginx looks it up when a request arrives, so the pod is ready before the gateway is.
-  API_UPSTREAM: "http://gateway-service.ecomdemo.svc.cluster.local:8080"
+  API_UPSTREAM: 'http://gateway-service.ecomdemo.svc.cluster.local:8080'

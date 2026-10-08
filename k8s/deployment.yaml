@@ -17,7 +17,7 @@ spec:
       terminationGracePeriodSeconds: 30
       securityContext:
         runAsNonRoot: true
-        runAsUser: 101   # the image's `nginx` user
+        runAsUser: 101 # the image's `nginx` user
         runAsGroup: 101
         # Makes the emptyDir volumes below writable by that group.
         fsGroup: 101
@@ -38,7 +38,7 @@ spec:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities:
-              drop: ["ALL"]
+              drop: ['ALL']
           # A static site has nothing to warm up: ready as soon as nginx answers, and alive as long as it does.
           startupProbe:
             httpGet:
@@ -64,7 +64,7 @@ spec:
                 # Traefik learns that a pod is going a moment after the pod starts to stop. Keep serving for that moment, so a
                 # request already on its way is not sent to a pod that has closed its door (no failed request on a deletion
                 # or a rolling update).
-                command: ["sleep", "8"]
+                command: ['sleep', '8']
           resources:
             requests:
               cpu: 20m
