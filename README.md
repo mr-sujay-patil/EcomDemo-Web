@@ -68,6 +68,9 @@ With the backend's kind cluster up, `bash scripts/k8s-up.sh` adds the shop to it
 | `npm run e2e` | End-to-end smoke tests: builds and previews the app on 4173, then drives it in Chromium against the real backend (it must be running). Every screen is also checked at 360–1280 px in light and dark |
 | `npm run e2e:ui` | The same tests in Playwright's UI mode, to watch and debug them step by step |
 | `npm run e2e:docker` | Builds the image, starts only the `web` container beside the running backend stack, runs the whole E2E suite against `http://localhost:8070`, then stops `web` |
+| `npm run perf` | Lighthouse CI (the shelf, a product page) and the signed-in flows (the cart, an order) against the production container; fails on a broken budget. See [performance](docs/performance.md) |
+| `npm run perf:analyze` | Writes the bundle's treemap and raw sizes to `bundle-analysis/` |
+| `npm run check:budgets` | Chunk-size budgets on the current `dist/` (also part of `npm run verify`) |
 | `npm run e2e:k8s` | Puts the image in the backend's kind cluster (`scripts/k8s-up.sh`), runs the whole suite through `http://shop.localhost:18080` with one pod deleted mid-run, then a pod deletion and a rolling update under traffic with zero failed requests |
 | `npm run e2e:report` | Saves screenshots at 360 and 1280 px into `docs/test-reports/phase-XX/` (the phase comes from the branch, or `REPORT_PHASE=phase-XX`) |
 

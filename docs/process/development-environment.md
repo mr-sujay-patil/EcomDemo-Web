@@ -67,6 +67,10 @@ The cluster is the backend's: kind cluster `ecomdemo` (context `kind-ecomdemo`),
 - Both scripts refuse to run unless context `kind-ecomdemo` has the `ecomdemo` namespace (and, for `up`, a `gateway-service`).
 - The backend's `scripts/k8s-down.sh` deletes the whole cluster, the shop with it; `k8s-up.sh` here brings it back.
 
+## Measuring performance (from Phase 21)
+
+`npm run perf` builds the production image, starts only `web` beside the running backend stack (the same network detection as `npm run e2e:docker`), runs Lighthouse CI for the shelf and a product page and the signed-in flows for the cart and an order, prints the median tables, keeps `perf-results/`, and takes `web` down. It needs a Chrome: `CHROME_PATH`, otherwise the Chromium Playwright installed (`npx playwright install --with-deps chromium`). It registers three throw-away customers and buys one Desk Mat per run, like the E2E suite. The budgets and the method are in `docs/performance.md`.
+
 ## What must be installed inside WSL2
 
 - **Node.js, latest Active LTS**, through `nvm` (pinned in `.nvmrc` from Phase 1). npm comes with it. No yarn, no pnpm.

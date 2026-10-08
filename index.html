@@ -5,9 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
     <title>EcomDemo</title>
-    <!-- Two faces are preloaded: the headings and the body text. The rest load when a page uses them. -->
+    <!-- One face is preloaded: the headings (the h1 is what the shelf paints last). The body text and the rest load when a page uses them: a second preload competes with the JavaScript for the same slow link and made the product page's LCP worse (docs/performance.md). -->
     <link rel="preload" href="/src/styles/fonts/Newsreader-SemiBold.woff2" as="font" type="font/woff2" crossorigin />
-    <link rel="preload" href="/src/styles/fonts/IBMPlexSans-Regular.woff2" as="font" type="font/woff2" crossorigin />
     <!-- Applies a saved Light or Dark choice before the first paint, so the page does not flash the other theme. Same key as src/app/useTheme.ts. -->
     <script>
       try {

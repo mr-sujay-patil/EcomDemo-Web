@@ -72,11 +72,17 @@ export default defineConfig([
 
   // Tool configs run in Node.
   {
-    files: ['*.config.{js,ts}'],
+    files: ['*.config.{js,ts}', 'lighthouserc.cjs'],
     languageOptions: { globals: globals.node },
   },
 
-  // Plain JavaScript outside every tsconfig (the config files, scripts/check-tokens.mjs, scripts/localhost-dns.cjs): no type information.
+  // The performance flow runs functions inside the browser page (page.evaluate, waitForFunction): `document` and `location` are theirs.
+  {
+    files: ['scripts/perf-flows.mjs'],
+    languageOptions: { globals: { ...globals.node, ...globals.browser } },
+  },
+
+  // Plain JavaScript outside every tsconfig (the config files, lighthouserc.cjs, scripts/*.mjs and *.cjs): no type information.
   {
     files: ['**/*.js', '**/*.mjs', '**/*.cjs'],
     extends: [tseslint.configs.disableTypeChecked],

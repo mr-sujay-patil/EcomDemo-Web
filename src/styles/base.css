@@ -89,6 +89,13 @@ code {
   min-height: calc(var(--space-16) * 5);
 }
 
+/* The shelf while it loads: as tall as the screen, so the footer is out of sight both before and after the products arrive and
+   cannot be seen to jump (it was the whole of the shelf's layout shift, 0.176). */
+.reserve-page {
+  min-height: 100vh;
+  min-height: 100svh;
+}
+
 .reserve-sm {
   min-height: calc(var(--space-16) * 3);
 }

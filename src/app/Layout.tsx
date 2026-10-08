@@ -1,11 +1,10 @@
-import { useEffect, useRef, useState, type MouseEvent } from 'react'
+import { lazy, Suspense, useEffect, useRef, useState, type MouseEvent } from 'react'
 import { Link, Outlet, ScrollRestoration, useLocation, useMatches } from 'react-router'
 import { Button, buttonClass } from '@/components/Button'
 import { Header } from '@/components/Header'
 import { Icon } from '@/components/Icon'
 import { Logo } from '@/components/Logo'
 import { site } from '@/content/site'
-import { AssistantSheet } from '@/features/assistant/AssistantSheet'
 import { AccountMenu } from '@/features/auth/AccountMenu'
 import { ExpiryNotice } from '@/features/auth/ExpiryNotice'
 import { SearchBox } from '@/features/search/SearchBox'
@@ -14,6 +13,11 @@ import { countItems, useCart } from '@/features/cart/api'
 import { PageTitleContext } from './pageTitle'
 import { ThemeToggle } from './ThemeToggle'
 import './Layout.css'
+
+// The assistant's code (its conversation, its sheet) is fetched the first time someone reaches for it, not with the shelf.
+// Hovering or focusing the button starts the fetch early, so by the click the sheet is usually already here.
+const loadAssistantSheet = () => import('@/features/assistant/AssistantSheet')
+const AssistantSheet = lazy(async () => ({ default: (await loadAssistantSheet()).AssistantSheet }))
 
 /** Each route names its page in `handle.title`; the layout turns it into the document title. */
 export type RouteHandle = { title: string }
@@ -29,6 +33,8 @@ export function Layout() {
   // A page may name itself (a "Not permitted" standing in for the admin console); otherwise the route does.
   const [pageTitle, setPageTitle] = useState<string | null>(null)
   const [assistantOpen, setAssistantOpen] = useState(false)
+  // Mounted from the first opening on, and kept: closing hides the sheet, it does not throw its conversation away.
+  const [assistantMounted, setAssistantMounted] = useState(false)
   const { session, role } = useSession()
   const cartCount = countItems(useCart().data)
   const name = pageTitle ?? handle?.title
@@ -83,7 +89,12 @@ export function Layout() {
               className="site-ask"
               // The words are hidden in a narrow header (see Layout.css), so the name is given here.
               aria-label="Ask the shop"
-              onClick={() => setAssistantOpen(true)}
+              onPointerEnter={() => void loadAssistantSheet()}
+              onFocus={() => void loadAssistantSheet()}
+              onClick={() => {
+                setAssistantMounted(true)
+                setAssistantOpen(true)
+              }}
             >
               Ask the shop
             </Button>
@@ -112,7 +123,11 @@ export function Layout() {
           </Link>
         }
       />
-      <AssistantSheet open={assistantOpen} onClose={() => setAssistantOpen(false)} />
+      {assistantMounted && (
+        <Suspense fallback={null}>
+          <AssistantSheet open={assistantOpen} onClose={() => setAssistantOpen(false)} />
+        </Suspense>
+      )}
       <ExpiryNotice />
       <main id="main" className="site-main page" tabIndex={-1}>
         <PageTitleContext.Provider value={setPageTitle}>

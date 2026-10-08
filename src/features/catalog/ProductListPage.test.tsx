@@ -363,7 +363,8 @@ describe('adding to the cart from the shelf', () => {
 
     await user.click(screen.getAllByRole('button', { name: 'Add to cart' })[0]!)
 
-    expect(router.state.location.pathname).toBe('/sign-in')
+    // The sign-in page is a lazy route: the router commits the new location once its code has arrived.
+    await waitFor(() => expect(router.state.location.pathname).toBe('/sign-in'))
     expect(router.state.location.search).toBe('?next=%2F')
   })
 

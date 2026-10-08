@@ -62,6 +62,8 @@ async function openSheet(path = '/about', role: 'CUSTOMER' | 'ADMIN' | null = 'C
   await screen.findByRole('heading', { level: 1 })
   const opener = screen.getByRole('button', { name: 'Ask the shop' })
   await user.click(opener)
+  // The sheet's code is fetched on the first opening, so it arrives a moment after the click.
+  await screen.findByRole('dialog', { name: 'Ask the shop' })
   return { user, opener, ...view }
 }
 

@@ -1,7 +1,5 @@
 import { createBrowserRouter, Navigate, type RouteObject } from 'react-router'
-import { RegisterPage } from '@/features/accounts/RegisterPage'
 import { RequireRole } from '@/features/auth/RequireRole'
-import { SignInPage } from '@/features/accounts/SignInPage'
 import { AboutPage } from '@/features/content/AboutPage'
 import { PrivacyPage } from '@/features/content/PrivacyPage'
 import { ReturnsPage } from '@/features/content/ReturnsPage'
@@ -16,6 +14,17 @@ import { NotFoundPage } from './NotFoundPage'
 function route(path: string, title: string, element: RouteObject['element']): RouteObject {
   const handle: RouteHandle = { title }
   return { path, element, handle }
+}
+
+/**
+ * A page whose code is fetched when it is first visited, not with the shelf. Sign-in and registration are the pages that
+ * need the form libraries (zod and react-hook-form are about a third of the shelf's JavaScript). (The search and
+ * content pages stay in the entry on purpose: making them lazy added shared chunks for the shelf to preload and made
+ * the first paint 0.15 s later, docs/performance.md. The shelf and the product page are what a visitor lands on.)
+ */
+function lazyRoute(path: string, title: string, load: () => Promise<RouteObject['Component']>): RouteObject {
+  const handle: RouteHandle = { title }
+  return { path, handle, lazy: async () => ({ Component: await load() }) }
 }
 
 // The style guide ships only where a person looks at it: `npm run dev`, and the build the E2E suite previews
@@ -77,8 +86,12 @@ export const routes: RouteObject[] = [
           },
         ],
       },
-      route('sign-in', 'Sign in', <SignInPage />),
-      route('register', 'Create an account', <RegisterPage />),
+      lazyRoute('sign-in', 'Sign in', async () => (await import('@/features/accounts/SignInPage')).SignInPage),
+      lazyRoute(
+        'register',
+        'Create an account',
+        async () => (await import('@/features/accounts/RegisterPage')).RegisterPage,
+      ),
       // Signed in as an admin: the console.
       {
         element: <RequireRole role="ADMIN" />,

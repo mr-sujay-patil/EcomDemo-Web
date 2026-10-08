@@ -16,3 +16,7 @@ api
 scripts/*.md
 ecomdemo-frontend-integration-guide.md
 *Zone.Identifier
+bundle-analysis
+.lighthouseci
+perf-results
+C:*

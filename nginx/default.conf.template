@@ -10,6 +10,9 @@ server {
 
     root /usr/share/nginx/html;
 
+    # The build's files are compressed once, in the image (Dockerfile); nginx sends the .gz file when the browser accepts it.
+    gzip_static on;
+    # Everything else (API answers) is compressed as it is sent.
     gzip on;
     gzip_vary on;
     gzip_min_length 1024;
@@ -54,6 +57,8 @@ server {
     # Built files have a hash in their name: a changed file has a new name, so they can be kept for a year.
     location /assets/ {
         try_files $uri =404;
+        # A hashed file is never asked about again, so its ETag is bytes on every response for nothing (six font files: ~170 B).
+        etag off;
         add_header Cache-Control "public, max-age=31536000, immutable";
     }
 
