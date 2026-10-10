@@ -81,6 +81,10 @@ spec:
               mountPath: /var/cache/nginx
             - name: conf
               mountPath: /etc/nginx/conf.d
+            # The cluster CA's public certificate, to verify the gateway (web KI-035). Read only; the Secret is the backend's.
+            - name: cluster-ca
+              mountPath: /etc/ecomdemo-ca
+              readOnly: true
       volumes:
         - name: tmp
           emptyDir:
@@ -91,3 +95,8 @@ spec:
         - name: conf
           emptyDir:
             sizeLimit: 1Mi
+        # Created by the backend's scripts/k8s-up.sh (key `tls.ca`, the public certificate only). This app reads it and never
+        # creates, edits or deletes it.
+        - name: cluster-ca
+          secret:
+            secretName: ecomdemo-ca-public

@@ -1,5 +1,5 @@
-# Rendered at container start by the nginx image's entrypoint: ${API_UPSTREAM} and ${NGINX_LOCAL_RESOLVERS} (the DNS
-# server from /etc/resolv.conf, read by the image itself) are filled in from the environment. nginx's own $variables are
+# Rendered at container start by the nginx image's entrypoint: ${API_UPSTREAM}, ${API_CA_FILE} and ${NGINX_LOCAL_RESOLVERS}
+# (the DNS server from /etc/resolv.conf, read by the image itself) are filled in from the environment. nginx's own $variables are
 # left alone, because the entrypoint substitutes only variables that exist in the environment.
 
 server {
@@ -34,6 +34,14 @@ server {
         set $api_upstream ${API_UPSTREAM};
         # A variable with no path in it: the request goes on exactly as it came (/api/products?page=0 stays that).
         proxy_pass $api_upstream;
+
+        # An https:// upstream (the gateway in the kind cluster, web KI-035) is verified like any client would: its certificate
+        # must chain to the CA in API_CA_FILE (the cluster's CA there; the image's own CA bundle by default) and carry the
+        # upstream's host name, sent as SNI too. Without these nginx accepts any certificate at all. A plain http://
+        # upstream (compose) ignores all four.
+        proxy_ssl_verify on;
+        proxy_ssl_trusted_certificate ${API_CA_FILE};
+        proxy_ssl_server_name on;
 
         proxy_http_version 1.1;
         # The gateway lets a browser write (POST, PUT, DELETE) only when Host matches the request's Origin, so Host is the

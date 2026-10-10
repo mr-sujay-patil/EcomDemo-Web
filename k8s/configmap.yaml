@@ -7,4 +7,7 @@ data:
   # nginx's resolver does not use the pod's DNS search path, so the short name `gateway-service` (which a Java service or
   # curl resolves fine) is "could not be resolved" to nginx and every /api request is a 502.
   # nginx looks it up when a request arrives, so the pod is ready before the gateway is.
-  API_UPSTREAM: 'http://gateway-service.ecomdemo.svc.cluster.local:8080'
+  # HTTPS since backend KI-056 (web KI-035): the gateway's certificate names exactly this host, and nginx verifies it.
+  API_UPSTREAM: 'https://gateway-service.ecomdemo.svc.cluster.local:8080'
+  # The cluster CA's public certificate, from the backend's Secret `ecomdemo-ca-public` (mounted in deployment.yaml).
+  API_CA_FILE: '/etc/ecomdemo-ca/tls.ca'

@@ -286,6 +286,11 @@ jobs:
           echo "$headers" | grep -qi "^content-security-policy:.*script-src 'self';"
           docker rm --force web
 
+      # web KI-035: against a stand-in HTTPS gateway, nginx proxies only when the certificate chains to API_CA_FILE and names
+      # the upstream (a wrong CA and a wrong name are both 502), and a plain http:// gateway (compose) works as before.
+      - name: Check nginx verifies an HTTPS gateway
+        run: bash scripts/test-nginx-upstream-tls.sh ecomdemo-web:ci
+
       # The software bill of materials: every package in the image (Alpine and nginx's, and the app's files) in CycloneDX.
       # Made before the scan and uploaded even when the scan fails, so the list is there to read when something is flagged.
       - name: Make the SBOM of the image
