@@ -5,19 +5,20 @@
 - **Updated:** 2026-10-10
 - **Task:** fix KI-020 (`e2e/checkout.spec.ts` "a quantity above stock is refused up front" needs the seeded Laptop Sleeve 16" at stock 2; on a used backend it is 0 and the spec times out)
 - **Branch:** `fix/ki-020-own-stock` (cut from `main` at `7eb65c5`; KI-028 merged, CI on `main` green)
-- **Step:** TESTING
+- **Step:** PR_OPEN (PR #42)
 - **Backend pinned at:** commit `669a9ed1dfcc8ef0d89608c87ef05421bb157fb6` (unchanged by this fix)
-- **Waiting for user:** no
+- **Waiting for user:** YES: CI on PR #42 (its `e2e` job is the real run of the spec), then `approved, merge it`
 
 ## Checklist
 - [x] Root cause, with evidence: the spec named Laptop Sleeve 16" and its seeded level 2 (shelf add, two Increase clicks, "available 2", "Lower to 2")
 - [x] Regression check: the spec itself, arranging its own precondition (works on a fresh and on a used backend)
 - [x] Fix: `productWithFewestInStock` (live catalogue, every page) + `putInCart` (API), then one Increase in the UI; same assertions
 - [x] `npm ci && npm run verify` (904 unit tests, 74 files); typecheck, lint, format clean; `playwright --list` sees the 4 checkout tests. The e2e spec runs only in CI's `e2e` job (no backend stack in this container)
-- [ ] Docs: KNOWN_ISSUES (Fixed, PR #n), `[Fix KI-020] Decision`, this checkpoint; PR
+- [x] Docs: KNOWN_ISSUES (Fixed, PR #42), `[Fix KI-020] Decision`, this checkpoint; PR #42
+- [ ] CI green on PR #42
 
 ## Next action
-Open the PR (`Fix KI-020: …`), add its number to the KI-020 row, then wait for CI (the `e2e` job is the real run of the spec) and STOP for the owner's `approved, merge it`. After the merge: local `npm ci && npm run verify` on `main`, CI on `main` green, tag `ki-020-fixed` (tag pushes are refused here with 403: give the owner the command).
+Wait for CI on PR #42 and fix it if red (the `e2e` job is the real run of the spec) and STOP for the owner's `approved, merge it`. After the merge: local `npm ci && npm run verify` on `main`, CI on `main` green, tag `ki-020-fixed` (tag pushes are refused here with 403: give the owner the command).
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.
