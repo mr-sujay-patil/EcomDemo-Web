@@ -51,7 +51,7 @@ The container joins the backend's Docker network. Its name is `<backend compose 
 
 ### In the backend's kind cluster
 
-With the backend's kind cluster up, `bash scripts/k8s-up.sh` adds the shop to it (two replicas behind the cluster's Traefik): **http://shop.localhost:18080** (⚠️ the backend's cluster is HTTPS now, so this does not work until it is changed: web KI-034, `docs/process/development-environment.md`), while `localhost:18080` stays the backend's own. `bash scripts/k8s-down.sh` removes only what it added.
+With the backend's kind cluster up, `bash scripts/k8s-up.sh` adds the shop to it (two replicas behind the cluster's Traefik): **https://shop.localhost:18443**, with the certificate from the cluster's own CA (the script saves it to `.local/cluster-ca.crt`; trusting it is in `docs/process/development-environment.md`), while `localhost:18443` stays the backend's own and port 18080 only redirects to HTTPS. `bash scripts/k8s-down.sh` removes only what it added.
 
 | Script | What it does |
 |---|---|
@@ -71,7 +71,7 @@ With the backend's kind cluster up, `bash scripts/k8s-up.sh` adds the shop to it
 | `npm run perf` | Lighthouse CI (the shelf, a product page) and the signed-in flows (the cart, an order) against the production container; fails on a broken budget. See [performance](docs/performance.md) |
 | `npm run perf:analyze` | Writes the bundle's treemap and raw sizes to `bundle-analysis/` |
 | `npm run check:budgets` | Chunk-size budgets on the current `dist/` (also part of `npm run verify`) |
-| `npm run e2e:k8s` | Puts the image in the backend's kind cluster (`scripts/k8s-up.sh`), runs the whole suite through `http://shop.localhost:18080` with one pod deleted mid-run, then a pod deletion and a rolling update under traffic with zero failed requests |
+| `npm run e2e:k8s` | Puts the image in the backend's kind cluster (`scripts/k8s-up.sh`), runs the whole suite through `https://shop.localhost:18443` with one pod deleted mid-run, then a pod deletion and a rolling update under traffic with zero failed requests |
 | `npm run e2e:report` | Saves screenshots at 360 and 1280 px into `docs/test-reports/phase-XX/` (the phase comes from the branch, or `REPORT_PHASE=phase-XX`) |
 
 If `format:check` fails, run `npm run format` and commit the result. Editors pick up `.editorconfig`; with the ESLint and Prettier extensions installed they show lint errors as you type and can format on save. There is no pre-commit hook: CI enforces both from Phase 5.
@@ -123,7 +123,7 @@ Every pull request, and every push to `main`, runs [`.github/workflows/ci.yml`](
 | Job | What it does |
 |---|---|
 | `verify` | `npm ci` and `npm run verify` (the unit tests run once, with coverage) on the Node version in `.nvmrc`; the coverage report is saved as the run's `coverage` artifact. Pull requests only |
-| `e2e` | Pull requests only. Checks out the backend at `BACKEND_TAG` (default: the pinned commit `82ef598`, see `docs/process/development-environment.md`), loads its images from the cache that `backend-images.yml` keeps (or builds them when there is none) and starts its compose stack with a generated, masked signing key and client secrets, then runs `npm run e2e`. On failure it saves the Playwright report and traces (`playwright-report`) and the backend's logs (`backend-logs`) |
+| `e2e` | Pull requests only. Checks out the backend at `BACKEND_TAG` (default: the pinned commit `669a9ed`, see `docs/process/development-environment.md`), loads its images from the cache that `backend-images.yml` keeps (or builds them when there is none) and starts its compose stack with a generated, masked signing key and client secrets, then runs `npm run e2e`. On failure it saves the Playwright report and traces (`playwright-report`) and the backend's logs (`backend-logs`) |
 
 The job builds the backend from source because its per-service images are not published yet ([web KI-015](docs/KNOWN_ISSUES.md)), so it takes a while. The runner's memory and each container's use are printed on the run's summary page. To test against a newer backend, set the repository variable `BACKEND_TAG` (Settings → Secrets and variables → Actions → Variables). Nothing secret is stored in this repository.
 
