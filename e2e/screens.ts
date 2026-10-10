@@ -579,6 +579,54 @@ export const screens: Screen[] = [
     },
     allowedConsoleErrors: [/Failed to load resource: the server responded with a status of 429/],
   },
+  {
+    // Phase 24: the guest cart of a visitor, from this browser's storage. The two products are stubbed (one with a long name, one
+    // with one left), so the layout specs measure a line that could clip and a stock hint, whatever the live catalogue holds.
+    name: 'cart-guest',
+    path: '/cart',
+    report: true,
+    prepare: async (page) => {
+      await page.addInitScript(() => {
+        localStorage.setItem(
+          'ecomdemo-guest-cart-v1',
+          JSON.stringify({
+            items: [
+              { productId: 1, quantity: 2 },
+              { productId: 2, quantity: 3 },
+            ],
+          }),
+        )
+      })
+      const product = (id: number, name: string, price: number, stockQuantity: number, category: string) => ({
+        id,
+        name,
+        description: `${name}, for the desk.`,
+        price,
+        stockQuantity,
+        category,
+        imageUrl: null,
+      })
+      await page.route('**/api/products/1', (route) =>
+        route.fulfill({ json: product(1, 'Mechanical Keyboard', 8999, 22, 'PERIPHERALS') }),
+      )
+      await page.route('**/api/products/2', (route) =>
+        route.fulfill({
+          json: product(
+            2,
+            'Ultra-wide curved monitor with an unreasonably long product name to test wrapping',
+            32000,
+            1,
+            'DISPLAYS',
+          ),
+        }),
+      )
+    },
+    ready: async (page) => {
+      await expect(page.getByRole('heading', { level: 1, name: 'Your cart' })).toBeVisible()
+      await expect(page.getByRole('list', { name: 'Items in your cart' }).getByRole('listitem')).toHaveCount(2)
+      await expect(page.getByText('Only 1 left.')).toBeVisible()
+    },
+  },
   ...routePages.map(({ name, path, h1, report }): Screen => ({
     name,
     path,

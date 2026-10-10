@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { act, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { beforeAll, describe, expect, it } from 'vitest'
 import type { Role } from '@/features/auth/session'
@@ -32,7 +32,9 @@ const pages = [
 /** Who must be signed in to see a path (src/app/router.tsx): customers for the shop's private pages, an admin for the console. */
 function viewerOf(path: string): Role | undefined {
   if (path.startsWith('/admin')) return 'ADMIN'
-  const customerOnly = ['/cart', '/checkout', '/orders', '/account']
+  // `/cart` is open to everyone since Phase 24 (a visitor sees the guest cart); the table renders it for a customer.
+  if (path === '/cart') return 'CUSTOMER'
+  const customerOnly = ['/checkout', '/orders', '/account']
   return customerOnly.some((prefix) => path === prefix || path.startsWith(`${prefix}/`)) ? 'CUSTOMER' : undefined
 }
 
@@ -101,6 +103,17 @@ describe('layout', () => {
     expect(await screen.findByRole('heading', { level: 1, name: 'Returns' })).toHaveFocus()
   })
 
+  it('leaves focus alone on a page that has no heading yet (a redirect on its way), and does not fail', async () => {
+    const { router } = renderRoute('/about')
+    await screen.findByRole('heading', { level: 1, name: 'About' })
+
+    // Signed out, /orders renders only a redirect to sign-in: the address changes before any h1 exists.
+    await act(() => router.navigate('/orders'))
+
+    expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/sign-in')
+  })
+
   it.each([
     ['About', 'About'],
     ['Returns', 'Returns'],
@@ -117,14 +130,16 @@ describe('layout', () => {
     expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeInTheDocument()
   })
 
-  it('links the store name to the product list, and signed out the cart link leads to sign-in', async () => {
+  // Since Phase 24 the cart link leads a visitor to their guest cart, not to sign-in.
+  it('links the store name to the product list, and signed out the cart link leads to the guest cart', async () => {
     const user = userEvent.setup()
     renderRoute('/about')
     await screen.findByRole('heading', { level: 1, name: 'About' })
     const header = within(screen.getByRole('banner'))
 
     await user.click(header.getByRole('link', { name: 'Cart' }))
-    expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Your cart' })).toBeInTheDocument()
+    expect(screen.getByText('Your cart is empty')).toBeInTheDocument()
     await user.click(header.getByRole('link', { name: 'Sign in' }))
     expect(await screen.findByRole('heading', { level: 1, name: 'Sign in' })).toBeInTheDocument()
     await user.click(header.getByRole('link', { name: 'EcomDemo' }))

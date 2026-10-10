@@ -16,6 +16,7 @@ beforeAll(() => server.listen({ onUnhandledFrame: 'error' }))
 afterEach(() => {
   cleanup() // unmount what the test rendered (automatic only with `globals: true`, which we don't use)
   server.resetHandlers() // drop the per-test overrides added with server.use()
+  localStorage.clear() // the guest cart (and the theme) must not leak from one test into the next
 })
 
 afterAll(() => server.close())

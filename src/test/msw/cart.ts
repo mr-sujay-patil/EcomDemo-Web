@@ -59,6 +59,10 @@ export function fakeCart({
       calls.push(`POST ${productId} x${quantity}`)
       const refused = refusal()
       if (refused) return refused
+      // As the backend: an id the catalogue does not hold is a 404, and the cart is not changed.
+      if (!productFixtures.some((product) => product.id === productId)) {
+        return HttpResponse.json({ status: 404, message: `Product ${productId} not found` }, { status: 404 })
+      }
       add(productId, quantity)
       return HttpResponse.json(view())
     }),

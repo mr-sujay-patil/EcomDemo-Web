@@ -80,19 +80,34 @@ test.describe('the cart', () => {
     await expect.poll(async () => (await summary.textContent())?.includes(serverTotal())).toBe(true)
   })
 
-  test('a signed-out visitor who adds is sent to sign in and comes back to the same page', async ({
+  // Phase 24 replaced "a signed-out add goes to sign-in" with the guest cart (e2e/guest-cart.spec.ts has the whole flow).
+  test('a signed-out visitor’s add stays on the page, and signing in moves it into the account’s cart', async ({
     page,
     request,
   }) => {
     const username = await createAccount(request)
     await page.goto('/')
 
-    await page.getByRole('button', { name: 'Add to cart' }).first().click()
-    await expect(page).toHaveURL('/sign-in?next=%2F')
+    const card = page
+      .getByRole('article')
+      .filter({ has: page.getByRole('button', { name: 'Add to cart' }) })
+      .first()
+    const name = (await card.getByRole('heading', { level: 2 }).textContent()) ?? ''
+    await card.getByRole('button', { name: 'Add to cart' }).click()
+    await expect(page).toHaveURL('/')
+    await expect(page.getByRole('banner').getByRole('link', { name: 'Cart, 1 item' })).toBeVisible()
 
+    await page.getByRole('banner').getByRole('link', { name: 'Sign in' }).click()
     await signIn(page, username)
 
     await expect(page).toHaveURL('/')
     await expect(page.getByRole('button', { name: 'Account: E2E' })).toBeVisible()
+    await expect(page.getByText('Your cart is up to date')).toBeVisible()
+    await expect(
+      page
+        .getByRole('article')
+        .filter({ has: page.getByRole('heading', { level: 2, name, exact: true }) })
+        .getByRole('button', { name: 'In your cart (1)' }),
+    ).toBeVisible()
   })
 })

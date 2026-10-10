@@ -77,6 +77,10 @@ When a session ends the guard on the current page redirects to `/sign-in?next=<p
 
 Whenever a session ends, every query in the cache except the catalogue (`['catalog', …]`, the same for everyone) is removed. The rule is "everything not under `catalog` is the person's", so a feature added later is safe by default.
 
+## The guest cart on sign-in (Phase 24)
+
+When a session starts for a CUSTOMER and the browser holds a guest cart, `GuestCartProvider` replays it into the account's cart: it reads `GET /api/cart`, then sends one `POST /api/cart/items` per line under the Web Lock `ecomdemo-guest-cart-replay`, removing each line from storage once the server has it. It runs once per token; an ADMIN's sign-in replays nothing. If the session ends during the replay, nothing more is sent and the rest stays in the browser. Sign-out never copies the account's cart into the browser. Details: `docs/modules/cart.md`.
+
 ## A throttled login
 
 Login answers `429` with `Retry-After` after repeated failures (`docs/backend/phase-33-delta.md`). The form shows the wait on the button ("Try again in 28 s"), keeps it disabled, never retries by itself, announces the problem once and "You can try again now." once, and enables the button at zero. A `429` without `Retry-After` is the gateway's general limit: a second.

@@ -59,15 +59,17 @@ export const routes: RouteObject[] = [
           { index: true, element: <ProductListPage />, handle: { title: 'Products' } satisfies RouteHandle },
           route('products/:id', 'Product', <ProductPage />),
           route('search', 'Search', <SearchPage />),
-          // Signed in as a customer: the cart, checkout and orders. Signed out they go to /sign-in?next=…
+          // The cart decides for itself: a customer's from the server, a visitor's from this browser (the guest cart), "Not
+          // permitted" for an admin, and sign-in for someone whose session just ended (CartRoute, decisions [Phase 24]).
+          {
+            path: 'cart',
+            handle: { title: 'Your cart' } satisfies RouteHandle,
+            lazy: async () => ({ Component: (await import('@/features/cart/CartRoute')).CartRoute }),
+          },
+          // Signed in as a customer: checkout and orders. Signed out they go to /sign-in?next=…
           {
             element: <RequireRole role="CUSTOMER" />,
             children: [
-              {
-                path: 'cart',
-                handle: { title: 'Your cart' } satisfies RouteHandle,
-                lazy: async () => ({ Component: (await import('@/features/cart/CartPage')).CartPage }),
-              },
               // Placing the order is the cart's button (one click, no address, web KI-008): /checkout is only an old address.
               { path: 'checkout', element: <Navigate to="/cart" replace /> },
               // List and detail share the /orders path: the list is the index, an order opens under it.
