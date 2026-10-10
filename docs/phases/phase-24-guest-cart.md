@@ -20,18 +20,19 @@
 - A guest cart store: product id and quantity only (never a price, a name or the token) in `localStorage` under a versioned key, validated on every read (anything malformed is discarded), with an in-memory fallback when storage is unavailable, and kept in step across tabs with the `storage` event.
 - Signed out, "Add to cart" on the shelf, a product page and the search results adds to the guest cart ("In your cart (n)"), and the header's cart count is the guest cart's.
 - `/cart` signed out shows the guest cart: each line with the catalogue's current price fetched by id (labelled as the current price), quantity and remove (with Undo), loading, empty and error states, a line for a product no longer in the shop, a stock hint, no totals worked out in the browser, and "Sign in to check out". A session that ended on the person (expired or refused) still goes to sign-in from `/cart`; an admin still sees "Not permitted".
-- Replay on sign-in as a customer: one `POST /api/cart/items` per line, in order, one tab at a time (Web Locks where available); a line leaves the browser only once the server has it; a product the shop no longer has is dropped and reported; a line that could not be sent (a lost connection, a busy shop) is kept, reported, and can be tried again. The server cart is read again afterwards.
+- Replay on sign-in as a customer: the account's cart is read first, then one `POST /api/cart/items` per line, in order, one tab at a time (Web Locks where available); a line leaves the browser only once the server has it; a product the shop no longer has is dropped and reported. A send with an **unknown outcome** (no answer, a busy shop) keeps the line, marked with what was sent and what the server held, reported with Try again; before such a line is sent again the server cart is compared with the mark, and if the earlier send arrived it is not repeated (POST adds to a line: a blind retry would double it, web KI-037). The server cart is read again afterwards.
 - A notice under the header while the cart moves and after it: what moved, what did not and why.
 
 **Concepts to understand**
 - Client state that must outlive a reload (browser storage) versus server state (the query cache), and why the browser holds no prices
 - Validating what comes back from storage: it is input, like a request body
-- Replaying writes that are not idempotent: at-most-once per line, partial failure, cross-tab coordination
+- Replaying writes that are not idempotent: an unknown outcome is checked against the server before a retry, partial failure, cross-tab coordination
 
 **Done when**
 - A signed-out visitor adds products, reloads, and still finds them in the cart with the server's current prices; after signing in the same lines are in the server cart and the browser holds nothing (unit, component and E2E).
 - Merging into a server cart that already has the product adds the quantities (the API's rule) (unit and E2E).
 - A product removed from the shop, and a failed send, are reported per line; only the failed line stays in the browser (unit).
+- A send the server applied but whose answer was lost does not double the quantity when it is tried again (unit, web KI-037).
 - Corrupt or foreign data under the key is discarded without an error (unit).
 - Another tab sees a guest cart change (unit, the `storage` event).
 
