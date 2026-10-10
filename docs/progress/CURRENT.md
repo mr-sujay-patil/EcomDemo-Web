@@ -5,19 +5,19 @@
 - **Updated:** 2026-10-10
 - **Task:** fix KI-020 (`e2e/checkout.spec.ts` "a quantity above stock is refused up front" needs the seeded Laptop Sleeve 16" at stock 2; on a used backend it is 0 and the spec times out)
 - **Branch:** `fix/ki-020-own-stock` (cut from `main` at `7eb65c5`; KI-028 merged, CI on `main` green)
-- **Step:** BRANCHED
+- **Step:** TESTING
 - **Backend pinned at:** commit `669a9ed1dfcc8ef0d89608c87ef05421bb157fb6` (unchanged by this fix)
 - **Waiting for user:** no
 
 ## Checklist
-- [ ] Root cause, with evidence: the spec reads a fixed product and a fixed stock it does not own
-- [ ] Regression check: the spec itself, arranging its own precondition (works on a fresh and on a used backend)
-- [ ] Fix: the spec picks an in-stock product from the live catalogue and puts the line in the cart through the API
-- [ ] `npm ci && npm run verify`; the e2e spec runs in CI's `e2e` job (no backend stack in this container)
-- [ ] Docs: KNOWN_ISSUES (Fixed, PR #n), decision if it sets a convention, this checkpoint; PR
+- [x] Root cause, with evidence: the spec named Laptop Sleeve 16" and its seeded level 2 (shelf add, two Increase clicks, "available 2", "Lower to 2")
+- [x] Regression check: the spec itself, arranging its own precondition (works on a fresh and on a used backend)
+- [x] Fix: `productWithFewestInStock` (live catalogue, every page) + `putInCart` (API), then one Increase in the UI; same assertions
+- [x] `npm ci && npm run verify` (904 unit tests, 74 files); typecheck, lint, format clean; `playwright --list` sees the 4 checkout tests. The e2e spec runs only in CI's `e2e` job (no backend stack in this container)
+- [ ] Docs: KNOWN_ISSUES (Fixed, PR #n), `[Fix KI-020] Decision`, this checkpoint; PR
 
 ## Next action
-Rewrite the refused-order test in `e2e/checkout.spec.ts` so it arranges its own stock precondition, then run the checks and open the PR.
+Open the PR (`Fix KI-020: …`), add its number to the KI-020 row, then wait for CI (the `e2e` job is the real run of the spec) and STOP for the owner's `approved, merge it`. After the merge: local `npm ci && npm run verify` on `main`, CI on `main` green, tag `ki-020-fixed` (tag pushes are refused here with 403: give the owner the command).
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.
@@ -29,5 +29,5 @@ Rewrite the refused-order test in `e2e/checkout.spec.ts` so it arranges its own 
 - `~/.cache/ms-playwright` already holds `chromium-1243` and `chromium_headless_shell-1243`.
 
 ## ⚠️ Carried, not fixed (oldest first)
-- web KI-020: `e2e/checkout.spec.ts` refused-order spec needs Laptop Sleeve stock 2; the shared backend has 0.
+- The other two `e2e/checkout.spec.ts` tests (and `orders`, `keyboard-flows`) still buy seeded products by name: KI-025's general form, not this fix.
 - The backend stack running here (`ecomdemo-gateway-service`) is ahead of the pin: `npm run e2e` stops at `api:check` (dead-letter admin schema `dltTimestamp`). Run `npx playwright test --project=chromium` and say so, or have the owner approve a `chore/pin-backend-<tag>`.
