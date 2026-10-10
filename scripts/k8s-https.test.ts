@@ -4,7 +4,8 @@ import { describe, expect, it } from 'vitest'
 // The shop in the backend's kind cluster is HTTPS end to end (web KI-034, KI-035). The cluster itself cannot run in CI, so
 // these read the manifests and scripts it is deployed with; `npm run e2e:k8s` is the proof on a running cluster, and
 // scripts/test-nginx-upstream-tls.sh proves nginx verifies the gateway's certificate.
-const read = (path: string) => readFileSync(new URL(`../${path}`, import.meta.url), 'utf8')
+// Paths are from the repository root, where Vitest runs (as scripts/openapi.test.ts reads api/openapi/).
+const read = (path: string) => readFileSync(path, 'utf8')
 
 describe('the shop in the cluster is served over HTTPS (KI-034)', () => {
   it('the Ingress terminates TLS for shop.localhost with the backend edge certificate', () => {
