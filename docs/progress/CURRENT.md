@@ -5,19 +5,19 @@
 - **Updated:** 2026-10-10
 - **Task:** fix KI-025 (the e2e specs that still depend on seeded products and stock by name or by shelf position: `checkout` x2, `orders`, `keyboard-flows`, `catalog`, `design`; the owner said "proceed" with "find products that are in stock; find seeds through search")
 - **Branch:** `fix/ki-025-own-test-data` (cut from `main` at `1f584e6`; KI-020 merged, local verify on `main` 904 tests passed, CI on `main` green)
-- **Step:** BRANCHED
+- **Step:** TESTING
 - **Backend pinned at:** commit `669a9ed1dfcc8ef0d89608c87ef05421bb157fb6` (unchanged by this fix)
 - **Waiting for user:** NO
 
 ## Checklist
-- [ ] Root cause per spec: which seeded name, stock level or shelf position each one assumes
-- [ ] Shared live-data helpers in `e2e/` (catalogue across pages, picks by stock and price, account, cart through the API, a product found on the shelf across pages), DRY with KI-020's
-- [ ] `checkout` (confirmed purchase, cancelled order), `orders`, `keyboard-flows`, `catalog`, `design` arrange or discover their own data, same assertions
-- [ ] typecheck, lint, format; `playwright --list`; full `npm ci && npm run verify`
-- [ ] Docs: KNOWN_ISSUES (KI-025 Fixed, or narrowed), decisions only if the convention changes, this checkpoint; PR
+- [x] Root cause per spec: `checkout` (Desk Mat, 2 Mechanical Keyboards), `orders` (2 keyboards), `keyboard-flows` (Desk Mat), `catalog` (ten seeded names on page 1), `design` (ids 1 and 9, page 1), `shelf` (Accessories, Audio, ids 1 and 4, Mechanical Keyboard on page 1), `observability` (Mechanical Keyboard on page 1)
+- [x] Shared helpers in `e2e/live-data.ts` (KI-020's moved there): `allProducts`, `productToBuy`, `orderOverTheLimit`, `productWithFewestInStock`, `putInCart`, `createAccount`, `findOnShelf`, `everyShelfCard`, `shelfCount`
+- [x] Every spec above arranges or finds its own data; same assertions (stronger in `catalog` and `shelf`: every product, exact prices)
+- [x] typecheck, lint, format; `playwright --list` (39 tests in the 7 files); a scratch run against a 60-product stand-in gateway with the preinstalled Chromium 1194 (24 passed: `catalog`, `design`, `shelf`, `observability`; `findOnShelf` by click and keyboard to page 3). Specs needing accounts, cart and orders run only in CI's `e2e` job
+- [ ] Full `npm ci && npm run verify`; docs (KNOWN_ISSUES Fixed, `[Fix KI-025] Decision`); PR
 
 ## Next action
-Write the shared helper module in `e2e/`, move KI-020's `allProducts`/`productWithFewestInStock`/`putInCart` into it, then rework each spec in the checklist.
+Run `npm ci && npm run verify`, push, open the PR `Fix KI-025: …`, add its number to the KI-025 row ("Fixed (PR #n)") and this checkpoint, and STOP for the owner's review. Do not wait for CI here: the caller watches it (the `e2e` job is the real run of these specs).
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.
