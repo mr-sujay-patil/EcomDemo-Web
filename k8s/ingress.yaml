@@ -1,12 +1,19 @@
-# http://shop.localhost:18080 serves the shop. The backend's own Ingress (no host: everything else, `localhost:18080`)
+# https://shop.localhost:18443 serves the shop. The backend's own Ingress (no host: everything else, `localhost:18443`)
 # stays exactly as it is: a request with the Host `shop.localhost` matches this rule, any other Host matches theirs.
 # Browsers resolve *.localhost to 127.0.0.1 with no hosts-file edit. Traefik is the backend's (ingressClass `traefik`).
+#
+# TLS (web KI-034): Traefik terminates HTTPS with the backend's edge certificate, the Secret `ecomdemo-tls` in this namespace,
+# which names `shop.localhost` since backend KI-060. cert-manager renews it; this app only reads it. The plain port 18080
+# answers every host with a 301 to HTTPS (the backend's Traefik settings), so the shop is never served in clear text.
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: ecomdemo-web
 spec:
   ingressClassName: traefik
+  tls:
+    - hosts: [shop.localhost]
+      secretName: ecomdemo-tls
   rules:
     - host: shop.localhost
       http:

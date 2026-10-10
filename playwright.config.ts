@@ -3,6 +3,12 @@ import { defineConfig, devices } from '@playwright/test'
 // `npm run e2e:docker` points the suite at the container (E2E_BASE_URL); otherwise it builds and previews the app itself.
 const baseURL = process.env.E2E_BASE_URL ?? 'http://localhost:4173'
 
+// `npm run e2e:k8s` (web KI-034): the shop is HTTPS with a certificate from the cluster's own CA. Chromium accepts exactly the
+// key scripts/e2e-k8s.sh read from the server and verified against that CA, and no other certificate error is ignored.
+const k8sTrust = process.env.E2E_K8S_SPKI
+  ? { launchOptions: { args: [`--ignore-certificate-errors-spki-list=${process.env.E2E_K8S_SPKI}`] } }
+  : {}
+
 // https://playwright.dev/docs/test-configuration
 export default defineConfig({
   testDir: './e2e',
@@ -21,7 +27,7 @@ export default defineConfig({
   },
   projects: [
     // The smoke suite: everything except the screenshot generator.
-    { name: 'chromium', use: { ...devices['Desktop Chrome'] }, grepInvert: /@report/ },
+    { name: 'chromium', use: { ...devices['Desktop Chrome'], ...k8sTrust }, grepInvert: /@report/ },
     // `npm run e2e:report` only: writes screenshots into docs/test-reports/, so it never runs by default.
     { name: 'report', use: { ...devices['Desktop Chrome'] }, grep: /@report/ },
   ],
