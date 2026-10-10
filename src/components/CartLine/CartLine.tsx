@@ -10,8 +10,11 @@ export type CartLineProps = {
   category?: string | null
   /** Rupees each, as the server sent them. */
   unitPrice: number
-  /** The server's `lineTotal`. The line never multiplies price by quantity itself. */
-  lineTotal: number
+  /**
+   * The server's `lineTotal`. The line never multiplies price by quantity itself, so a line the server has not priced (the
+   * guest cart's) leaves it out and shows no total.
+   */
+  lineTotal?: number
   quantity: number
   /** A second small line under the price, for example "price when added". */
   priceNote?: string
@@ -45,7 +48,7 @@ export function CartLine({
           {priceNote ? <p className="ed-caption">{priceNote}</p> : null}
         </div>
         <QuantityStepper value={quantity} onChange={onQuantity} max={max} label={`Quantity of ${name}`} />
-        <span className="ed-cartline-total">{formatPrice(lineTotal)}</span>
+        {lineTotal === undefined ? null : <span className="ed-cartline-total">{formatPrice(lineTotal)}</span>}
         <Button variant="ghost" size="sm" icon="trash" aria-label={`Remove ${name}`} onClick={onRemove} />
         {notice ? <div className="ed-cartline-notice">{notice}</div> : null}
       </div>
