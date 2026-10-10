@@ -54,7 +54,11 @@ test.describe('by keyboard alone', () => {
     pointer.expectUnused()
   })
 
-  test('a signed-out visitor opens a product, is sent to sign in, and comes back to it', async ({ page, request }) => {
+  // Since Phase 24 the add is kept in the browser (the guest cart) and the visitor signs in from the cart to check out.
+  test('a signed-out visitor opens a product, adds it, signs in from the cart, and comes back to it there', async ({
+    page,
+    request,
+  }) => {
     const username = await createAccount(request)
     const pointer = await watchPointer(page)
     await page.goto('/')
@@ -68,10 +72,17 @@ test.describe('by keyboard alone', () => {
     const productPath = new URL(page.url()).pathname
 
     await activate(page, page.getByRole('main').getByRole('button', { name: 'Add to cart' }))
-    await expect(page).toHaveURL(/\/sign-in\?next=/)
+    await expect(page.getByRole('main').getByRole('button', { name: 'In your cart (1)' })).toBeVisible()
+    await expect(page).toHaveURL(productPath)
+
+    await activate(page, page.getByRole('banner').getByRole('link', { name: 'Cart, 1 item' }))
+    await expect(page.getByRole('heading', { level: 1, name: 'Your cart' })).toBeVisible()
+    await activate(page, page.getByRole('link', { name: 'Sign in to check out' }))
+    await expect(page).toHaveURL(/\/sign-in\?next=%2Fcart/)
     await signInByKeyboard(page, username)
 
-    await expect(page).toHaveURL(productPath)
+    await expect(page).toHaveURL('/cart')
+    await expect(page.getByRole('list', { name: 'Items in your cart' }).getByText(name, { exact: true })).toBeVisible()
     pointer.expectUnused()
   })
 
