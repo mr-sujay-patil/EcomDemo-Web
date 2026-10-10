@@ -69,9 +69,9 @@ jobs:
     permissions:
       contents: read
     env:
-      # The backend this app is tested against: a commit of its `main` (tagged `ki-049-fixed`), pinned by SHA because a tag can be moved.
+      # The backend this app is tested against: a commit of its `main` (the KI-060 merge), pinned by SHA because a tag can be moved.
       # The name stays BACKEND_TAG; any ref works. Override with a repository variable when the pin moves.
-      BACKEND_TAG: ${{ vars.BACKEND_TAG || '82ef5989594c30330850594f388967b8f080ce8a' }}
+      BACKEND_TAG: ${{ vars.BACKEND_TAG || '669a9ed1dfcc8ef0d89608c87ef05421bb157fb6' }}
     steps:
       # The same side-by-side layout as a laptop, so e2e/global-setup.ts finds ../ecomdemo-backend-readonly.
       - name: Check out the code
@@ -285,6 +285,11 @@ jobs:
           done
           echo "$headers" | grep -qi "^content-security-policy:.*script-src 'self';"
           docker rm --force web
+
+      # web KI-035: against a stand-in HTTPS gateway, nginx proxies only when the certificate chains to API_CA_FILE and names
+      # the upstream (a wrong CA and a wrong name are both 502), and a plain http:// gateway (compose) works as before.
+      - name: Check nginx verifies an HTTPS gateway
+        run: bash scripts/test-nginx-upstream-tls.sh ecomdemo-web:ci
 
       # The software bill of materials: every package in the image (Alpine and nginx's, and the app's files) in CycloneDX.
       # Made before the scan and uploaded even when the scan fails, so the list is there to read when something is flagged.

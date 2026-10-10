@@ -15,6 +15,9 @@ test-results/
 .env.*
 !.env.example
 
+# The kind cluster's CA certificate (public), fetched by scripts/k8s-up.sh
+.local/
+
 # Editors
 .idea/
 .vscode/*

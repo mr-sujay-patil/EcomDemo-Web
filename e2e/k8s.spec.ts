@@ -61,10 +61,19 @@ if (process.env.E2E_K8S) {
       expect(readyPods(), 'two ready pods').toHaveLength(2)
 
       expect((await request.get('/healthz')).status()).toBe(200)
-      // The backend's own front door, `localhost:18080`, still goes to the gateway and not to the shop.
-      const backend = await request.get('http://localhost:18080/api/products/1')
+      // The backend's own front door, `localhost:18443`, still goes to the gateway and not to the shop.
+      const backend = await request.get('https://localhost:18443/api/products/1')
       expect(backend.status()).toBe(200)
       expect((await backend.text()).includes('<div id="root">')).toBe(false)
+    })
+
+    test('the shop is HTTPS only: the plain port redirects to it (web KI-034)', async ({ request }) => {
+      // The plain port only redirects, with the shop's own host kept, and never serves the shop itself.
+      const plain = await request.get('http://shop.localhost:18080/products/1', { maxRedirects: 0 }) // redirect only
+      expect(plain.status()).toBe(301)
+      expect(plain.headers()['location']).toMatch(/^https:\/\/shop\.localhost(:18443)?\/products\/1$/)
+      // And the API through the shop works: nginx reaches the gateway over verified HTTPS (web KI-035).
+      expect((await request.get('/api/products/1')).status()).toBe(200)
     })
 
     test('deleting one pod loses no request, and the Deployment brings it back', async ({ request }) => {

@@ -39,7 +39,7 @@ jobs:
     # A cold build of the eight services has taken ~200 s on a hosted runner; this leaves room for a slow day.
     timeout-minutes: 45
     env:
-      BACKEND_TAG: ${{ vars.BACKEND_TAG || '82ef5989594c30330850594f388967b8f080ce8a' }}
+      BACKEND_TAG: ${{ vars.BACKEND_TAG || '669a9ed1dfcc8ef0d89608c87ef05421bb157fb6' }}
     steps:
       - name: Check out the backend at ${{ env.BACKEND_TAG }} (read only)
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

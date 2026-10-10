@@ -30,6 +30,9 @@ COPY nginx/security-headers.conf /etc/nginx/snippets/security-headers.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 # Where /api goes. Compose overrides it; this default is the backend's own service name and port.
 ENV API_UPSTREAM=http://gateway-service:8080
+# The CA file nginx checks an https:// upstream against (web KI-035). The image's own bundle by default, so compose (a plain
+# http:// gateway) needs no setting; the kind cluster points it at the cluster's CA (k8s/configmap.yaml).
+ENV API_CA_FILE=/etc/ssl/certs/ca-certificates.crt
 # Makes the image's entrypoint read the DNS server from /etc/resolv.conf into NGINX_LOCAL_RESOLVERS (nginx.conf uses it;
 # in compose that is Docker's own resolver, which knows the backend's service names).
 ENV NGINX_ENTRYPOINT_LOCAL_RESOLVERS=1

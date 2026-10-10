@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The whole E2E suite against the shop in the backend's kind cluster, through http://shop.localhost:18080 (Traefik).
+# The whole E2E suite against the shop in the backend's kind cluster, through https://shop.localhost:18443 (Traefik).
 #   1. k8s-up.sh puts the current image in the cluster (this app's four objects only).
 #   2. The main suite runs. About 25 s in, ONE app pod is deleted in the background: the suite must still pass.
 #   3. The @disruptive specs run alone: one pod deleted and a rolling update, each under steady traffic with zero failures.
@@ -10,11 +10,28 @@ cd "$(dirname "$0")/.."
 bash scripts/k8s-up.sh
 
 # Playwright (Chromium) resolves *.localhost itself; Node's fetch, used by the global setup, goes to the backend's own door.
-export E2E_BASE_URL=http://shop.localhost:18080
+export E2E_BASE_URL=https://shop.localhost:18443
 export E2E_K8S=1
-export API_TARGET=http://localhost:18080
+export API_TARGET=https://localhost:18443
 # Lets Node (not just Chromium) resolve shop.localhost: see the file.
 export NODE_OPTIONS="${NODE_OPTIONS:-} --require $PWD/scripts/localhost-dns.cjs"
+
+# Trust, never "ignore certificate errors" (web KI-034). Node (the global setup, api:check, Playwright's request fixture)
+# verifies against the cluster's CA, which k8s-up.sh fetched. Chromium has no option to add a CA without touching the
+# machine's trust store, so it is told the one key the shop's certificate has right now (its SPKI hash, read from the
+# server): that certificate, and no other, is accepted. cert-manager makes a new key at each renewal, so it is read every run.
+ca_file=.local/cluster-ca.crt
+export NODE_EXTRA_CA_CERTS="$PWD/$ca_file"
+served_certificate="$(echo | openssl s_client -connect 127.0.0.1:18443 -servername shop.localhost -CAfile "$ca_file" \
+  -verify_hostname shop.localhost -verify_return_error 2>/dev/null | openssl x509 2>/dev/null || true)"
+# Checked before hashing: an empty input hashes too, to a value that looks like a key.
+if [ -z "$served_certificate" ]; then
+  echo "https://shop.localhost:18443 does not present a certificate that verifies against $ca_file (backend KI-060?)." >&2
+  exit 1
+fi
+E2E_K8S_SPKI="$(printf '%s\n' "$served_certificate" | openssl x509 -pubkey -noout | openssl pkey -pubin -outform der \
+  | openssl dgst -sha256 -binary | base64)"
+export E2E_K8S_SPKI
 
 # The live API against the snapshots this app was generated from. The cluster's backend is the backend team's, at whatever
 # version they last built: a difference is reported here, loudly, but does not stop the run.

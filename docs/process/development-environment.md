@@ -6,7 +6,7 @@ Goal: the machine is never the reason a result is in doubt. The web app is light
 
 | | |
 |---|---|
-| **Pinned backend** | **commit `82ef5989594c30330850594f388967b8f080ce8a`** on the backend's `main` (backend PR #81, tagged `ki-049-fixed`). The backend publishes no `phase-*` tag after `phase-34-complete`, so the pin is a commit. Previous pins: `f088fd4` (backend PR #75, 2026-10-08), then `phase-34-complete` (backend PR #59, merge `9173309`, 2026-10-06) |
+| **Pinned backend** | **commit `669a9ed1dfcc8ef0d89608c87ef05421bb157fb6`** on the backend's `main` (backend PR #86, the KI-060 merge: `shop.localhost` in the kind cluster's edge certificate, needed by web KI-034). The backend publishes no `phase-*` tag after `phase-34-complete`, so the pin is a commit. Previous pins: `82ef598` (backend PR #81, `ki-049-fixed`, 2026-10-09), `f088fd4` (backend PR #75, 2026-10-08), then `phase-34-complete` (backend PR #59, merge `9173309`, 2026-10-06) |
 | Why this one | the backend team asked the web to follow `main` after Phase 34: the catalogue is paged (`page`, `size`, `X-Total-Count`, `Link`), catalogue reads and checkout can answer `503` with `Retry-After`, the dead-letter shape changed (`dltTimestamp`), `/actuator` left port 8080, ports bind to 127.0.0.1. Earlier: `phase-34-complete` added product images (web KI-002): `ProductResponse.imageUrl`, a gateway-relative path or `null`, and the anonymous `GET /api/products/{id}/image`. It keeps everything from `phase-33-complete` (RS256 tokens, login throttling `429` + `Retry-After`) and `ki-041-fixed` (CORS preflights) |
 | Delta since `phase-33-complete` | `docs/backend/phase-34-delta.md` (earlier: `docs/backend/phase-33-delta.md`) |
 
@@ -23,7 +23,7 @@ Everything lives **inside the WSL2 Linux filesystem**, never under `/mnt/c/...` 
 The read-only clone is set up once, in Phase 0:
 
     git clone https://github.com/mr-sujay-patil/ecomdemo ../ecomdemo-backend-readonly
-    git -C ../ecomdemo-backend-readonly checkout 82ef5989594c30330850594f388967b8f080ce8a
+    git -C ../ecomdemo-backend-readonly checkout 669a9ed1dfcc8ef0d89608c87ef05421bb157fb6
     git -C ../ecomdemo-backend-readonly remote set-url --push origin no-push   # a mistaken push fails locally
 
 Reading it is allowed (files, `git log`, `git fetch --tags`, checking out a newer tag when the pin moves). Writing is never allowed: no commits, branches, pushes, PRs, issues or comments on the backend. Never check out a tag in `~/projects/ecomdemo`: that would move the backend team's work.
@@ -71,15 +71,15 @@ Swagger UI: http://localhost:28080/swagger-ui.html (8080 on the backend team's o
 
 ## Running the shop in the backend's kind cluster (from Phase 20)
 
-> ⚠️ **The backend's kind cluster is HTTPS now, and the commands below describe the old HTTP cluster: they do not work against it until they are changed (web KI-034).** The backend team's note: the API is at **`https://localhost:18443`**; `http://localhost:18080` no longer serves the API and answers `301` to the HTTPS address. The certificate is issued by a local CA, so a client must trust it: after the backend's `scripts/k8s-up.sh` the CA's public certificate is at `.local/ecomdemo-ca.crt` in the backend clone (pass it to `curl --cacert`, or set `NODE_EXTRA_CA_CERTS` for Node; the backend README section "TLS at the Ingress" has the commands for Linux/WSL2 and Windows browsers). A running kind cluster cannot gain the HTTPS port, so it must be recreated (`scripts/k8s-down.sh`, then `scripts/k8s-up.sh`, **the backend's own scripts**): the cluster the backend team uses was already recreated, so **the shop deployed here in Phase 20 is gone**. The certificate covers **`localhost` and `127.0.0.1` only**, not `shop.localhost`, so the shop's Ingress host cannot be served over HTTPS until the backend adds that name (the ask is web KI-034). **Docker Compose is unchanged** (`http://localhost:8080` in the backend's own stack; the web's wrapper keeps its shifted ports, see above). Not touched by this: CI (it never uses the cluster).
+> **HTTPS (web KI-034, KI-035).** The backend's kind cluster serves only HTTPS: the shop is at **`https://shop.localhost:18443`**, the backend's API at `https://localhost:18443`, and `http://…:18080` answers `301` to them. The certificate (the backend's `ecomdemo-tls`, which names `shop.localhost` since backend KI-060) is issued by the cluster's own CA. `scripts/k8s-up.sh` copies that CA's public certificate from the backend's Secret `ecomdemo-ca-public` to **`.local/cluster-ca.crt`** (git-ignored) and checks the shop with it; use it with `curl --cacert`, `NODE_EXTRA_CA_CERTS`, or trust it in a browser (the backend README, "TLS at the Ingress", has the commands; it is the same CA as the backend clone's `.local/ecomdemo-ca.crt`). Inside the cluster the shop's nginx reaches the gateway over HTTPS too, verifying its certificate against the same CA (mounted from that Secret, read only). A cluster from before backend KI-060 has a certificate without `shop.localhost`: `k8s-up.sh` then fails its check, and the backend's `scripts/k8s-up.sh` (re-run on the backend side) reissues it. **Docker Compose is unchanged** (plain HTTP). CI never uses the cluster.
 
-The cluster is the backend's: kind cluster `ecomdemo` (context `kind-ecomdemo`), namespace `ecomdemo`, Traefik on host port 18080 (from the backend's `scripts/k8s-up.sh`). **It is the backend team's working environment and may run a newer backend than the pin or hold used-up data (web KI-025).** This repository only adds four objects to it (`k8s/`: a Deployment, Service, ConfigMap and Ingress, all named `ecomdemo-web`) and never edits or deletes a backend object.
+The cluster is the backend's: kind cluster `ecomdemo` (context `kind-ecomdemo`), namespace `ecomdemo`, Traefik on host ports 18443 (HTTPS) and 18080 (redirects only), from the backend's `scripts/k8s-up.sh`. **It is the backend team's working environment and may run a newer backend than the pin or hold used-up data (web KI-025).** This repository only adds four objects to it (`k8s/`: a Deployment, Service, ConfigMap and Ingress, all named `ecomdemo-web`) and never edits or deletes a backend object.
 
-    bash scripts/k8s-up.sh      # build, `kind load docker-image`, apply, wait; the shop on http://shop.localhost:18080
+    bash scripts/k8s-up.sh      # build, `kind load docker-image`, apply, wait; the shop on https://shop.localhost:18443
     npm run e2e:k8s             # up, the whole suite through the Ingress (a pod deleted mid-run), then the disruptive specs
     bash scripts/k8s-down.sh    # deletes exactly the four objects
 
-- `shop.localhost:18080` is the shop; `localhost:18080` stays the backend's own door. Browsers resolve `*.localhost` to 127.0.0.1; Node does not on this machine, so `e2e:k8s` preloads `scripts/localhost-dns.cjs`.
+- `shop.localhost:18443` is the shop; `localhost:18443` stays the backend's own door. In `e2e:k8s` Node trusts `.local/cluster-ca.crt` (`NODE_EXTRA_CA_CERTS`) and Chromium accepts only the key the shop's certificate has, read and verified against that CA at the start of each run (`--ignore-certificate-errors-spki-list`; no certificate error is ignored otherwise). Browsers resolve `*.localhost` to 127.0.0.1; Node does not on this machine, so `e2e:k8s` preloads `scripts/localhost-dns.cjs`.
 - Both scripts refuse to run unless context `kind-ecomdemo` has the `ecomdemo` namespace (and, for `up`, a `gateway-service`).
 - The backend's `scripts/k8s-down.sh` deletes the whole cluster, the shop with it; `k8s-up.sh` here brings it back.
 
@@ -103,8 +103,8 @@ The cluster is the backend's: kind cluster `ecomdemo` (context `kind-ecomdemo`),
 | 5173 | `npm run dev` | Vite default |
 | 4173 | `npm run preview` (production build) | Vite default; Playwright runs against it |
 | 8070 | this app's nginx container (`WEB_PORT`, Phase 19) | 8080–8087 and 8090 belong to the backend |
-| 18080 | the kind Ingress (backend); since the HTTPS change it only redirects (`301`) to 18443 | this app gets its own host rule, `shop.localhost`, in Phase 20 |
-| 18443 | the kind Ingress over HTTPS (backend) | the API in the cluster since the backend's HTTPS change; the certificate is for `localhost` and `127.0.0.1` only (web KI-034) |
+| 18080 | the kind Ingress (backend); since the HTTPS change it only redirects (`301`) to 18443 | for `shop.localhost` too |
+| 18443 | the kind Ingress over HTTPS (backend) | the API (`localhost`) and this app's host rule `shop.localhost` (web KI-034); the certificate names both |
 
 Never use 3000: it is the backend's Grafana.
 
