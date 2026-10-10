@@ -5,7 +5,7 @@
 - **Updated:** 2026-10-10
 - **Task:** Phase 24: Guest Cart (web KI-012, approved by the user on 2026-10-10), `docs/phases/phase-24-guest-cart.md`
 - **Branch:** `feature/phase-24-guest-cart` (cut from `main` at `8c2d000`; KI-025 merged as PR #43, CI on `main` green, local `npm ci && npm run verify` on `main` 904 tests passed in this session; tags `ki-020-fixed` and `ki-025-fixed` still to push by the owner, 403 here)
-- **Step:** PR_OPEN (PR #PR_NUMBER)
+- **Step:** PR_OPEN (PR #44)
 - **Backend pinned at:** commit `669a9ed1dfcc8ef0d89608c87ef05421bb157fb6` (unchanged; this phase needs no backend change)
 - **Waiting for user:** YES: CI on the PR (its `e2e` and `perf` jobs are the only real run of the new E2E specs and the budget), then `approved, merge it`
 

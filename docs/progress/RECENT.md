@@ -15,7 +15,7 @@
 **Follow-ups (not done, out of scope):** <suggestions deferred to later phases>
 -->
 
-## Phase 24: Guest Cart (tag: phase-24-complete, PR #PR_NUMBER)
+## Phase 24: Guest Cart (tag: phase-24-complete, PR #44)
 **What exists now:** A visitor fills a cart kept in the browser (`localStorage`, `ecomdemo-guest-cart-v1`, ids and quantities only, validated on read, followed across tabs) from the shelf, a product page and search; the header counts it; `/cart` shows it with current catalogue prices, no totals, and Sign in to check out. On a customer's sign-in it is replayed into the account's cart (GET the cart, one POST per line under a Web Lock, removed from storage line by line; 404 dropped, anything else kept with Try again; a send whose answer was lost is compared with the cart before it is ever resent, web KI-037) and a notice under the header reports it.
 **Key code:** `src/features/cart/guestCart.ts`, `guestCartStore.ts`, `guestReplay.ts`, `GuestCartProvider.tsx` (in `AppProviders`, inside the session), `useGuestCart.ts`, `GuestCartPage.tsx`, `GuestCartNotice.tsx` (in `Layout`), `CartRoute.tsx` (`/cart` left `RequireRole`: guest, customer, admin, ended session); `useAddAction` signed out adds to the guest cart; `CartLine.lineTotal` optional. Decisions [Phase 24] (they replace [Phase 12]'s "a signed-out add goes to sign-in").
 **Config & infrastructure:** none new. Shelf JavaScript 134.8 KB gzipped in 8 files (was 131.6 in 5; limit 170). `src/test/setup.ts` clears `localStorage` after each test; the MSW fake cart answers 404 for an unknown product.
