@@ -3,23 +3,21 @@
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
 - **Updated:** 2026-10-10
-- **Task:** fix KI-034 (the k8s scripts, spec and Ingress still use plain HTTP on 18080) and KI-035 (the shop's nginx speaks HTTP to the now-HTTPS gateway in the cluster): same cause, backend KI-051/056
-- **Branch:** `fix/ki-034-035-k8s-https` (cut from `main` at `d57bc4b`)
-- **Step:** PR_OPEN (PR #40)
-- **Backend pinned at:** commit `669a9ed1dfcc8ef0d89608c87ef05421bb157fb6` on this branch (was `82ef598`) (backend PR #86, KI-060: `shop.localhost` in the edge certificate). Between the two the backend's `src/main` changed only one comment, and compose did not change.
-- **Waiting for user:** YES: CI on PR #40, the owner's local `npm run e2e:k8s`, then `approved, merge it`. The k8s E2E (`npm run e2e:k8s`) is run by the owner locally: the cloud session cannot build the kind cluster (its network policy blocks the Helm chart hosts and quay.io).
+- **Task:** fix KI-028 (`e2e/visual.spec.ts` "shelf at 1280 px, light": the sort `<select>`'s text sometimes rasterised differently, 202 pixels)
+- **Branch:** `fix/ki-028-select-font` (cut from `main` at `59ee563`)
+- **Step:** BRANCHED
+- **Backend pinned at:** commit `669a9ed1dfcc8ef0d89608c87ef05421bb157fb6` (unchanged by this fix)
+- **Waiting for user:** NO
 
 ## Checklist
-- [x] Regression tests: KI-034 (the Ingress has `tls` for `shop.localhost` with `ecomdemo-tls`; the scripts use https 18443) and KI-035 (the ConfigMap's upstream is https and nginx verifies it; a container test: verified HTTPS upstream 200, wrong CA 502, plain HTTP upstream still 200)
-- [x] KI-035: `nginx/default.conf.template` `proxy_ssl_verify on` with `API_CA_FILE` (default: the image's CA bundle); ConfigMap `https://`, CA mounted from `ecomdemo-ca-public`
-- [x] KI-034: `k8s/ingress.yaml` tls; `scripts/k8s-up.sh`, `scripts/e2e-k8s.sh` to https 18443 with the backend clone's CA (`NODE_EXTRA_CA_CERTS`, Chromium's SPKI pin); `e2e/k8s.spec.ts`
-- [x] Pin: `chore(backend): pin 669a9ed` with its decisions line
-- [x] Docs: development-environment, README, decisions, KNOWN_ISSUES (fixed)
-- [x] `npm ci && npm run verify` (904 tests); PR #40
-- [ ] CI green on PR #40
+- [ ] Root cause, with evidence (not "a flake")
+- [ ] Regression check that fails if the cause returns
+- [ ] Fix the cause (no tolerance, no mask)
+- [ ] `npm ci && npm run verify`; the visual spec in CI's `e2e` job (this container cannot build the backend stack)
+- [ ] Docs: KNOWN_ISSUES (fixed), decisions only if one changes, this checkpoint; PR
 
 ## Next action
-Wait for CI on PR #40 (its `e2e` job builds the backend at the new pin from source: slow) and fix it if red. Then STOP for the owner: local `npm run e2e:k8s` and `approved, merge it`. After the merge (rule 9): local `npm ci && npm run verify` on `main`, the CI run on `main` green, tags `ki-034-fixed` and `ki-035-fixed` (this session's tag pushes are refused with 403: give the owner the commands). Watch `perf` (KI-033) on this PR as on the next few.
+Find why the select's text renders differently between runs (fonts, swap, native control), then fix and add the regression check.
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.
