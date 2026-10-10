@@ -3,24 +3,22 @@
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
 - **Updated:** 2026-10-10
-- **Task:** fix KI-028 (`e2e/visual.spec.ts` "shelf at 1280 px, light": the sort `<select>`'s text sometimes rasterised differently, 202 pixels)
-- **Branch:** `fix/ki-028-select-font` (cut from `main` at `59ee563`)
-- **Step:** PR_OPEN (PR #41)
+- **Task:** fix KI-020 (`e2e/checkout.spec.ts` "a quantity above stock is refused up front" needs the seeded Laptop Sleeve 16" at stock 2; on a used backend it is 0 and the spec times out)
+- **Branch:** `fix/ki-020-own-stock` (cut from `main` at `7eb65c5`; KI-028 merged, CI on `main` green)
+- **Step:** PR_OPEN (PR #42)
 - **Backend pinned at:** commit `669a9ed1dfcc8ef0d89608c87ef05421bb157fb6` (unchanged by this fix)
-- **Waiting for user:** YES: CI on PR #41 (its `e2e` job is the real test of the visual spec), then `approved, merge it`
+- **Waiting for user:** YES: CI on PR #42 (its `e2e` job is the real run of the spec), then `approved, merge it`
 
 ## Checklist
-- [x] Root cause, with evidence: the select's label copy (UA shadow root) kept a fallback face after the swap (KNOWN_ISSUES KI-028); not reproduced on local Chromium 1194
-- [x] Regression check: `e2e/fonts.spec.ts` (guard fails on a fallback face; passes the shelf; re-layout keeps focus, choice, place); mutation-checked
-- [x] Fix: `settleFonts` in `e2e/fonts.ts`, used by `visual.spec.ts` (no tolerance, no mask, no baseline change)
-- [x] `npm ci && npm run verify` (904 unit tests); local e2e: `fonts.spec.ts` 3/3 (and 9/9 with --repeat-each=3), visual 32/32 unchanged versus the old wait. The visual spec against the real baselines runs only in CI's `e2e` job
-- [x] Docs: KNOWN_ISSUES (Fixed, PR #41), `[Fix KI-028] Decision`, this checkpoint; PR #41
-- [ ] CI green on PR #41
+- [x] Root cause, with evidence: the spec named Laptop Sleeve 16" and its seeded level 2 (shelf add, two Increase clicks, "available 2", "Lower to 2")
+- [x] Regression check: the spec itself, arranging its own precondition (works on a fresh and on a used backend)
+- [x] Fix: `productWithFewestInStock` (live catalogue, every page) + `putInCart` (API), then one Increase in the UI; same assertions
+- [x] `npm ci && npm run verify` (904 unit tests, 74 files); typecheck, lint, format clean; `playwright --list` sees the 4 checkout tests. The e2e spec runs only in CI's `e2e` job (no backend stack in this container)
+- [x] Docs: KNOWN_ISSUES (Fixed, PR #42), `[Fix KI-020] Decision`, this checkpoint; PR #42
+- [ ] CI green on PR #42
 
 ## Next action
-Wait for CI on PR #41 and fix it if red (watch the `e2e` job's visual and `fonts.spec.ts` results). Then STOP for the owner's `approved, merge it`. After the merge: local `npm ci && npm run verify` on `main`, CI on `main` green, tag `ki-028-fixed` (this session's tag pushes are refused with 403: give the owner the command).
-
-Local e2e here used a stub gateway (a tiny Node server answering `/api/products`) only to pass `global-setup`, with `/opt/pw-browsers` Chromium 1194: the committed baselines are CI's Chromium 1243, so only relative comparisons are meaningful locally.
+Wait for CI on PR #42 and fix it if red (the `e2e` job is the real run of the spec) and STOP for the owner's `approved, merge it`. After the merge: local `npm ci && npm run verify` on `main`, CI on `main` green, tag `ki-020-fixed` (tag pushes are refused here with 403: give the owner the command).
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.
@@ -32,5 +30,5 @@ Local e2e here used a stub gateway (a tiny Node server answering `/api/products`
 - `~/.cache/ms-playwright` already holds `chromium-1243` and `chromium_headless_shell-1243`.
 
 ## ⚠️ Carried, not fixed (oldest first)
-- web KI-020: `e2e/checkout.spec.ts` refused-order spec needs Laptop Sleeve stock 2; the shared backend has 0.
+- The other two `e2e/checkout.spec.ts` tests (and `orders`, `keyboard-flows`) still buy seeded products by name: KI-025's general form, not this fix.
 - The backend stack running here (`ecomdemo-gateway-service`) is ahead of the pin: `npm run e2e` stops at `api:check` (dead-letter admin schema `dltTimestamp`). Run `npx playwright test --project=chromium` and say so, or have the owner approve a `chore/pin-backend-<tag>`.
