@@ -3,22 +3,24 @@
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
 - **Updated:** 2026-10-10
-- **Task:** fix KI-025 (the e2e specs that still depend on seeded products and stock by name or by shelf position: `checkout` x2, `orders`, `keyboard-flows`, `catalog`, `design`; the owner said "proceed" with "find products that are in stock; find seeds through search")
-- **Branch:** `fix/ki-025-own-test-data` (cut from `main` at `1f584e6`; KI-020 merged, local verify on `main` 904 tests passed, CI on `main` green)
-- **Step:** PR_OPEN (PR #43)
-- **Backend pinned at:** commit `669a9ed1dfcc8ef0d89608c87ef05421bb157fb6` (unchanged by this fix)
-- **Waiting for user:** YES: CI on PR #43 (its `e2e` job is the real run of these specs), then `approved, merge it`
+- **Task:** Phase 24: Guest Cart (web KI-012, approved by the user on 2026-10-10), `docs/phases/phase-24-guest-cart.md`
+- **Branch:** `feature/phase-24-guest-cart` (cut from `main` at `8c2d000`; KI-025 merged as PR #43, CI on `main` green, local `npm ci && npm run verify` on `main` 904 tests passed in this session; tags `ki-020-fixed` and `ki-025-fixed` still to push by the owner, 403 here)
+- **Step:** BRANCHED
+- **Backend pinned at:** commit `669a9ed1dfcc8ef0d89608c87ef05421bb157fb6` (unchanged; this phase needs no backend change)
+- **Waiting for user:** no
 
 ## Checklist
-- [x] Root cause per spec: `checkout` (Desk Mat, 2 Mechanical Keyboards), `orders` (2 keyboards), `keyboard-flows` (Desk Mat), `catalog` (ten seeded names on page 1), `design` (ids 1 and 9, page 1), `shelf` (Accessories, Audio, ids 1 and 4, Mechanical Keyboard on page 1), `observability` (Mechanical Keyboard on page 1)
-- [x] Shared helpers in `e2e/live-data.ts` (KI-020's moved there): `allProducts`, `productToBuy`, `orderOverTheLimit`, `productWithFewestInStock`, `putInCart`, `createAccount`, `findOnShelf`, `everyShelfCard`, `shelfCount`
-- [x] Every spec above arranges or finds its own data; same assertions (stronger in `catalog` and `shelf`: every product, exact prices)
-- [x] typecheck, lint, format; `playwright --list` (39 tests in the 7 files); a scratch run against a 60-product stand-in gateway with the preinstalled Chromium 1194 (24 passed: `catalog`, `design`, `shelf`, `observability`; `findOnShelf` by click and keyboard to page 3). Specs needing accounts, cart and orders run only in CI's `e2e` job
-- [x] Full `npm ci && npm run verify` (904 unit tests, 74 files); docs (KNOWN_ISSUES Fixed (PR #43), `[Fix KI-025] Decision`); PR #43
-- [ ] CI green on PR #43
+- [ ] Decisions recorded (`[Phase 24]` in `docs/decisions.md`): what is stored, storage and key, validation, signed-out screens, replay and partial failure, merge, clearing, sign-out, tabs
+- [ ] Guest cart store (`localStorage`, versioned key, validated reads, in-memory fallback, `storage` event) with unit tests
+- [ ] Signed-out Add to cart (shelf, product page, search) and the header count use the guest cart
+- [ ] `/cart` signed out: the guest cart page (current prices by id, loading, empty, error, removed product, stock hint, Sign in to check out)
+- [ ] Replay on sign-in (per-line POST, Web Locks, partial failure, Try again, cart re-read) and its notice, with tests
+- [ ] E2E: `e2e/guest-cart.spec.ts`; the guest cart screen in `e2e/screens.ts`; specs that expected sign-in on a signed-out add updated
+- [ ] Full `npm ci && npm run verify`; test report `docs/test-reports/phase-24.md`; README, `docs/modules/cart.md`, architecture state; `RECENT.md` summary and rotation; tracker 🔵
+- [ ] PR opened
 
 ## Next action
-Wait for CI on PR #43 and fix it if red (the `e2e` job is the real run of these specs), then STOP for the owner's `approved, merge it`. After the merge: local `npm ci && npm run verify` on `main`, CI on `main` green, tag `ki-025-fixed` (tag pushes are refused here with 403: give the owner the command).
+Write the `[Phase 24]` decisions, then build `src/features/cart/guestCart.ts` (pure parse and update functions) and its store with unit tests.
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.

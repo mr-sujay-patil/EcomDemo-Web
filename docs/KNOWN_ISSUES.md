@@ -67,13 +67,12 @@ Adding an issue: take the next free ID, add a row, and add a detail section only
 
 | ID | Item | Phase |
 |---|---|---|
-| — | none yet | |
+| KI-012 | Guest cart kept in the browser and replayed with `POST /api/cart/items` after login (approved by the user on 2026-10-10) | Phase 24 (`docs/phases/phase-24-guest-cart.md`) |
 
 ## Candidates: new capabilities (a phase only if approved)
 
 | ID | Capability | Notes |
 |---|---|---|
-| KI-012 | Guest cart kept in the browser and replayed with `POST /api/cart/items` after login | The guide suggests it; the backend has no guest cart |
 | KI-013 | Server-sent events for order status instead of polling | Needs backend KI-022 first |
 | KI-014 | Code-quality dashboard (SonarQube Cloud) as the backend has | Not in the guide's roadmap; propose as a phase if wanted |
 
@@ -87,4 +86,4 @@ Adding an issue: take the next free ID, add a row, and add a detail section only
 
 | ID | Item | Check |
 |---|---|---|
-| — | none yet | |
+| KI-012 | Guest cart kept in the browser and replayed with `POST /api/cart/items` after login (approved by the user on 2026-10-10) | Phase 24 (`docs/phases/phase-24-guest-cart.md`) |
