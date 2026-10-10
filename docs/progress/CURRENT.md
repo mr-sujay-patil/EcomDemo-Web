@@ -5,19 +5,20 @@
 - **Updated:** 2026-10-10
 - **Task:** fix KI-028 (`e2e/visual.spec.ts` "shelf at 1280 px, light": the sort `<select>`'s text sometimes rasterised differently, 202 pixels)
 - **Branch:** `fix/ki-028-select-font` (cut from `main` at `59ee563`)
-- **Step:** PR_OPEN
+- **Step:** PR_OPEN (PR #41)
 - **Backend pinned at:** commit `669a9ed1dfcc8ef0d89608c87ef05421bb157fb6` (unchanged by this fix)
-- **Waiting for user:** NO
+- **Waiting for user:** YES: CI on PR #41 (its `e2e` job is the real test of the visual spec), then `approved, merge it`
 
 ## Checklist
 - [x] Root cause, with evidence: the select's label copy (UA shadow root) kept a fallback face after the swap (KNOWN_ISSUES KI-028); not reproduced on local Chromium 1194
 - [x] Regression check: `e2e/fonts.spec.ts` (guard fails on a fallback face; passes the shelf; re-layout keeps focus, choice, place); mutation-checked
 - [x] Fix: `settleFonts` in `e2e/fonts.ts`, used by `visual.spec.ts` (no tolerance, no mask, no baseline change)
 - [x] `npm ci && npm run verify` (904 unit tests); local e2e: `fonts.spec.ts` 3/3 (and 9/9 with --repeat-each=3), visual 32/32 unchanged versus the old wait. The visual spec against the real baselines runs only in CI's `e2e` job
-- [ ] Docs: KNOWN_ISSUES (fixed), decisions only if one changes, this checkpoint; PR
+- [x] Docs: KNOWN_ISSUES (Fixed, PR #41), `[Fix KI-028] Decision`, this checkpoint; PR #41
+- [ ] CI green on PR #41
 
 ## Next action
-Finish `npm ci && npm run verify`, push, open the PR `Fix KI-028: ...`, add its number to the KI row, then STOP for the owner (CI's `e2e` job is the only place the visual spec runs against the real baselines).
+Wait for CI on PR #41 and fix it if red (watch the `e2e` job's visual and `fonts.spec.ts` results). Then STOP for the owner's `approved, merge it`. After the merge: local `npm ci && npm run verify` on `main`, CI on `main` green, tag `ki-028-fixed` (this session's tag pushes are refused with 403: give the owner the command).
 
 Local e2e here used a stub gateway (a tiny Node server answering `/api/products`) only to pass `global-setup`, with `/opt/pw-browsers` Chromium 1194: the committed baselines are CI's Chromium 1243, so only relative comparisons are meaningful locally.
 
