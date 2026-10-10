@@ -1,21 +1,12 @@
-import type { APIRequestContext, Locator, Page } from '@playwright/test'
+import type { Page } from '@playwright/test'
 import { expect, test } from './fixtures'
 import { activate, typeInto, watchPointer } from './keyboard'
+import { createAccount, findOnShelf, password, productToBuy } from './live-data'
 import { visit } from './screens'
 
 // The main flows again, with no mouse: every control is reached with Tab and used with Enter or Space, and the test
 // fails if a pointer event ever reaches the page (watchPointer). Real accounts, the real cart and the real order saga,
-// as in checkout.spec.ts: the purchase is one Desk Mat, the cheapest of the well-stocked products.
-const password = 'correct horse battery'
-
-async function createAccount(request: APIRequestContext) {
-  const username = `e2e-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
-  const response = await request.post('/api/customers/register', {
-    data: { username, password, fullName: 'E2E Person' },
-  })
-  expect(response.status()).toBe(201)
-  return username
-}
+// as in checkout.spec.ts: the purchase is one of the product with the most in stock, from the live catalogue (web KI-025).
 
 async function signInByKeyboard(page: Page, username: string) {
   await typeInto(page, page.getByLabel('Username'), username)
@@ -24,19 +15,19 @@ async function signInByKeyboard(page: Page, username: string) {
   await expect(page.getByRole('button', { name: 'Account: E2E' })).toBeVisible()
 }
 
-const card = (page: Page, name: string): Locator =>
-  page.getByRole('article').filter({ has: page.getByRole('heading', { name }) })
-
 test.describe('by keyboard alone', () => {
   test('a customer signs in, buys, finds the order and signs out', async ({ page, request }) => {
+    const product = await productToBuy(request)
     const username = await createAccount(request)
     const pointer = await watchPointer(page)
     await page.goto('/sign-in')
 
     await signInByKeyboard(page, username)
 
-    await activate(page, card(page, 'Desk Mat').getByRole('button', { name: 'Add to cart' }))
-    await expect(card(page, 'Desk Mat').getByRole('button', { name: 'In your cart (1)' })).toBeVisible()
+    // Its card may be pages into the shelf: the "Next page" link is followed by keyboard too.
+    const card = await findOnShelf(page, product, (next) => activate(page, next))
+    await activate(page, card.getByRole('button', { name: 'Add to cart' }))
+    await expect(card.getByRole('button', { name: 'In your cart (1)' })).toBeVisible()
 
     await activate(page, page.getByRole('banner').getByRole('link', { name: /^Cart/ }))
     await expect(page.getByRole('heading', { level: 1, name: 'Your cart' })).toBeVisible()
@@ -68,8 +59,12 @@ test.describe('by keyboard alone', () => {
     const pointer = await watchPointer(page)
     await page.goto('/')
 
-    await activate(page, card(page, 'Desk Mat').getByRole('link', { name: 'Desk Mat' }))
-    await expect(page.getByRole('heading', { level: 1, name: 'Desk Mat' })).toBeVisible()
+    // Whichever product the shelf shows first: the flow is about the way there and back, not about one product.
+    const card = page.getByRole('article').first()
+    const name = (await card.getByRole('heading', { level: 2 }).textContent()) ?? ''
+    expect(name).not.toBe('')
+    await activate(page, card.getByRole('link', { name, exact: true }))
+    await expect(page.getByRole('heading', { level: 1, name, exact: true })).toBeVisible()
     const productPath = new URL(page.url()).pathname
 
     await activate(page, page.getByRole('main').getByRole('button', { name: 'Add to cart' }))

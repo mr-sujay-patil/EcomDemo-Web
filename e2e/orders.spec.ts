@@ -1,19 +1,11 @@
 import type { APIRequestContext, Page } from '@playwright/test'
 import { expect, test } from './fixtures'
+import { createAccount, findOnShelf, orderOverTheLimit, password } from './live-data'
 
-// Real accounts and the real order saga. The order is one that the saga cancels (two keyboards come to more than the
-// payment limit), so no stock is taken for good. A full page load signs the person out: a second person reaches an order by
-// signing in with `?next=`, the way a link in an email would take them there.
-const password = 'correct horse battery'
-
-async function createAccount(request: APIRequestContext) {
-  const username = `e2e-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
-  const response = await request.post('/api/customers/register', {
-    data: { username, password, fullName: 'E2E Person' },
-  })
-  expect(response.status()).toBe(201)
-  return username
-}
+// Real accounts and the real order saga. The order is one that the saga cancels (its total is above the payment limit), so
+// no stock is taken for good; the product and the quantity come from the live catalogue, not the seed (web KI-025,
+// e2e/live-data.ts). A full page load signs the person out: a second person reaches an order by signing in with `?next=`, the
+// way a link in an email would take them there.
 
 async function signIn(page: Page, username: string, next = '/') {
   await page.goto(`/sign-in?next=${encodeURIComponent(next)}`)
@@ -22,13 +14,17 @@ async function signIn(page: Page, username: string, next = '/') {
   await page.getByRole('button', { name: 'Sign in' }).click()
 }
 
-/** Signs in a new account, puts two keyboards in the cart and places the order; returns the order's id. */
+/**
+ * Signs in a new account, puts in the cart enough of one product to pass the payment limit and places the order; returns the
+ * order's id and the product's name.
+ */
 async function placeCancelledOrder(page: Page, request: APIRequestContext) {
+  const { product, quantity } = await orderOverTheLimit(request)
   const username = await createAccount(request)
   await signIn(page, username)
   await expect(page.getByRole('button', { name: 'Account: E2E' })).toBeVisible()
-  const card = page.getByRole('article').filter({ has: page.getByRole('heading', { name: 'Mechanical Keyboard' }) })
-  for (const count of [1, 2]) {
+  const card = await findOnShelf(page, product)
+  for (let count = 1; count <= quantity; count += 1) {
     await card.getByRole('button', { name: /^(Add to cart|In your cart)/ }).click()
     await expect(card.getByRole('button', { name: `In your cart (${count})` })).toBeVisible()
   }
@@ -37,7 +33,7 @@ async function placeCancelledOrder(page: Page, request: APIRequestContext) {
   await expect(page.getByText('Your order was cancelled')).toBeVisible({ timeout: 30_000 })
   const id = /\/orders\/(\d+)$/.exec(page.url())?.[1]
   expect(id).toBeDefined()
-  return { username, id: id! }
+  return { username, id: id!, productName: product.name }
 }
 
 async function openFromMenu(page: Page, link: string) {
@@ -47,7 +43,7 @@ async function openFromMenu(page: Page, link: string) {
 
 test.describe('orders', () => {
   test('my orders lists an order placed earlier, and its detail opens', async ({ page, request }) => {
-    const { id } = await placeCancelledOrder(page, request)
+    const { id, productName } = await placeCancelledOrder(page, request)
 
     await openFromMenu(page, 'My orders')
 
@@ -60,7 +56,7 @@ test.describe('orders', () => {
 
     await expect(page).toHaveURL(new RegExp(`/orders/${id}$`))
     await expect(page.getByRole('heading', { level: 1, name: `Order #${id}` })).toBeVisible()
-    await expect(page.getByRole('region', { name: 'Items in this order' })).toContainText('Mechanical Keyboard')
+    await expect(page.getByRole('region', { name: 'Items in this order' })).toContainText(productName)
   })
 
   test.describe("someone else's order", () => {
@@ -72,7 +68,7 @@ test.describe('orders', () => {
       request,
       browser,
     }) => {
-      const { id } = await placeCancelledOrder(page, request)
+      const { id, productName } = await placeCancelledOrder(page, request)
 
       const other = await browser.newContext()
       const otherPage = await other.newPage()
@@ -83,7 +79,7 @@ test.describe('orders', () => {
 
       await expect(otherPage.getByRole('heading', { level: 1, name: 'Order not found' })).toBeVisible()
       await expect(otherPage.getByText('Payment declined')).toHaveCount(0)
-      await expect(otherPage.getByText('Mechanical Keyboard')).toHaveCount(0)
+      await expect(otherPage.getByText(productName)).toHaveCount(0)
 
       await signIn(otherPage, await createAccount(request), '/orders/999999999')
       await expect(otherPage.getByRole('heading', { level: 1, name: 'Order not found' })).toBeVisible()

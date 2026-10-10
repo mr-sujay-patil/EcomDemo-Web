@@ -1,22 +1,20 @@
-import type { APIRequestContext, Locator, Page } from '@playwright/test'
-import type { components as AppApi } from '../src/api/generated/app'
-import type { components as CatalogApi } from '../src/api/generated/catalog'
-import type { components as CustomerApi } from '../src/api/generated/customer'
+import type { APIRequestContext, Page } from '@playwright/test'
 import { expect, test } from './fixtures'
+import {
+  createAccount,
+  findOnShelf,
+  orderOverTheLimit,
+  password,
+  productToBuy,
+  productWithFewestInStock,
+  putInCart,
+  type Product,
+} from './live-data'
 
 // Real accounts, the real cart and the real order saga (stock, then simulated payment). A full page load signs the
-// person out, so every move below is a click. Each confirmed order takes real stock (the API cannot give it back):
-// the confirmed purchase is one Desk Mat, the cheapest of the well-stocked products.
-const password = 'correct horse battery'
-
-async function createAccount(request: APIRequestContext) {
-  const username = `e2e-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`
-  const response = await request.post('/api/customers/register', {
-    data: { username, password, fullName: 'E2E Person' },
-  })
-  expect(response.status()).toBe(201)
-  return username
-}
+// person out, so every move below is a click. Each confirmed order takes real stock (the API cannot give it back), so the
+// products come from the live catalogue, not the seed (web KI-025, e2e/live-data.ts): the confirmed purchase is one of the
+// product with the most in stock; the cancelled order holds its stock only until the saga cancels it.
 
 async function signedInShelf(page: Page, request: APIRequestContext, username?: string) {
   username ??= await createAccount(request)
@@ -27,64 +25,14 @@ async function signedInShelf(page: Page, request: APIRequestContext, username?: 
   await expect(page.getByRole('button', { name: 'Account: E2E' })).toBeVisible()
 }
 
-const card = (page: Page, name: string): Locator =>
-  page.getByRole('article').filter({ has: page.getByRole('heading', { name }) })
-
-async function addFromShelf(page: Page, name: string, times = 1) {
-  const addButton = card(page, name).getByRole('button', { name: /^(Add to cart|In your cart)/ })
+/** Adds the product from its card on the shelf, `times` clicks, on whichever shelf page it is. */
+async function addFromShelf(page: Page, product: Product, times = 1) {
+  const card = await findOnShelf(page, product)
+  const addButton = card.getByRole('button', { name: /^(Add to cart|In your cart)/ })
   for (let count = 0; count < times; count += 1) {
     await addButton.click()
-    await expect(card(page, name).getByRole('button', { name: `In your cart (${count + 1})` })).toBeVisible()
+    await expect(card.getByRole('button', { name: `In your cart (${count + 1})` })).toBeVisible()
   }
-}
-
-type Product = CatalogApi['schemas']['ProductResponse']
-
-/** The whole live catalogue: the pinned backend pages `GET /api/products` (web KI-030), so every page is read. */
-async function allProducts(request: APIRequestContext): Promise<Product[]> {
-  const size = 100
-  const products: Product[] = []
-  for (let page = 0; ; page += 1) {
-    const response = await request.get(`/api/products?page=${page}&size=${size}`)
-    expect(response.status()).toBe(200)
-    const batch = (await response.json()) as Product[]
-    products.push(...batch)
-    if (batch.length < size) return products
-  }
-}
-
-// Specs that run at the same time take stock from these (a confirmed Desk Mat; two keyboards held until the saga cancels the
-// order), so their level can change while this test reads it. The admin spec's own products ("E2E product …", "E2E import …")
-// are deleted while the suite runs.
-const stockTakenElsewhere = new Set(['Desk Mat', 'Mechanical Keyboard'])
-const changesWhileWeRun = (product: Product) => stockTakenElsewhere.has(product.name) || product.name.startsWith('E2E ')
-
-/**
- * The in-stock product with the fewest left, as the live backend has it now. The suite runs on a fresh stack in CI and on a used
- * one locally, where checkouts have drained the seed (web KI-020), so a test that needs "a few in stock" finds it instead of
- * assuming a seeded product still has its seeded level. Below 99, so the cart's stepper (max 99) can go one above it.
- */
-async function productWithFewestInStock(request: APIRequestContext): Promise<Product> {
-  const candidates = (await allProducts(request))
-    .filter((product) => product.stockQuantity >= 1 && product.stockQuantity < 99)
-    .filter((product) => !changesWhileWeRun(product))
-    .sort((a, b) => a.stockQuantity - b.stockQuantity)
-  expect(candidates.length, 'the backend needs a product with 1 to 98 in stock').toBeGreaterThan(0)
-  return candidates[0]!
-}
-
-/** Puts a line in the person's server-side cart through the API (adding does not check stock), before the browser signs in. */
-async function putInCart(request: APIRequestContext, username: string, productId: number, quantity: number) {
-  const login = await request.post('/api/auth/login', {
-    data: { username, password } satisfies CustomerApi['schemas']['LoginRequest'],
-  })
-  expect(login.status()).toBe(200)
-  const { accessToken } = (await login.json()) as CustomerApi['schemas']['TokenResponse']
-  const added = await request.post('/api/cart/items', {
-    headers: { Authorization: `Bearer ${accessToken}` },
-    data: { productId, quantity } satisfies AppApi['schemas']['AddCartItemRequest'],
-  })
-  expect(added.status()).toBe(200)
 }
 
 async function openCart(page: Page) {
@@ -94,14 +42,15 @@ async function openCart(page: Page) {
 
 test.describe('checkout', () => {
   test('a purchase is confirmed, and the cart is empty afterwards', async ({ page, request }) => {
+    const product = await productToBuy(request)
     await signedInShelf(page, request)
-    await addFromShelf(page, 'Desk Mat')
+    await addFromShelf(page, product)
     await openCart(page)
 
     await page.getByRole('button', { name: 'Place order' }).click()
 
     await expect(page).toHaveURL(/\/orders\/\d+$/)
-    await expect(page.getByRole('region', { name: 'Items in this order' })).toContainText('Desk Mat')
+    await expect(page.getByRole('region', { name: 'Items in this order' })).toContainText(product.name)
     // 201 is "received": the page waits for the saga before it says confirmed.
     await expect(page.getByText('Your order is confirmed.')).toBeVisible({ timeout: 30_000 })
     await expect(page.getByRole('region', { name: 'Order progress' })).toContainText('Confirmed')
@@ -114,8 +63,9 @@ test.describe('checkout', () => {
     page,
     request,
   }) => {
+    const { product, quantity } = await orderOverTheLimit(request)
     await signedInShelf(page, request)
-    await addFromShelf(page, 'Mechanical Keyboard', 2)
+    await addFromShelf(page, product, quantity)
     await openCart(page)
 
     await page.getByRole('button', { name: 'Place order' }).click()
@@ -127,8 +77,8 @@ test.describe('checkout', () => {
     await page.getByRole('button', { name: 'Add these items to my cart again' }).click()
 
     await expect(page).toHaveURL('/cart')
-    const line = page.getByRole('listitem').filter({ hasText: 'Mechanical Keyboard' })
-    await expect(line.getByRole('group', { name: /^Quantity of/ }).getByRole('status')).toHaveText('2')
+    const line = page.getByRole('listitem').filter({ hasText: product.name })
+    await expect(line.getByRole('group', { name: /^Quantity of/ }).getByRole('status')).toHaveText(String(quantity))
   })
 
   test.describe('a refused order', () => {

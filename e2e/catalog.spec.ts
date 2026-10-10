@@ -1,31 +1,26 @@
 import { expect, test } from './fixtures'
+import { allProducts, madeByTheAdminSpec, everyShelfCard } from './live-data'
 import { abortedRequestError, gatewayUnreachable } from './screens'
 
-// Assumed data: the backend's seed migration (catalog-service V2__seed_products.sql, ids 1–10).
-// Other rows may exist (backend smoke tests add some), so the spec never assumes a total.
-const seededProducts = [
-  'Mechanical Keyboard',
-  'Wireless Mouse',
-  '27" 4K Monitor',
-  'Noise-Cancelling Headphones',
-  'USB-C Hub',
-  'Laptop Stand',
-  'Webcam 1080p',
-  'Desk Mat',
-  'Portable SSD 1TB',
-  'Laptop Sleeve 16"',
-]
+const money = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' })
 
-test('the product list shows the seeded products with rupee prices', async ({ page }) => {
+test('the shelf shows every product in the catalogue, with its rupee price', async ({ page, request }) => {
+  // The live catalogue, not the seed (web KI-025): a used backend has more products than the seed, over several shelf pages,
+  // and the spec never assumes which ones or how many. The admin spec's own rows come and go while the suite runs.
+  const catalogue = (await allProducts(request)).filter((product) => !madeByTheAdminSpec(product))
+  expect(catalogue.length).toBeGreaterThan(0)
+  const byId = (a: { id: number }, b: { id: number }) => a.id - b.id
+  const expected = catalogue.map(({ id, name, price }) => ({ id, name, price: money.format(price) })).sort(byId)
+
   await page.goto('/')
 
   await expect(page.getByRole('heading', { level: 1, name: 'Everything for the desk' })).toBeVisible()
-  for (const name of seededProducts) {
-    const item = page.getByRole('listitem').filter({ has: page.getByRole('heading', { name, exact: true }) })
-    await expect(item).toBeVisible()
-    await expect(item).toContainText(/₹[\d,]+\.\d{2}/)
-  }
-  await expect(page.getByRole('status')).toHaveCount(0)
+  const cards = await everyShelfCard(page)
+  for (const card of cards) expect(card.price, card.name).toMatch(/^₹[\d,]+\.\d{2}$/)
+  const shown = cards.filter((card) => !madeByTheAdminSpec(card))
+
+  // Every product once, under its own name, with the price the server sent.
+  expect(shown.sort(byId)).toEqual(expected)
 })
 
 test.describe('with the gateway unreachable', () => {

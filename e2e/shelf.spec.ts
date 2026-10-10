@@ -1,14 +1,46 @@
-import type { Page } from '@playwright/test'
+import type { APIRequestContext, Page } from '@playwright/test'
 import { expect, test } from './fixtures'
+import { allProducts, everyShelfCard, madeByTheAdminSpec, shelfCount, type Product } from './live-data'
 import { notFoundResponseError, productListUrl } from './screens'
 
-// Assumed data: the backend's seed migration (catalog-service V2__seed_products.sql, ids 1-10).
-// Other rows may exist (backend smoke tests add some), so these specs pick seeded products and never assume a total.
-const accessories = ['USB-C Hub', 'Laptop Stand', 'Desk Mat', 'Laptop Sleeve 16"']
+// The data comes from the live catalogue, not the seed (web KI-025): a used backend has other products, and a category can run
+// past one shelf page. The specs never assume which products there are or how many.
+
+const money = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' })
+
+/**
+ * The category with the most products (ties: A to Z), and its products. The admin spec's own rows (category "E2E") come and go
+ * while the suite runs, so they are left out.
+ */
+async function busiestCategory(request: APIRequestContext): Promise<{ category: string; products: Product[] }> {
+  const byCategory = new Map<string, Product[]>()
+  for (const product of await allProducts(request)) {
+    const category = product.category?.trim()
+    if (!category || madeByTheAdminSpec(product) || category === 'E2E') continue
+    byCategory.set(category, [...(byCategory.get(category) ?? []), product])
+  }
+  const [category, products] = [...byCategory].sort(
+    ([a, left], [b, right]) => right.length - left.length || a.localeCompare(b, 'en'),
+  )[0] ?? ['', []]
+  expect(category, 'the backend needs a product with a category').not.toBe('')
+  return { category, products }
+}
+
+/** A category's words on its chip: the catalogue stores `AUDIO`, the shelf says "Audio" (as `categoryLabel` in the app). */
+const chipLabel = (category: string) => category.charAt(0) + category.slice(1).toLowerCase()
 
 /** A category chip, found by its words ("Accessories"); its count follows ("Accessories 4"). */
 const categoryChip = (page: Page, label: string) =>
-  page.getByRole('group', { name: 'Category' }).getByRole('button', { name: new RegExp(`^${label}\\b`) })
+  page
+    .getByRole('group', { name: 'Category' })
+    .getByRole('button', { name: new RegExp(`^${label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`) })
+
+/** The ids of every card on the shelf, across its pages, without the admin spec's rows. */
+const shelfIds = async (page: Page) =>
+  (await everyShelfCard(page))
+    .filter((card) => !madeByTheAdminSpec(card))
+    .map((card) => card.id)
+    .sort((a, b) => a - b)
 
 const productNames = (page: Page) => page.getByRole('heading', { level: 2 }).allTextContents()
 
@@ -19,30 +51,35 @@ async function displayedPrices(page: Page): Promise<number[]> {
 }
 
 test.describe('filter, sort and pages live in the URL', () => {
-  test('filtering by category updates the URL, and a reload keeps it', async ({ page }) => {
+  test('filtering by category updates the URL, and a reload keeps it', async ({ page, request }) => {
+    const { category, products } = await busiestCategory(request)
+    // Exactly the category's products, every one of them and no other, on however many pages they take.
+    const expected = products.map((product) => product.id).sort((a, b) => a - b)
     await page.goto('/')
     await expect(page.getByRole('listitem').first()).toBeVisible()
 
-    await categoryChip(page, 'Accessories').click()
+    await categoryChip(page, chipLabel(category)).click()
 
-    await expect(page).toHaveURL(/\?category=ACCESSORIES$/)
-    for (const name of accessories)
-      await expect(page.getByRole('heading', { level: 2, name, exact: true })).toBeVisible()
-    await expect(page.getByRole('heading', { level: 2, name: 'Mechanical Keyboard' })).toHaveCount(0)
+    await expect(page).toHaveURL(`/?${new URLSearchParams({ category }).toString()}`)
+    expect(await shelfIds(page)).toEqual(expected)
 
     await page.reload()
 
-    await expect(categoryChip(page, 'Accessories')).toHaveAttribute('aria-pressed', 'true')
-    for (const name of accessories)
-      await expect(page.getByRole('heading', { level: 2, name, exact: true })).toBeVisible()
-    await expect(page.getByRole('heading', { level: 2, name: 'Mechanical Keyboard' })).toHaveCount(0)
+    await expect(categoryChip(page, chipLabel(category))).toHaveAttribute('aria-pressed', 'true')
+    expect(await shelfIds(page)).toEqual(expected)
   })
 
-  test('a shared link opens the filtered shelf', async ({ page }) => {
-    await page.goto('/?category=AUDIO&sort=price-desc')
+  test('a shared link opens the filtered shelf', async ({ page, request }) => {
+    const { category, products } = await busiestCategory(request)
+    // The shelf's order for "Price (high to low)": price, then name, then id.
+    const [priciest] = [...products].sort(
+      (a, b) => b.price - a.price || a.name.localeCompare(b.name, 'en') || a.id - b.id,
+    )
 
-    await expect(page.getByRole('heading', { level: 2, name: 'Noise-Cancelling Headphones' })).toBeVisible()
-    await expect(categoryChip(page, 'Audio')).toHaveAttribute('aria-pressed', 'true')
+    await page.goto(`/?${new URLSearchParams({ category, sort: 'price-desc' }).toString()}`)
+
+    await expect(page.getByRole('article').first().getByRole('heading', { level: 2 })).toHaveText(priciest!.name)
+    await expect(categoryChip(page, chipLabel(category))).toHaveAttribute('aria-pressed', 'true')
     await expect(page.getByRole('combobox', { name: 'Sort by' })).toHaveValue('price-desc')
   })
 
@@ -115,42 +152,56 @@ test.describe('pages', () => {
 })
 
 test.describe('the product page', () => {
-  test('opens from the shelf by link, and the back button returns to the same filter', async ({ page }) => {
-    await page.goto('/?category=PERIPHERALS')
-    await page.getByRole('link', { name: 'Mechanical Keyboard' }).click()
+  test('opens from the shelf by link, and the back button returns to the same filter', async ({ page, request }) => {
+    const { category, products } = await busiestCategory(request)
+    const filtered = `/?${new URLSearchParams({ category }).toString()}`
+    await page.goto(filtered)
+    // The first product of the filtered shelf, whichever it is, checked against what the backend says about it.
+    const link = page.getByRole('article').first().getByRole('heading', { level: 2 }).getByRole('link')
+    const path = (await link.getAttribute('href')) ?? ''
+    const product = products.find((candidate) => path === `/products/${candidate.id}`)
+    expect(product, `${path} is one of the ${category} products`).toBeDefined()
+    await link.click()
 
-    await expect(page).toHaveURL('/products/1')
-    await expect(page.getByRole('heading', { level: 1, name: 'Mechanical Keyboard' })).toBeVisible()
-    await expect(page.getByText('PERIPHERALS', { exact: true })).toBeVisible()
-    await expect(page.getByText(/₹8,999\.00/)).toBeVisible()
+    await expect(page).toHaveURL(path)
+    await expect(page.getByRole('heading', { level: 1, name: product!.name, exact: true })).toBeVisible()
+    await expect(page.getByText(category, { exact: true })).toBeVisible()
+    await expect(page.getByText(money.format(product!.price))).toBeVisible()
     await expect(page.getByText(/^(\d+ in stock|Only \d+ left|Out of stock)$/)).toBeVisible()
     await expect(page.getByRole('button', { name: 'Add to cart' })).toBeEnabled()
 
     await page.goBack()
 
-    await expect(page).toHaveURL(/\?category=PERIPHERALS$/)
-    await expect(categoryChip(page, 'Peripherals')).toHaveAttribute('aria-pressed', 'true')
+    await expect(page).toHaveURL(filtered)
+    await expect(categoryChip(page, chipLabel(category))).toHaveAttribute('aria-pressed', 'true')
   })
 
-  test('opens by deep URL, with the product from the backend', async ({ page }) => {
-    await page.goto('/products/4')
+  test('opens by deep URL, with the product from the backend', async ({ page, request }) => {
+    const { category, products } = await busiestCategory(request)
+    const product = products[0]!
 
-    await expect(page.getByRole('heading', { level: 1, name: 'Noise-Cancelling Headphones' })).toBeVisible()
-    await expect(page.getByText('AUDIO', { exact: true })).toBeVisible()
-    await expect(page.getByText('₹14,999.00')).toBeVisible()
+    await page.goto(`/products/${product.id}`)
+
+    await expect(page.getByRole('heading', { level: 1, name: product.name, exact: true })).toBeVisible()
+    await expect(page.getByText(category, { exact: true })).toBeVisible()
+    await expect(page.getByText(money.format(product.price))).toBeVisible()
   })
 
   test('hovering a product on the shelf loads it before it is opened', async ({ page }) => {
     await page.goto('/')
-    const link = page.getByRole('link', { name: 'Mechanical Keyboard' })
+    // The product the shelf shows first, whichever it is (the live catalogue, not the seed: web KI-025).
+    const link = page.getByRole('article').first().getByRole('heading', { level: 2 }).getByRole('link')
     await expect(link).toBeVisible()
+    const name = (await link.textContent()) ?? ''
+    const path = (await link.getAttribute('href')) ?? ''
+    expect(path).toMatch(/^\/products\/\d+$/)
 
-    const prefetch = page.waitForRequest((request) => new URL(request.url()).pathname === '/api/products/1')
+    const prefetch = page.waitForRequest((request) => new URL(request.url()).pathname === `/api${path}`)
     await link.hover()
     await prefetch
 
     await link.click()
-    await expect(page.getByRole('heading', { level: 1, name: 'Mechanical Keyboard' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name, exact: true })).toBeVisible()
   })
 
   test.describe('for a product that is not there', () => {
@@ -205,7 +256,9 @@ test.describe('error and retry', () => {
     up = true
     await alert.getByRole('button', { name: 'Retry' }).click()
 
-    await expect(page.getByRole('heading', { level: 2, name: 'Mechanical Keyboard' })).toBeVisible()
+    // The shelf, with whatever the live catalogue holds (web KI-025).
+    await expect(shelfCount(page)).toBeVisible()
+    await expect(page.getByRole('article').first()).toBeVisible()
     await expect(page.getByRole('alert')).toHaveCount(0)
   })
 })
