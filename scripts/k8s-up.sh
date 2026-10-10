@@ -22,6 +22,14 @@ if ! kubectl --context "$context" -n "$namespace" get service gateway-service >/
 fi
 kc=(kubectl --context "$context" -n "$namespace")
 
+# The cluster's CA (public certificate only), from the backend's Secret: scripts/e2e-k8s.sh and anyone using the shop trust it
+# to verify https://shop.localhost:18443 (web KI-034), and the pods mount the same Secret to verify the gateway (KI-035), so
+# without it they would never start. Read, never written, on the cluster side; checked before anything is deployed.
+ca_file=.local/cluster-ca.crt
+mkdir -p "$(dirname "$ca_file")"
+{ "${kc[@]}" get secret ecomdemo-ca-public -o 'jsonpath={.data.tls\.ca}' 2>/dev/null || true; } | base64 -d > "$ca_file"
+[ -s "$ca_file" ] || { echo "The backend's Secret ecomdemo-ca-public has no tls.ca: is its cluster from before backend KI-056?" >&2; exit 1; }
+
 docker build --quiet -t "$image" .
 # The node keeps its own copy of the image; the backend's images are loaded the same way (imagePullPolicy: Never).
 kind load docker-image "$image" --name "$cluster"
@@ -32,13 +40,6 @@ existed=false
 # The tag does not change when the image does, so a deployment that was already there is restarted to pick the new one up.
 if [ "$existed" = true ]; then "${kc[@]}" rollout restart deployment/ecomdemo-web; fi
 "${kc[@]}" rollout status deployment/ecomdemo-web --timeout=180s
-
-# The cluster's CA (public certificate only), from the backend's Secret: scripts/e2e-k8s.sh and anyone using the shop trust it
-# to verify https://shop.localhost:18443 (web KI-034). Read, never written, on the cluster side.
-ca_file=.local/cluster-ca.crt
-mkdir -p "$(dirname "$ca_file")"
-"${kc[@]}" get secret ecomdemo-ca-public -o 'jsonpath={.data.tls\.ca}' | base64 -d > "$ca_file"
-[ -s "$ca_file" ] || { echo "The backend's Secret ecomdemo-ca-public has no tls.ca: is its cluster from before backend KI-056?" >&2; exit 1; }
 
 # Through the cluster's own front door, with the name browsers use (they resolve *.localhost to 127.0.0.1 themselves), and
 # with the certificate verified: a cluster whose certificate lacks shop.localhost (before backend KI-060) fails here.
