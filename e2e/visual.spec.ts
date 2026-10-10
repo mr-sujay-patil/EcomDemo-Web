@@ -1,10 +1,12 @@
 import type { Page } from '@playwright/test'
 import { expect, test } from './fixtures'
+import { settleFonts } from './fonts'
 import { colorSchemes, openScreen, screens, stubConsole, type Screen } from './screens'
 
 // Visual regression: the key screens, at a phone and a desktop width, in both themes, compared with the pictures in
 // e2e/visual.spec.ts-snapshots/. Every answer is stubbed (the shelf, the product, the orders), so the pictures depend
-// on the code and nothing else. Fonts are the app's own (@font-face), the clock is not shown, animations are off.
+// on the code and nothing else. Fonts are the app's own (@font-face), the clock is not shown, animations are off, and
+// settleFonts (e2e/fonts.ts) makes sure a native select draws its text in them too (web KI-028).
 //
 // When a picture changes on purpose, update the baselines with `npm run e2e:baselines` and say why in the PR: a changed
 // baseline is a reviewed change. A change nobody meant fails this spec.
@@ -86,7 +88,7 @@ for (const shot of shots) {
 
         test('looks the way it did', async ({ page }) => {
           await openScreen(page, shot)
-          await page.evaluate(() => document.fonts.ready)
+          await settleFonts(page)
 
           await expect(page).toHaveScreenshot(`${shot.name}-${width}-${colorScheme}.png`, { fullPage: true })
         })
