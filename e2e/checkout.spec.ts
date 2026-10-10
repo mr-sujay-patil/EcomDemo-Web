@@ -1,4 +1,7 @@
 import type { APIRequestContext, Locator, Page } from '@playwright/test'
+import type { components as AppApi } from '../src/api/generated/app'
+import type { components as CatalogApi } from '../src/api/generated/catalog'
+import type { components as CustomerApi } from '../src/api/generated/customer'
 import { expect, test } from './fixtures'
 
 // Real accounts, the real cart and the real order saga (stock, then simulated payment). A full page load signs the
@@ -15,8 +18,8 @@ async function createAccount(request: APIRequestContext) {
   return username
 }
 
-async function signedInShelf(page: Page, request: APIRequestContext) {
-  const username = await createAccount(request)
+async function signedInShelf(page: Page, request: APIRequestContext, username?: string) {
+  username ??= await createAccount(request)
   await page.goto('/sign-in')
   await page.getByLabel('Username').fill(username)
   await page.getByLabel('Password', { exact: true }).fill(password)
@@ -33,6 +36,55 @@ async function addFromShelf(page: Page, name: string, times = 1) {
     await addButton.click()
     await expect(card(page, name).getByRole('button', { name: `In your cart (${count + 1})` })).toBeVisible()
   }
+}
+
+type Product = CatalogApi['schemas']['ProductResponse']
+
+/** The whole live catalogue: the pinned backend pages `GET /api/products` (web KI-030), so every page is read. */
+async function allProducts(request: APIRequestContext): Promise<Product[]> {
+  const size = 100
+  const products: Product[] = []
+  for (let page = 0; ; page += 1) {
+    const response = await request.get(`/api/products?page=${page}&size=${size}`)
+    expect(response.status()).toBe(200)
+    const batch = (await response.json()) as Product[]
+    products.push(...batch)
+    if (batch.length < size) return products
+  }
+}
+
+// Specs that run at the same time take stock from these (a confirmed Desk Mat; two keyboards held until the saga cancels the
+// order), so their level can change while this test reads it. The admin spec's own products ("E2E product …", "E2E import …")
+// are deleted while the suite runs.
+const stockTakenElsewhere = new Set(['Desk Mat', 'Mechanical Keyboard'])
+const changesWhileWeRun = (product: Product) => stockTakenElsewhere.has(product.name) || product.name.startsWith('E2E ')
+
+/**
+ * The in-stock product with the fewest left, as the live backend has it now. The suite runs on a fresh stack in CI and on a used
+ * one locally, where checkouts have drained the seed (web KI-020), so a test that needs "a few in stock" finds it instead of
+ * assuming a seeded product still has its seeded level. Below 99, so the cart's stepper (max 99) can go one above it.
+ */
+async function productWithFewestInStock(request: APIRequestContext): Promise<Product> {
+  const candidates = (await allProducts(request))
+    .filter((product) => product.stockQuantity >= 1 && product.stockQuantity < 99)
+    .filter((product) => !changesWhileWeRun(product))
+    .sort((a, b) => a.stockQuantity - b.stockQuantity)
+  expect(candidates.length, 'the backend needs a product with 1 to 98 in stock').toBeGreaterThan(0)
+  return candidates[0]!
+}
+
+/** Puts a line in the person's server-side cart through the API (adding does not check stock), before the browser signs in. */
+async function putInCart(request: APIRequestContext, username: string, productId: number, quantity: number) {
+  const login = await request.post('/api/auth/login', {
+    data: { username, password } satisfies CustomerApi['schemas']['LoginRequest'],
+  })
+  expect(login.status()).toBe(200)
+  const { accessToken } = (await login.json()) as CustomerApi['schemas']['TokenResponse']
+  const added = await request.post('/api/cart/items', {
+    headers: { Authorization: `Bearer ${accessToken}` },
+    data: { productId, quantity } satisfies AppApi['schemas']['AddCartItemRequest'],
+  })
+  expect(added.status()).toBe(200)
 }
 
 async function openCart(page: Page) {
@@ -84,25 +136,32 @@ test.describe('checkout', () => {
     test.use({ allowedConsoleErrors: [/Failed to load resource: the server responded with a status of 409/] })
 
     test('a quantity above stock is refused up front, by its line, and the cart is kept', async ({ page, request }) => {
-      await signedInShelf(page, request)
-      // Seeded with two in stock: asking for three is refused before any order exists.
-      await addFromShelf(page, 'Laptop Sleeve 16"')
+      // The test arranges its own precondition: whatever product has the fewest in stock right now, with exactly that many in
+      // the cart. Asking for one more is refused before any order exists, so no stock is taken.
+      const product = await productWithFewestInStock(request)
+      const stock = product.stockQuantity
+      const username = await createAccount(request)
+      await putInCart(request, username, product.id, stock)
+      await signedInShelf(page, request, username)
       await openCart(page)
-      const line = page.getByRole('listitem').filter({ hasText: 'Laptop Sleeve' })
+      const line = page
+        .getByRole('list', { name: 'Items in your cart' })
+        .getByRole('listitem')
+        .filter({ hasText: product.name })
+      await expect(line.getByRole('status')).toHaveText(String(stock))
       await line.getByRole('button', { name: 'Increase' }).click()
-      await line.getByRole('button', { name: 'Increase' }).click()
-      await expect(line.getByRole('status')).toHaveText('3')
+      await expect(line.getByRole('status')).toHaveText(String(stock + 1))
 
       await page.getByRole('button', { name: 'Place order' }).click()
 
       await expect(line.getByRole('alert')).toContainText(
-        "Insufficient stock for 'Laptop Sleeve 16\"': requested 3, available 2",
+        `Insufficient stock for '${product.name}': requested ${stock + 1}, available ${stock}`,
       )
       await expect(page).toHaveURL('/cart')
 
-      await line.getByRole('button', { name: 'Lower to 2' }).click()
+      await line.getByRole('button', { name: `Lower to ${stock}` }).click()
 
-      await expect(line.getByRole('status')).toHaveText('2')
+      await expect(line.getByRole('status')).toHaveText(String(stock))
       await expect(line.getByRole('alert')).toHaveCount(0)
     })
   })
