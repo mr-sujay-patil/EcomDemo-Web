@@ -82,4 +82,4 @@ Status: ⬜ Not started · 🟡 In progress · 🔵 PR open · ✅ Done (verifie
 | 21 | [Performance](phases/phase-21-performance.md) | Lighthouse CI + bundle budgets | `feature/phase-21-performance` | Quality | none | ✅ |
 | 22 | [Security](phases/phase-22-security.md) | CSP + npm audit + Trivy | `feature/phase-22-security` | Quality | none | ✅ |
 | 23 | [Observability](phases/phase-23-observability.md) | Error reporting + trace propagation | `feature/phase-23-observability` | Quality | `X-Correlation-Id`; backend tracing (Tempo) | ✅ |
-| 24 | [Guest Cart](phases/phase-24-guest-cart.md) | Browser storage + replay after sign-in (web KI-012) | `feature/phase-24-guest-cart` | Shopping | none (the cart API at the pin) | 🟡 |
+| 24 | [Guest Cart](phases/phase-24-guest-cart.md) | Browser storage + replay after sign-in (web KI-012) | `feature/phase-24-guest-cart` | Shopping | none (the cart API at the pin) | 🔵 |
