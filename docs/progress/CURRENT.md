@@ -5,19 +5,21 @@
 - **Updated:** 2026-10-10
 - **Task:** fix KI-028 (`e2e/visual.spec.ts` "shelf at 1280 px, light": the sort `<select>`'s text sometimes rasterised differently, 202 pixels)
 - **Branch:** `fix/ki-028-select-font` (cut from `main` at `59ee563`)
-- **Step:** BRANCHED
+- **Step:** PR_OPEN
 - **Backend pinned at:** commit `669a9ed1dfcc8ef0d89608c87ef05421bb157fb6` (unchanged by this fix)
 - **Waiting for user:** NO
 
 ## Checklist
-- [ ] Root cause, with evidence (not "a flake")
-- [ ] Regression check that fails if the cause returns
-- [ ] Fix the cause (no tolerance, no mask)
-- [ ] `npm ci && npm run verify`; the visual spec in CI's `e2e` job (this container cannot build the backend stack)
+- [x] Root cause, with evidence: the select's label copy (UA shadow root) kept a fallback face after the swap (KNOWN_ISSUES KI-028); not reproduced on local Chromium 1194
+- [x] Regression check: `e2e/fonts.spec.ts` (guard fails on a fallback face; passes the shelf; re-layout keeps focus, choice, place); mutation-checked
+- [x] Fix: `settleFonts` in `e2e/fonts.ts`, used by `visual.spec.ts` (no tolerance, no mask, no baseline change)
+- [x] `npm ci && npm run verify` (904 unit tests); local e2e: `fonts.spec.ts` 3/3 (and 9/9 with --repeat-each=3), visual 32/32 unchanged versus the old wait. The visual spec against the real baselines runs only in CI's `e2e` job
 - [ ] Docs: KNOWN_ISSUES (fixed), decisions only if one changes, this checkpoint; PR
 
 ## Next action
-Find why the select's text renders differently between runs (fonts, swap, native control), then fix and add the regression check.
+Finish `npm ci && npm run verify`, push, open the PR `Fix KI-028: ...`, add its number to the KI row, then STOP for the owner (CI's `e2e` job is the only place the visual spec runs against the real baselines).
+
+Local e2e here used a stub gateway (a tiny Node server answering `/api/products`) only to pass `global-setup`, with `/opt/pw-browsers` Chromium 1194: the committed baselines are CI's Chromium 1243, so only relative comparisons are meaningful locally.
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.
