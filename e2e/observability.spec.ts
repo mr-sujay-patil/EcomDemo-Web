@@ -19,6 +19,15 @@ function recordApiCalls(page: import('@playwright/test').Page): Call[] {
   return calls
 }
 
+/** Opens the product the shelf shows first, whichever it is (the live catalogue, not the seed: web KI-025). */
+async function openFirstProduct(page: import('@playwright/test').Page) {
+  const link = page.getByRole('article').first().getByRole('heading', { level: 2 }).getByRole('link')
+  const name = (await link.textContent()) ?? ''
+  expect(name).not.toBe('')
+  await link.click()
+  await expect(page.getByRole('heading', { level: 1, name, exact: true })).toBeVisible()
+}
+
 // Tracing starts after the first paint (src/app/startTracing.ts, web KI-033), and says so with <html data-tracing="on">.
 const tracingIsOn = (page: import('@playwright/test').Page) =>
   expect(page.locator('html')).toHaveAttribute('data-tracing', 'on')
@@ -36,11 +45,7 @@ test('every fetch to /api carries an X-Correlation-Id, and a traceparent from th
 
   await tracingIsOn(page)
   calls.length = 0
-  await page
-    .getByRole('link', { name: /Mechanical Keyboard/ })
-    .first()
-    .click()
-  await expect(page.getByRole('heading', { level: 1, name: 'Mechanical Keyboard' })).toBeVisible()
+  await openFirstProduct(page)
 
   // Every call from here on has both, and one trace per call.
   expect(calls.length).toBeGreaterThan(0)
@@ -61,11 +66,7 @@ test('nothing but /api calls carries a traceparent', async ({ page }) => {
 
   await page.goto('/')
   await tracingIsOn(page)
-  await page
-    .getByRole('link', { name: /Mechanical Keyboard/ })
-    .first()
-    .click()
-  await expect(page.getByRole('heading', { level: 1, name: 'Mechanical Keyboard' })).toBeVisible()
+  await openFirstProduct(page)
 
   expect(others).toEqual([])
 })

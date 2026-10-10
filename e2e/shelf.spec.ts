@@ -1,5 +1,6 @@
 import type { Page } from '@playwright/test'
 import { expect, test } from './fixtures'
+import { shelfCount } from './live-data'
 import { notFoundResponseError, productListUrl } from './screens'
 
 // Assumed data: the backend's seed migration (catalog-service V2__seed_products.sql, ids 1-10).
@@ -142,15 +143,19 @@ test.describe('the product page', () => {
 
   test('hovering a product on the shelf loads it before it is opened', async ({ page }) => {
     await page.goto('/')
-    const link = page.getByRole('link', { name: 'Mechanical Keyboard' })
+    // The product the shelf shows first, whichever it is (the live catalogue, not the seed: web KI-025).
+    const link = page.getByRole('article').first().getByRole('heading', { level: 2 }).getByRole('link')
     await expect(link).toBeVisible()
+    const name = (await link.textContent()) ?? ''
+    const path = (await link.getAttribute('href')) ?? ''
+    expect(path).toMatch(/^\/products\/\d+$/)
 
-    const prefetch = page.waitForRequest((request) => new URL(request.url()).pathname === '/api/products/1')
+    const prefetch = page.waitForRequest((request) => new URL(request.url()).pathname === `/api${path}`)
     await link.hover()
     await prefetch
 
     await link.click()
-    await expect(page.getByRole('heading', { level: 1, name: 'Mechanical Keyboard' })).toBeVisible()
+    await expect(page.getByRole('heading', { level: 1, name, exact: true })).toBeVisible()
   })
 
   test.describe('for a product that is not there', () => {
@@ -205,7 +210,9 @@ test.describe('error and retry', () => {
     up = true
     await alert.getByRole('button', { name: 'Retry' }).click()
 
-    await expect(page.getByRole('heading', { level: 2, name: 'Mechanical Keyboard' })).toBeVisible()
+    // The shelf, with whatever the live catalogue holds (web KI-025).
+    await expect(shelfCount(page)).toBeVisible()
+    await expect(page.getByRole('article').first()).toBeVisible()
     await expect(page.getByRole('alert')).toHaveCount(0)
   })
 })
