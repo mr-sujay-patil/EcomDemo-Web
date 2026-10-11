@@ -5,9 +5,9 @@
 - **Updated:** 2026-10-11
 - **Task:** Fix KI-039 (web side, approved by the owner 2026-10-11: "KI-039 web-side"): Loki gets no logs from this repo's backend stacks, because the backend's Alloy keeps only the compose project `ecomdemo`. This repo applies the Alloy override itself (`scripts/backend-stack.sh`, and CI through the same script), generated at stack start from the pinned backend's own `docker/alloy/config.alloy`, failing loudly if its project rule is not found; then the KI-032 check (`npm run e2e:service-down`) can run, in CI too. `docs/KNOWN_ISSUES.md` row KI-039 (Fix queue)
 - **Branch:** `fix/ki-039-backend-logs-to-loki` (cut from `main` at `f86e750`, the merge of PR #47; KI-032 merged and merge-verified there: local verify 1034 tests, CI on `main` green)
-- **Step:** IMPLEMENTING (KI-040 added to PR #48)
+- **Step:** PR_OPEN (PR #48, KI-039 and KI-040)
 - **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` (unchanged by this fix)
-- **Waiting for user:** no
+- **Waiting for user:** YES: CI on PR #48, then the owner's review and `approved, merge it`
 
 ## Checklist
 - [x] Pre-flight: KI-032 merged (`f86e750`) and merge-verified; branch cut; KI-039 moved to the Fix queue, In progress
@@ -18,12 +18,12 @@
 - [x] Full `npm ci && npm run verify` exit 0 (1048 tests, 85 files); e2e, perf and `e2e:service-down` only in CI (no backend buildable here)
 - [x] PR opened (#48)
 - [x] CI run 1 on PR #48 (`36c1483`): stack, e2e, Loki check, perf green; `e2e:service-down` red at the root-service assertion for the Retry reference (KI-040). Owner approved fixing it in this PR (2026-10-11)
-- [ ] KI-040: red unit tests for reading a Tempo trace by id (`scripts/observability.ts`), then green; the spec checks the root only for the first reference, and for the Retry that the `correlation_id` span is a gateway-service SERVER span whose parent is the browser's span from its `traceparent`
-- [ ] Docs (`[Fix KI-040]`, KI-040 Fixed), verify, push, PR body
+- [x] KI-040: red unit tests (`5a75f19`, 6 failed; green in `c88d9a3`) for reading a Tempo trace by id (`scripts/observability.ts`), then green; the spec checks the root only for the first reference, and for the Retry that the `correlation_id` span is a gateway-service SERVER span whose parent is the browser's span from its `traceparent`
+- [x] Docs (`[Fix KI-040]` x2, KI-040 Fixed), `npm run verify` exit 0 (1054 tests, 85 files), pushed, PR body updated
 - [ ] CI green on the PR
 
 ## Next action
-KI-040: add `tempoTraceUrl`, `readTempoTrace`, `parentSpanIdOf` to `scripts/observability.ts` (red tests first; Tempo 3.0.3's `/api/v2/traces/<id>` returns OTLP JSON with base64 ids and `SPAN_KIND_SERVER`), then the spec change, docs, verify, push, update PR #48's body.
+Wait for CI on PR #48 and fix it if red (the step "Stop the catalogue and find the reference in Loki and Tempo" is the one KI-040 changed; it has never passed yet). Then STOP for `approved, merge it`. After the merge: local `npm ci && npm run verify` on `main`, CI on `main` green, then give the owner the tags `ki-039-fixed` and `ki-040-fixed` as commands (tag pushes are refused here).
 
 ## ⚠️ Environment notes (this machine)
 - This session runs in a cloud container (not the owner's WSL machine): Node 24 at `/opt/node24/bin`; the backend team's working copy is `/home/user/ecomdemo` (read only, never checked out or changed); a read-only clone is at `/home/user/ecomdemo-backend-readonly` (`a85202f`, push URL `no-push`).
