@@ -5,26 +5,27 @@
 - **Updated:** 2026-10-11
 - **Task:** Fix KI-038: triage the first SonarQube analysis's 144 maintainability findings rule by rule (fix, or accept with the reason in the code or `sonar-project.properties` and a `[Fix KI-038]` decision), `docs/KNOWN_ISSUES.md` row KI-038
 - **Branch:** `fix/ki-038-sonar-findings` (cut from `main` at `57fecf0`, the merge of PR #45; Phase 25 merge-verified: local `npm ci && npm run verify` on `main` exit 0, 996 tests, and CI on `main` green, run 113; tag `phase-25-complete` for the owner to push, tag pushes are refused here with 403)
-- **Step:** BRANCHED
+- **Step:** TESTING (PR next)
 - **Backend pinned at:** commit `669a9ed1dfcc8ef0d89608c87ef05421bb157fb6` (unchanged; this fix needs nothing from the backend)
 - **Waiting for user:** no
 
 ## Checklist
 - [x] Pre-flight: Phase 25 verified in `main`; branch cut; KI-038 moved to the fix queue (In progress)
-- [ ] Baseline analysis of `57fecf0` on a fresh local SonarQube (expect 144 code smells)
-- [ ] `S3776` cognitive complexity (5): ProductCard, SagaTimeline, ProductFormPage, SearchIndexPage, CartPage under 15, behaviour identical
-- [ ] `S7773` `Number.NaN`
-- [ ] `S6759` read-only props (51)
-- [ ] `S1874` deprecated `FormEvent` (8) and `prefetchQuery` (1)
-- [ ] `S3358` nested ternaries (29): fix or accept
-- [ ] `S6819` ARIA role vs native element (28): fix or accept with the Phase 08/18 reasons
-- [ ] `S5906`, `S3863`, `S4624` and the singles: fix or accept
-- [ ] Re-analysis: before/after counts by rule, gate status; stack down
-- [ ] Decisions `[Fix KI-038]`, KI-038 Fixed, full `npm ci && npm run verify`
+- [x] Baseline analysis of `57fecf0` on a fresh local SonarQube: 144 code smells (same as Phase 25), gate OK, coverage 99.2 %
+- [x] `S3776` (5): ProductCard, SagaTimeline, ProductFormPage, SearchIndexPage, CartPage refactored; existing tests unchanged, helpers unit-tested
+- [x] `S7773` `Number.NaN` (in the S3776 commit)
+- [x] `S6759` read-only props (51)
+- [x] `S1874` `FormEvent` -> `SubmitEvent` (8), `prefetchQuery` -> `query` (1)
+- [x] `S3358` (29) and `S4624` (2): all fixed
+- [x] `S6819` (28): accepted in `sonar-project.properties` with the Phase 08/18 reasons (no ARIA changed)
+- [x] `S5906` (6), `S3863` (4), singles: fixed; `S1135`, `S6479` accepted with reasons
+- [x] Re-analysis: 0 code smells, gate OK (new coverage 99.6 %); without the acceptances 30 (exactly the accepted ones); stack down (volumes kept)
+- [x] Decisions `[Fix KI-038]` x6, KI-038 Fixed, README; full `npm ci && npm run verify` exit 0 (1014 tests, 83 files)
+- [x] Scratch a11y/keyboard/layout/motion/zoom matrix against a stand-in gateway: 914 passed
 - [ ] PR opened
 
 ## Next action
-Run the baseline analysis (README "Code quality dashboard"; on this machine an uncommitted compose override puts `/opt/sonarqube/data/es9` on a tmpfs), then work the checklist top to bottom, one commit per rule group.
+Push and open the PR `Fix KI-038: ...`, then set the PR number in KI-038's status and here (PR_OPEN), commit, push, and STOP for the owner's review. After the merge: local `npm ci && npm run verify` on `main`, CI on `main` green, tag `ki-038-fixed` (the owner pushes it: tag pushes are refused here with 403).
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.
