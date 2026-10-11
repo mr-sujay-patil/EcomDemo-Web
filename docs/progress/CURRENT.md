@@ -13,7 +13,7 @@
 - [x] Phase file, tracker (Phase 24 ✅, Phase 25 row), KI-014 moved to "Covered by an approved phase"
 - [x] `compose.sonar.yaml` (project `ecomdemo-web-sonar`, 127.0.0.1:9010, own names and volumes, pinned tags)
 - [x] `scripts/sonar-setup.sh` (wait, admin password from env, project, gate on new code, attach, token printed once)
-- [ ] `sonar-project.properties`, `npm run sonar` (scanner Docker image), lcov reporter in `vite.config.ts`
+- [x] `sonar-project.properties`, `npm run sonar` (scanner Docker image), lcov reporter in `vite.config.ts`
 - [ ] `scripts/sonar.test.ts` (config checks, no stack)
 - [ ] Real run: stack up, setup twice, `npm run test:coverage && npm run sonar`, gate and metrics from the web API, stack down
 - [ ] Decisions `[Phase 25]`, README, development-environment ports, test report, `RECENT.md` (Phase 23 archived), tracker 🔵

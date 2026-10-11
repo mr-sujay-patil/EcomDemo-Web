@@ -60,6 +60,8 @@ export default defineConfig(({ mode }) => {
         provider: 'v8',
         include: ['src/**/*.{ts,tsx}'],
         exclude: ['src/test/**', 'src/**/*.test.{ts,tsx}', 'src/main.tsx'],
+        // Vitest's four defaults, plus lcov: coverage/lcov.info is the report SonarQube imports (`npm run sonar`, Phase 25).
+        reporter: ['text', 'html', 'clover', 'json', 'lcov'],
         // A floor, not a target: set to the measured values; later phases raise them, never lower them.
         thresholds: { statements: 99.9, branches: 98, functions: 100, lines: 100 },
       },
