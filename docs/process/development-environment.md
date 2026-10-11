@@ -6,7 +6,7 @@ Goal: the machine is never the reason a result is in doubt. The web app is light
 
 | | |
 |---|---|
-| **Pinned backend** | **commit `669a9ed1dfcc8ef0d89608c87ef05421bb157fb6`** on the backend's `main` (backend PR #86, the KI-060 merge: `shop.localhost` in the kind cluster's edge certificate, needed by web KI-034). The backend publishes no `phase-*` tag after `phase-34-complete`, so the pin is a commit. Previous pins: `82ef598` (backend PR #81, `ki-049-fixed`, 2026-10-09), `f088fd4` (backend PR #75, 2026-10-08), then `phase-34-complete` (backend PR #59, merge `9173309`, 2026-10-06) |
+| **Pinned backend** | **commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60`** on the backend's `main` (backend PR #94, the KI-035 merge: the gateway writes one request line per exchange with `correlation_id` and `traceId`, and puts `correlation_id` on its server span, needed by web KI-032). The backend publishes no `phase-*` tag after `phase-34-complete`, so the pin is a commit. Previous pins: `669a9ed` (backend PR #86, the KI-060 merge, for web KI-034, 2026-10-10), `82ef598` (backend PR #81, `ki-049-fixed`, 2026-10-09), `f088fd4` (backend PR #75, 2026-10-08), then `phase-34-complete` (backend PR #59, merge `9173309`, 2026-10-06) |
 | Why this one | the backend team asked the web to follow `main` after Phase 34: the catalogue is paged (`page`, `size`, `X-Total-Count`, `Link`), catalogue reads and checkout can answer `503` with `Retry-After`, the dead-letter shape changed (`dltTimestamp`), `/actuator` left port 8080, ports bind to 127.0.0.1. Earlier: `phase-34-complete` added product images (web KI-002): `ProductResponse.imageUrl`, a gateway-relative path or `null`, and the anonymous `GET /api/products/{id}/image`. It keeps everything from `phase-33-complete` (RS256 tokens, login throttling `429` + `Retry-After`) and `ki-041-fixed` (CORS preflights) |
 | Delta since `phase-33-complete` | `docs/backend/phase-34-delta.md` (earlier: `docs/backend/phase-33-delta.md`) |
 
@@ -23,19 +23,19 @@ Everything lives **inside the WSL2 Linux filesystem**, never under `/mnt/c/...` 
 The read-only clone is set up once, in Phase 0:
 
     git clone https://github.com/mr-sujay-patil/ecomdemo ../ecomdemo-backend-readonly
-    git -C ../ecomdemo-backend-readonly checkout 669a9ed1dfcc8ef0d89608c87ef05421bb157fb6
+    git -C ../ecomdemo-backend-readonly checkout a85202fefc0e1390f63bda4c93ce85c3b8266f60
     git -C ../ecomdemo-backend-readonly remote set-url --push origin no-push   # a mistaken push fails locally
 
 Reading it is allowed (files, `git log`, `git fetch --tags`, checking out a newer tag when the pin moves). Writing is never allowed: no commits, branches, pushes, PRs, issues or comments on the backend. Never check out a tag in `~/projects/ecomdemo`: that would move the backend team's work.
 
-> ⚠️ **Logs reach Loki only from the compose project `ecomdemo`.** The backend's Alloy config keeps containers whose project label is exactly `ecomdemo`; a clone in `ecomdemo-backend-readonly` has a project of that name, so Loki stays empty (traces are fine). To read logs here, mount a copy of `docker/alloy/config.alloy` with the project name changed through a local override file (outside both repositories); never run this clone as project `ecomdemo` (its volumes are the backend team's). Details: `docs/troubleshooting.md`.
+> ⚠️ **Logs reach Loki only from the compose project `ecomdemo`.** The backend's Alloy config keeps containers whose project label is exactly `ecomdemo`; a clone in `ecomdemo-backend-readonly` has a project of that name, so Loki stays empty (traces are fine). To read logs here, mount a copy of `docker/alloy/config.alloy` with the project name changed through a local override file (outside both repositories); never run this clone as project `ecomdemo` (its volumes are the backend team's). Details: `docs/troubleshooting.md`; recorded as web KI-039 (CI's Loki is empty for the same reason).
 
 ## Running the backend stack next to the backend team's
 
 The backend's compose file gives every container a fixed name (`ecomdemo-<service>`) and publishes the default host ports (8080, 3000, 5432...). Two stacks cannot share them: whoever starts second is blocked, and a web session had been blocking the backend team's own stack. So **start this clone's stack with the wrapper, not with `docker compose up`**:
 
     bash scripts/backend-stack.sh up        # builds if needed, starts, waits until healthy
-    eval "$(bash scripts/backend-stack.sh env)"   # API_TARGET=http://localhost:28080, GATEWAY_CONTAINER=webstack-gateway-service
+    eval "$(bash scripts/backend-stack.sh env)"   # API_TARGET=http://localhost:28080, GATEWAY_CONTAINER=webstack-gateway-service, LOKI_URL, TEMPO_URL (:23100, :23200)
     bash scripts/backend-stack.sh down      # stops and removes the containers, never the volumes
     bash scripts/backend-stack.sh config    # what would run: each container name and host port
 

@@ -1,3 +1,12 @@
+import {
+  correlationSpanQuery,
+  gatewayLineQuery,
+  lokiQueryRangeUrl,
+  readLokiLines,
+  readTempoTraces,
+  tempoSearchUrl,
+  traceIdOf,
+} from '../scripts/observability'
 import { expect, test } from './fixtures'
 
 // What Phase 23 promises: a call can be followed from the browser into the backend (the headers), and when one fails the
@@ -125,13 +134,21 @@ test.describe('when the catalogue is down', () => {
 
 // The real thing: needs one backend service actually stopped. `scripts/e2e-service-down.sh` stops the catalogue service,
 // runs only this test, and starts the service again. Skipped in every other run.
+// Grafana's data sources, for the KI-032 checks below: `bash scripts/backend-stack.sh env` prints the shifted ports.
+const lokiUrl = process.env.LOKI_URL ?? 'http://localhost:3100'
+const tempoUrl = process.env.TEMPO_URL ?? 'http://localhost:3200'
+
 test.describe('with the catalogue service really stopped', () => {
   // A conditional skip, not a disabled test: it runs whenever the service really is down (scripts/e2e-service-down.sh).
   // eslint-disable-next-line playwright/no-skipped-test
   test.skip(!process.env.E2E_SERVICE_DOWN, 'run it with scripts/e2e-service-down.sh')
   test.use({ allowedConsoleErrors: [/Failed to load resource/] })
 
-  test('the shelf shows a reference, one of the ids the page sent', async ({ page }) => {
+  // Waiting on Alloy (it reads the container logs every 15 s) and Tempo (a trace is searchable once its ingester cuts it).
+  test.setTimeout(240_000)
+
+  test('the shelf shows a reference, one of the ids the page sent', async ({ page, request }) => {
+    const startedAt = Date.now() / 1000
     const sent = new Map<string, string>()
     page.on('request', (request) => {
       const headers = request.headers()
@@ -162,5 +179,42 @@ test.describe('with the catalogue service really stopped', () => {
     // For docs/troubleshooting.md: the reference on screen, and the trace the same request started.
     console.log(`E2E_REFERENCE=${retryReference}`)
     console.log(`E2E_TRACEPARENT=${sent.get(retryReference)}`)
+
+    // Web KI-032 (backend KI-035): the reference alone finds the gateway's own log line and the trace, even for the first
+    // call, which had no traceparent. The queries are the ones docs/troubleshooting.md gives a support person.
+    const range = () => [startedAt - 60, Date.now() / 1000 + 60] as const
+    const gatewayLines = async (id: string) => {
+      const response = await request.get(lokiQueryRangeUrl(lokiUrl, gatewayLineQuery(id), ...range()))
+      expect(response.ok(), `Loki at ${lokiUrl} answered ${response.status()}`).toBe(true)
+      return readLokiLines(await response.json())
+    }
+    const tracesFor = async (id: string) => {
+      const response = await request.get(tempoSearchUrl(tempoUrl, correlationSpanQuery(id), ...range()))
+      expect(response.ok(), `Tempo at ${tempoUrl} answered ${response.status()}`).toBe(true)
+      return readTempoTraces(await response.json())
+    }
+
+    for (const id of [reference, retryReference]) {
+      await expect
+        .poll(async () => (await gatewayLines(id)).filter(({ line }) => line.includes('-> 503')).length, {
+          message: `the gateway's "-> 503" line for ${id} in Loki (${lokiUrl}). Empty Loki? Alloy ships only the compose project "ecomdemo": docs/troubleshooting.md`,
+          timeout: 90_000,
+        })
+        .toBe(1)
+      const [line] = (await gatewayLines(id)).filter(({ line }) => line.includes('-> 503'))
+      const loggedTraceId = line?.labels['trace_id']
+      expect(loggedTraceId, 'the gateway line carries the trace id').toMatch(/^[0-9a-f]{32}$/)
+
+      await expect
+        .poll(async () => (await tracesFor(id)).map(({ traceId }) => traceId), {
+          message: `a trace in Tempo (${tempoUrl}) with span.correlation_id = "${id}"`,
+          timeout: 90_000,
+        })
+        .toEqual([loggedTraceId])
+      const [trace] = await tracesFor(id)
+      expect(trace?.rootServiceName).toBe('gateway-service')
+    }
+    // The retried call carried a traceparent: the trace the reference finds is the one the browser started.
+    expect((await tracesFor(retryReference))[0]?.traceId).toBe(traceIdOf(sent.get(retryReference)))
   })
 })

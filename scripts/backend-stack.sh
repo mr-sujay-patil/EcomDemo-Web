@@ -14,7 +14,8 @@
 #   bash scripts/backend-stack.sh down      # stop and remove the containers (never the volumes)
 #   bash scripts/backend-stack.sh ps        # what runs, with the shifted ports
 #   bash scripts/backend-stack.sh config    # what WOULD run: each service's container name and host ports (starts nothing)
-#   bash scripts/backend-stack.sh env       # the variables the web tools need (eval "$(bash scripts/backend-stack.sh env)")
+#   bash scripts/backend-stack.sh env       # the variables the web tools need (eval "$(bash scripts/backend-stack.sh env)"):
+#                                           # API_TARGET, GATEWAY_CONTAINER, LOKI_URL, TEMPO_URL
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -64,6 +65,9 @@ for name, s in json.load(sys.stdin)['services'].items():
 " ;;
   env)
     echo "export API_TARGET=http://localhost:$((8080 + shift_by))"
-    echo "export GATEWAY_CONTAINER=${prefix}-gateway-service" ;;
+    echo "export GATEWAY_CONTAINER=${prefix}-gateway-service"
+    # Loki and Tempo, for the real service-down spec (web KI-032: the reference finds the gateway's line and the trace).
+    echo "export LOKI_URL=http://localhost:$((3100 + shift_by))"
+    echo "export TEMPO_URL=http://localhost:$((3200 + shift_by))" ;;
   *) echo "usage: $0 up|down|ps|config|env" >&2; exit 2 ;;
 esac
