@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent, type KeyboardEvent } from 'react'
+import { useEffect, useRef, useState, type SubmitEvent, type KeyboardEvent } from 'react'
 import { Link, useLocation } from 'react-router'
 import { AssistantMessage } from '@/components/AssistantMessage'
 import { Button, buttonClass } from '@/components/Button'
@@ -95,7 +95,7 @@ function Conversation({
     thread.current?.scrollTo({ top: Number.MAX_SAFE_INTEGER })
   }, [turns.length, thinking, unavailable])
 
-  function submit(event?: FormEvent) {
+  function submit(event?: SubmitEvent<HTMLFormElement>) {
     event?.preventDefault()
     const message = text.trim()
     if (!message || thinking || unavailable) return

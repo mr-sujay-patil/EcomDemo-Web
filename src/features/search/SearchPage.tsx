@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type SubmitEvent } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { Alert } from '@/components/Alert'
 import { Button, buttonClass } from '@/components/Button'
@@ -62,7 +62,7 @@ function Filters({
   // A shared link may name a category the catalogue no longer has: keep it so the control still says what is filtered.
   const options = state.category && !categories.includes(state.category) ? [...categories, state.category] : categories
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     const data = new FormData(event.currentTarget)
     const text = (name: string) => {

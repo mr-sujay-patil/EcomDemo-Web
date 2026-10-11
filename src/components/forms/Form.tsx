@@ -1,4 +1,4 @@
-import { useRef, type FormEvent, type ReactNode } from 'react'
+import { useRef, type SubmitEvent, type ReactNode } from 'react'
 import { FormProvider, type FieldValues, type SubmitHandler, type UseFormReturn } from 'react-hook-form'
 import './forms.css'
 
@@ -22,7 +22,7 @@ export function Form<Values extends FieldValues>({ form, onSubmit, children, ...
   const running = useRef(false)
   const submit = form.handleSubmit(onSubmit)
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     if (running.current) return
     running.current = true

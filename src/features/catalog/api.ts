@@ -42,10 +42,14 @@ export function useProduct(id: number | null) {
   return useQuery({ ...productQuery(id ?? 0), enabled: id !== null })
 }
 
-/** Starts loading a product before anyone opens it (on card hover or focus); a fresh cache entry is not refetched. */
+/**
+ * Starts loading a product before anyone opens it (on card hover or focus); a fresh cache entry is not refetched.
+ * `query` replaces the deprecated `prefetchQuery`; unlike it, `query` rejects on failure, so the failure is swallowed here:
+ * a prefetch that fails changes nothing, and the product page asks again and shows its own error.
+ */
 export function usePrefetchProduct() {
   const queryClient = useQueryClient()
   return (id: number) => {
-    void queryClient.prefetchQuery(productQuery(id))
+    queryClient.query(productQuery(id)).catch(() => undefined)
   }
 }
