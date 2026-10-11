@@ -15,7 +15,7 @@
 - [x] `scripts/sonar-setup.sh` (wait, admin password from env, project, gate on new code, attach, token printed once)
 - [x] `sonar-project.properties`, `npm run sonar` (scanner Docker image), lcov reporter in `vite.config.ts`
 - [x] `scripts/sonar.test.ts` (config checks, no stack)
-- [ ] Real run: stack up, setup twice, `npm run test:coverage && npm run sonar`, gate and metrics from the web API, stack down
+- [x] Real run: stack up (an uncommitted tmpfs override for the search index: this disk reports 8 % free), setup twice (idempotent, drift corrected), `npm run sonar` twice: gate OK, coverage 99.2 %, 144 code smells (KI-038), 0 bugs, 0 vulnerabilities, 0 hotspots; a throwaway project showed the gate FAILING on new issues (exit 3); stack down
 - [ ] Decisions `[Phase 25]`, README, development-environment ports, test report, `RECENT.md` (Phase 23 archived), tracker 🔵
 - [ ] Full `npm ci && npm run verify`; PR opened
 

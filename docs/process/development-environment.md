@@ -105,6 +105,7 @@ The cluster is the backend's: kind cluster `ecomdemo` (context `kind-ecomdemo`),
 | 8070 | this app's nginx container (`WEB_PORT`, Phase 19) | 8080–8087 and 8090 belong to the backend |
 | 18080 | the kind Ingress (backend); since the HTTPS change it only redirects (`301`) to 18443 | for `shop.localhost` too |
 | 18443 | the kind Ingress over HTTPS (backend) | the API (`localhost`) and this app's host rule `shop.localhost` (web KI-034); the certificate names both |
+| 9010 | this app's SonarQube (`compose.sonar.yaml`, Phase 25), loopback only | 9000 is the backend team's SonarQube; the scanner reaches this one inside Docker as `sonarqube:9000` |
 
 Never use 3000: it is the backend's Grafana.
 

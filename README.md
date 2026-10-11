@@ -135,6 +135,32 @@ A failed check links to its log from the PR. To open a failed E2E run's trace, d
 
 Dependabot ([`.github/dependabot.yml`](.github/dependabot.yml)) opens weekly PRs: one for all npm minor and patch updates, one per major version, and one for the actions. It skips the TypeScript and ESLint upgrades held back on purpose (see `docs/decisions.md`, Phase 4).
 
+## Code quality dashboard (SonarQube)
+
+A self-hosted [SonarQube Community Build](https://docs.sonarsource.com/sonarqube-community-build/) shows the code's health: bugs, vulnerabilities, security hotspots, code smells, duplication and test coverage, file by file, and a **quality gate** that judges every change by the code it adds. It mirrors the backend's Phase 12: no account, no secret in the repository, nothing in CI. It is optional; nothing else needs it.
+
+```bash
+docker compose -f compose.sonar.yaml up -d --wait     # SonarQube + its database; first start 1-2 minutes, ~2 GB of memory
+read -rs SONAR_ADMIN_PASSWORD && export SONAR_ADMIN_PASSWORD   # your admin password (12+ chars: upper, lower, digit, symbol)
+bash scripts/sonar-setup.sh                           # sets the password, creates the project and the gate, prints a token
+export SONAR_TOKEN='…'                                # the line the script printed (shown once)
+npm run test:coverage && npm run sonar                # coverage first: SonarQube imports it, it does not run tests
+docker compose -f compose.sonar.yaml down             # stop; the history stays (down -v wipes it: run the setup again)
+```
+
+Then open **http://localhost:9010/dashboard?id=ecomdemo-web** and sign in as `admin`. (The scanner prints `http://sonarqube:9000/…`: that is the same server seen from inside Docker.)
+
+| File | What it is |
+|---|---|
+| `compose.sonar.yaml` | SonarQube (`26.9.0.129388-community`, the backend's build) and PostgreSQL, project `ecomdemo-web-sonar`, port **127.0.0.1:9010**: its own names, volumes and port, so it runs beside the backend team's SonarQube on 9000 |
+| `scripts/sonar-setup.sh` | the quality gate as code (`EcomDemo Web way`): every condition on new code, coverage ≥ 80 %, no new issue, duplication ≤ 3 %, every hotspot reviewed, reliability and security A. Idempotent; `--no-token` skips the new token |
+| `sonar-project.properties` | what is analysed: `src/`, tests as tests, `src/api/generated/` left out, coverage from `coverage/lcov.info` |
+| `scripts/sonar-scan.sh` (`npm run sonar`) | the pinned `sonar-scanner-cli` image on the stack's network, the repository mounted read-only; fails when the gate fails |
+
+The gate looks only at **new code**, so the first analysis passes with nothing to judge, and from then on each change must meet it. Coverage and duplication conditions are skipped by SonarQube for changes under 20 new lines. The first analysis's findings are web KI-038.
+
+If it does not start: `docker logs ecomdemo-web-sonarqube`. "max virtual memory areas … too low" → `sudo sysctl -w vm.max_map_count=524288` on the host. "high disk watermark … exceeded" or "Fail to execute es request" → Elasticsearch wants at least 10 to 15 % of the disk free. `AccessDeniedException: /usr/src` from `npm run sonar` → the scanner runs as uid 1000 and must be able to read the checkout. The scanner's download cache is the volume `ecomdemo-web-sonar_scanner-home` (`docker volume rm` it to clear).
+
 ## Where to start
 
 - [Roadmap and progress tracker](docs/ROADMAP.md)
