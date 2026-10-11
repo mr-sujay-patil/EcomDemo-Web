@@ -11,6 +11,9 @@ import { ExpiryNotice } from '@/features/auth/ExpiryNotice'
 import { SearchBox } from '@/features/search/SearchBox'
 import { useSession } from '@/features/auth/useSession'
 import { countItems, useCart } from '@/features/cart/api'
+import { countGuestItems } from '@/features/cart/guestCart'
+import { GuestCartNotice } from '@/features/cart/GuestCartNotice'
+import { useGuestCart } from '@/features/cart/useGuestCart'
 import { PageTitleContext } from './pageTitle'
 import { ThemeToggle } from './ThemeToggle'
 import './Layout.css'
@@ -37,7 +40,10 @@ export function Layout() {
   // Mounted from the first opening on, and kept: closing hides the sheet, it does not throw its conversation away.
   const [assistantMounted, setAssistantMounted] = useState(false)
   const { session, role } = useSession()
-  const cartCount = countItems(useCart().data)
+  const serverCart = useCart()
+  const guestCart = useGuestCart()
+  // Signed out, the count is the guest cart's (kept in this browser); signed in, the account's.
+  const cartCount = session === null ? countGuestItems(guestCart.lines) : countItems(serverCart.data)
   const name = pageTitle ?? handle?.title
   const title = name ? `${site.storeName} · ${name}` : site.storeName
 
@@ -130,6 +136,7 @@ export function Layout() {
         </Suspense>
       )}
       <ExpiryNotice />
+      <GuestCartNotice />
       <main id="main" className="site-main page" tabIndex={-1}>
         <PageTitleContext.Provider value={setPageTitle}>
           <UnhandledRejectionNotice />

@@ -200,3 +200,35 @@ export async function everyShelfCard(page: Page): Promise<ShelfCard[]> {
     await turnThePage(page, () => next.click())
   }
 }
+
+/**
+ * Products a visitor can put in a guest cart (Phase 24): in stock (at least 3, so the shelf offers Add to cart while other
+ * specs buy at the same time), not the admin spec's, and not the products the purchases above take, in id order. Nothing is
+ * ordered with them, so no stock is taken.
+ */
+export async function productsToBrowse(request: APIRequestContext, count: number): Promise<Product[]> {
+  const products = await allProducts(request)
+  const takenElsewhere = new Set([pickToBuy(products)?.id, pickOverTheLimit(products)?.product.id])
+  const candidates = products
+    .filter(
+      (product) => product.stockQuantity >= 3 && !changedByTheAdminSpec(product) && !takenElsewhere.has(product.id),
+    )
+    .sort((a, b) => a.id - b.id)
+  expect(candidates.length, `the backend needs ${count} products with at least 3 in stock`).toBeGreaterThanOrEqual(
+    count,
+  )
+  return candidates.slice(0, count)
+}
+
+/** The person's server-side cart through the API, as product id to quantity: what the guest cart's replay must have left there. */
+export async function cartOf(request: APIRequestContext, username: string): Promise<Record<number, number>> {
+  const login = await request.post('/api/auth/login', {
+    data: { username, password } satisfies CustomerApi['schemas']['LoginRequest'],
+  })
+  expect(login.status()).toBe(200)
+  const { accessToken } = (await login.json()) as CustomerApi['schemas']['TokenResponse']
+  const response = await request.get('/api/cart', { headers: { Authorization: `Bearer ${accessToken}` } })
+  expect(response.status()).toBe(200)
+  const cart = (await response.json()) as AppApi['schemas']['CartResponse']
+  return Object.fromEntries(cart.items.map((item) => [item.productId, item.quantity]))
+}

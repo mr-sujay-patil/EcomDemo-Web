@@ -27,7 +27,7 @@ The skip link focuses `<main>` itself (the browser scrolls to `#main` on its own
 | `/` | Products | Phase 1 (data: 8) | the shelf: where a visitor starts |
 | `/products/:id` | Product | 8 | one product: price, stock, add to cart |
 | `/search` | Search | 15 | semantic search results (or the word-matching fallback); the query and filters live in the URL |
-| `/cart` | Your cart | 12 | what the customer is about to buy |
+| `/cart` | Your cart | 12, 24 | what the customer is about to buy; signed out, the guest cart kept in this browser (Phase 24) |
 | `/checkout` | (redirect) | 13 | an old address: goes to `/cart`, where the order is placed |
 | `/orders` | Your orders | 14 | the customer's order history |
 | `/orders/:id` | Order | 13, 14 | one order and its status |
@@ -42,7 +42,7 @@ No route is a placeholder any more (the last one, `/admin`, became the console i
 
 ## Code splitting
 
-`/cart`, `/orders/:id` and `/admin/*` use the route's `lazy` property: the page's module is a separate file (`CartPage-*.js`, `OrderPage-*.js`, `AdminPage-*.js` in `dist/assets/`), downloaded only when the route is opened. `e2e/routes.spec.ts` proves the home page requests neither. If a lazy route is the *first* page a visitor loads, the router shows `HydrateFallback` ("Loading…") until the chunk arrives; without it the router warns in development.
+`/cart`, `/orders/:id` and `/admin/*` use the route's `lazy` property: the page's module is a separate file (`CartRoute-*.js`, which holds both the account's and the guest's cart page, `OrderPage-*.js`, `AdminPage-*.js` in `dist/assets/`), downloaded only when the route is opened. `e2e/routes.spec.ts` proves the home page requests neither. If a lazy route is the *first* page a visitor loads, the router shows `HydrateFallback` ("Loading…") until the chunk arrives; without it the router warns in development.
 
 ## Deep links need an SPA fallback
 
@@ -54,4 +54,4 @@ No route is a placeholder any more (the last one, `/admin`, became the console i
 
 ## Guards (Phase 11)
 
-Routes that need an account sit inside a `RequireRole` element (`src/features/auth/RequireRole.tsx`) in the route table: `/cart`, `/checkout`, `/orders`, `/orders/:id` and `/account` for a CUSTOMER, `/admin/*` for an ADMIN. Signed out, the guard redirects to `/sign-in?next=<address>`; signed in as the other role, it shows "Not permitted" where the page would be. The layout lets a page name itself (`usePageTitle`), which is how that page gets its own tab title. `docs/architecture/auth-flow.md` has the whole picture.
+Routes that need an account sit inside a `RequireRole` element (`src/features/auth/RequireRole.tsx`) in the route table: `/checkout`, `/orders`, `/orders/:id` and `/account` for a CUSTOMER, `/admin/*` for an ADMIN. Signed out, the guard redirects to `/sign-in?next=<address>`; signed in as the other role, it shows "Not permitted" where the page would be. `/cart` has no guard since Phase 24: `CartRoute` (`src/features/cart/CartRoute.tsx`) shows a visitor the guest cart, a customer the account's cart and an admin "Not permitted", and sends someone whose session ended on them (expired or refused) to sign in, as the guard would. The layout lets a page name itself (`usePageTitle`), which is how that page gets its own tab title. `docs/architecture/auth-flow.md` has the whole picture.

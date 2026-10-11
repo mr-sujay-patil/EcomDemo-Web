@@ -7,6 +7,7 @@ The app keeps three kinds of state, in three places, and never mixes them.
 | **Server state**: data the backend owns, which this app only holds a copy of | the product list, one product | the TanStack Query cache (`@tanstack/react-query` 5.104.0) |
 | **URL state**: what the user is looking at, which should survive a reload and be shareable | the shelf's category, sort and page | the address bar (`useSearchParams`) |
 | **Client state**: things only this browser tab knows | a form's unsent text, the session token | component state; the session in `src/features/auth/session.ts` (memory only, `useSession`); unsent text that must outlive a session in `useFormDraft` |
+| **Browser state**: what a visitor chose before signing in, which must survive a reload | the guest cart (product ids and quantities) | `localStorage`, key `ecomdemo-guest-cart-v1`, read through `createGuestCartStore` (`src/features/cart/guestCartStore.ts`, validated on every read, followed across tabs) and `useGuestCart`; Phase 24 |
 
 Server state is not component state. A copy fetched in `useEffect` has no owner: two components that need the same product fetch it twice, a retry is hand-written each time, and nothing says when the copy is too old. The cache gives every copy a key, an age and an owner.
 
@@ -54,6 +55,10 @@ A loading state says what is loading (`role="status"`) and sits in a box that ke
 ## The session and the cache (Phase 11)
 
 The signed-in person's data lives in the query cache like any server state, and is **removed whenever a session ends** (sign-out, expiry, a refused token): every query whose key does not start with `'catalog'`. So a new feature's keys are safe by default, and a catalogue key must start with `catalog` to survive (`catalogKeys` does). The session itself is not in the cache: it is a small external store (`docs/architecture/auth-flow.md`).
+
+## The guest cart (Phase 24)
+
+The guest cart is not server state: the server has no guest cart, so there is nothing to cache. It is the visitor's own choice, kept in `localStorage` because it must outlive a reload, and it holds no prices (the guest cart page asks the catalogue cache for each product by id, `productQuery`). Storage is input: every read is validated and anything malformed is discarded. When a customer signs in, `GuestCartProvider` (in `AppProviders`, inside the session) moves it into the server cart through the cart's own mutation queue, and from then on the cart is ordinary server state in the query cache.
 
 ## Errors that are not a failed call
 

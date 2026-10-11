@@ -88,7 +88,9 @@ afterEach(() => {
 beforeAll(preloadAdminConsole)
 
 describe('guards', () => {
-  it.each(['/cart', '/checkout', '/orders', '/orders/42', '/account'])(
+  // `/cart` left this list in Phase 24: a visitor sees the guest cart there (src/features/cart/GuestCartPage.test.tsx), and
+  // someone whose session ended on them is still sent to sign in from it (tested there too).
+  it.each(['/checkout', '/orders', '/orders/42', '/account'])(
     'send someone signed out from %s to sign-in',
     async (path) => {
       const { router } = renderRoute(path)

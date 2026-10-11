@@ -356,16 +356,22 @@ describe('adding to the cart from the shelf', () => {
     expect(cart.calls).toEqual(['POST 3 x1'])
   })
 
-  it('sends someone who is signed out to sign in, and back to the shelf', async () => {
+  // Phase 24 replaced "a signed-out add goes to sign-in" (Phase 12) with the guest cart: the add stays in this browser.
+  it('keeps what someone signed out adds in this browser: the button and the header count change, nothing is sent', async () => {
     const user = userEvent.setup()
     const { router } = renderRoute('/')
     await screen.findByRole('heading', { level: 2, name: 'Test Kettle' })
 
     await user.click(screen.getAllByRole('button', { name: 'Add to cart' })[0]!)
+    await user.click(screen.getByRole('button', { name: 'In your cart (1)' }))
 
-    // The sign-in page is a lazy route: the router commits the new location once its code has arrived.
-    await waitFor(() => expect(router.state.location.pathname).toBe('/sign-in'))
-    expect(router.state.location.search).toBe('?next=%2F')
+    expect(screen.getByRole('button', { name: 'In your cart (2)' })).toBeInTheDocument()
+    expect(within(screen.getByRole('banner')).getByRole('link', { name: 'Cart, 2 items' })).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/')
+    // Any request would have failed the test (no handler for a cart write): only the browser knows.
+    expect(JSON.parse(localStorage.getItem('ecomdemo-guest-cart-v1') ?? '')).toEqual({
+      items: [{ productId: expect.any(Number) as number, quantity: 2 }],
+    })
   })
 
   it('shows why an add was refused, and lets the message go', async () => {

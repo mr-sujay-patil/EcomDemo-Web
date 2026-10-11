@@ -3,6 +3,7 @@ import type { ReactNode } from 'react'
 import type { ApiError } from '@/api/errors'
 import { SessionProvider } from '@/features/auth/SessionProvider'
 import type { SessionStore } from '@/features/auth/session'
+import { GuestCartProvider } from '@/features/cart/GuestCartProvider'
 
 declare module '@tanstack/react-query' {
   // Every failed query reaches `error` as the one error type the API client produces.
@@ -23,7 +24,10 @@ export function createQueryClient() {
   return new QueryClient({ defaultOptions: { queries: { retry: false } } })
 }
 
-/** The query cache, and inside it the session (which clears that cache when it ends). `session` is for tests that start signed in. */
+/**
+ * The query cache, inside it the session (which clears that cache when it ends), and inside that the guest cart (which is
+ * replayed when a customer signs in). `session` is for tests that start signed in.
+ */
 export function AppProviders({
   client,
   session,
@@ -35,7 +39,9 @@ export function AppProviders({
 }) {
   return (
     <QueryClientProvider client={client}>
-      <SessionProvider store={session}>{children}</SessionProvider>
+      <SessionProvider store={session}>
+        <GuestCartProvider>{children}</GuestCartProvider>
+      </SessionProvider>
     </QueryClientProvider>
   )
 }

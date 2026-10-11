@@ -21,7 +21,8 @@ The session, the guards, the header's account menu and the expiry notice. Concep
 
 | Guard | Routes |
 |---|---|
-| `RequireRole role="CUSTOMER"` | `/cart`, `/checkout`, `/orders`, `/orders/:id`, `/account` |
+| `RequireRole role="CUSTOMER"` | `/checkout`, `/orders`, `/orders/:id`, `/account` |
+| `CartRoute` (its own rule, Phase 24) | `/cart`: the guest cart signed out, sign-in after an ended session, "Not permitted" for an admin |
 | `RequireRole role="ADMIN"` | `/admin/*` |
 | none | everything else, including `/sign-in` and `/register` |
 

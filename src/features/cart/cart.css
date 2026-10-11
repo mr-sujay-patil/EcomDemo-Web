@@ -53,3 +53,59 @@
 .cart-refusal p {
   margin: 0;
 }
+
+/* The guest cart (Phase 24). */
+
+.guest-summary {
+  display: grid;
+  gap: var(--space-3);
+}
+
+.guest-summary p {
+  margin: 0;
+}
+
+.guest-summary-title {
+  margin: 0;
+  font: 600 var(--fs-title)/var(--lh-title) var(--font-serif);
+  color: var(--ink-strong);
+}
+
+.guest-gone {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-4);
+  padding: var(--space-3) 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.guest-gone p {
+  margin: 0;
+  color: var(--ink);
+}
+
+.guest-stock {
+  margin: 0;
+  color: var(--ink-strong);
+}
+
+.guest-notice {
+  padding-bottom: 0;
+}
+
+.guest-notice-body {
+  display: grid;
+  justify-items: start;
+  gap: var(--space-2);
+}
+
+.guest-notice-body p,
+.guest-notice-body ul {
+  margin: 0;
+}
+
+.guest-notice-body ul {
+  padding-left: var(--space-4);
+}

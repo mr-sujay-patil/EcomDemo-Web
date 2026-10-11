@@ -19,8 +19,14 @@ async function openCart(initial = [{ productId: 1, quantity: 1 }], options = {})
 describe('the cart page', () => {
   afterEach(() => vi.useRealTimers())
 
-  it('sends someone who is signed out to sign in and back', async () => {
-    const { router } = renderRoute('/cart')
+  // Since Phase 24 someone who never signed in sees the guest cart here (GuestCartPage.test.tsx); someone whose session
+  // ended on them is still sent to sign in and back.
+  it('sends someone whose session ended to sign in and back', async () => {
+    const { router, store } = await openCart()
+
+    act(() => {
+      store.end('expired')
+    })
 
     await screen.findByRole('heading', { level: 1, name: 'Sign in' })
     expect(router.state.location.search).toBe('?next=%2Fcart')

@@ -52,8 +52,8 @@ test.describe('by navigation', () => {
     const header = page.getByRole('banner')
     const footer = page.getByRole('contentinfo')
     const steps = [
-      // Signed out, the cart asks to sign in and remembers where the person was going.
-      [header.getByRole('link', { name: 'Cart' }), 'Sign in', '/sign-in?next=%2Fcart'],
+      // Signed out, the cart is the guest cart kept in this browser (Phase 24; it asked to sign in before).
+      [header.getByRole('link', { name: 'Cart' }), 'Your cart', '/cart'],
       [header.getByRole('link', { name: 'Sign in' }), 'Sign in', '/sign-in'],
       [footer.getByRole('link', { name: 'Returns' }), 'Returns', '/returns'],
       [footer.getByRole('link', { name: 'Shipping' }), 'Shipping', '/shipping'],

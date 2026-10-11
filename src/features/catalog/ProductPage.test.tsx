@@ -1,4 +1,4 @@
-import { screen, waitFor, within } from '@testing-library/react'
+import { screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { http, HttpResponse } from 'msw'
 import { describe, expect, it } from 'vitest'
@@ -49,16 +49,17 @@ describe('the product page', () => {
     expect(screen.getByText('Other')).toBeInTheDocument()
   })
 
-  it('sends someone who is signed out to sign in, and back here', async () => {
+  // Phase 24 replaced "a signed-out add goes to sign-in" (Phase 12) with the guest cart: the add stays in this browser.
+  it('keeps what someone signed out adds in this browser, and stays on the page', async () => {
     const user = userEvent.setup()
     const { router } = renderRoute('/products/1')
     await screen.findByRole('heading', { level: 1, name: 'Test Kettle' })
 
     await user.click(screen.getByRole('button', { name: 'Add to cart' }))
 
-    // The sign-in page is a lazy route: the router commits the new location once its code has arrived.
-    await waitFor(() => expect(router.state.location.pathname).toBe('/sign-in'))
-    expect(router.state.location.search).toBe('?next=%2Fproducts%2F1')
+    expect(await screen.findByRole('button', { name: 'In your cart (1)' })).toBeInTheDocument()
+    expect(router.state.location.pathname).toBe('/products/1')
+    expect(localStorage.getItem('ecomdemo-guest-cart-v1')).toBe('{"items":[{"productId":1,"quantity":1}]}')
   })
 
   it('adds to the cart for a customer, and then says how many are in it', async () => {
