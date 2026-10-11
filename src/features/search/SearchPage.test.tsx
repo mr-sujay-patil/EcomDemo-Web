@@ -153,6 +153,19 @@ describe('the search page', () => {
       expect(await screen.findByText(/Nothing matches “zebra”/)).toBeInTheDocument()
     })
 
+    it('says it is still searching while the fallback loads the catalogue', async () => {
+      server.use(
+        searchHandlers.unavailable,
+        http.get('/api/products', async () => {
+          await delay('infinite')
+        }),
+      )
+      renderRoute('/search?q=kettle')
+
+      expect(await screen.findByText("Search by description isn't available right now")).toBeInTheDocument()
+      expect(screen.getByText('Searching…')).toHaveAttribute('role', 'status')
+    })
+
     it('shows the catalogue error when the fallback cannot load the catalogue either', async () => {
       server.use(
         searchHandlers.unavailable,

@@ -7,7 +7,14 @@ import './ErrorReference.css'
  * overflows a 360 px screen) and breaks anywhere. When the browser will not copy (no clipboard, an insecure page), the
  * button says so and the text stays selectable.
  */
-export function ErrorReference({ reference }: { reference: string }) {
+/** What the always-present status line says after a copy: nothing, that it worked, or what to do instead. */
+const COPY_STATUS = {
+  no: '',
+  yes: 'Copied.',
+  failed: 'Could not copy. Select the reference and copy it.',
+} as const
+
+export function ErrorReference({ reference }: Readonly<{ reference: string }>) {
   const [copied, setCopied] = useState<'no' | 'yes' | 'failed'>('no')
 
   async function copy() {
@@ -31,7 +38,7 @@ export function ErrorReference({ reference }: { reference: string }) {
       </Button>
       {/* Always in the page, so the screen reader hears the change. */}
       <span className="error-reference-status" role="status">
-        {copied === 'yes' ? 'Copied.' : copied === 'failed' ? 'Could not copy. Select the reference and copy it.' : ''}
+        {COPY_STATUS[copied]}
       </span>
     </div>
   )

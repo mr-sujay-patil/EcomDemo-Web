@@ -31,7 +31,7 @@ export function ConfirmDialog({
   pending,
   onConfirm,
   onClose,
-}: ConfirmDialogProps) {
+}: Readonly<ConfirmDialogProps>) {
   const dialog = useRef<HTMLDialogElement | null>(null)
 
   useEffect(() => {

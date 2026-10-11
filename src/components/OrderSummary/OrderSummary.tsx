@@ -18,7 +18,14 @@ export type OrderSummaryProps = {
   onCheckout?: () => void
 }
 
-function Row({ label, children, tone }: { label: string; children: ReactNode; tone?: 'free' | 'total' }) {
+/** "Subtotal", with the item count when there is one: "Subtotal (1 item)", "Subtotal (3 items)". */
+function subtotalLabel(itemCount: number | undefined): string {
+  if (!itemCount) return 'Subtotal'
+  const items = itemCount > 1 ? 'items' : 'item'
+  return `Subtotal (${itemCount} ${items})`
+}
+
+function Row({ label, children, tone }: Readonly<{ label: string; children: ReactNode; tone?: 'free' | 'total' }>) {
   return (
     <div className={cx('ed-sum-row', tone === 'free' && 'is-free', tone === 'total' && 'is-total')}>
       <dt>{label}</dt>
@@ -37,16 +44,12 @@ export function OrderSummary({
   loading,
   cta = 'Place order',
   onCheckout,
-}: OrderSummaryProps) {
+}: Readonly<OrderSummaryProps>) {
   return (
     <section className="ed-panel ed-summary" aria-label="Order summary">
       <h3 className="ed-summary-title">Order summary</h3>
       <dl>
-        {subtotal === undefined ? null : (
-          <Row label={`Subtotal${itemCount ? ` (${itemCount} item${itemCount > 1 ? 's' : ''})` : ''}`}>
-            {formatPrice(subtotal)}
-          </Row>
-        )}
+        {subtotal === undefined ? null : <Row label={subtotalLabel(itemCount)}>{formatPrice(subtotal)}</Row>}
         {shipping === undefined ? null : (
           <Row label="Shipping" tone={shipping ? undefined : 'free'}>
             {shipping ? formatPrice(shipping) : 'Free'}

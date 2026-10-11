@@ -53,7 +53,7 @@ export function StockPage() {
   )
 }
 
-function StockRow({ product, quantity }: { product: ProductResponse; quantity: number | undefined }) {
+function StockRow({ product, quantity }: Readonly<{ product: ProductResponse; quantity: number | undefined }>) {
   const set = useSetStock()
   const [typed, setTyped] = useState('')
   const [problem, setProblem] = useState<string | null>(null)
@@ -74,7 +74,8 @@ function StockRow({ product, quantity }: { product: ProductResponse; quantity: n
       setTyped('')
     } catch (error) {
       const { message, reference } = failureOf(error, 'The stock level was not saved.')
-      setProblem(`${message}${reference ? ` Reference for support: ${reference}` : ''}`)
+      const support = reference ? ` Reference for support: ${reference}` : ''
+      setProblem(message + support)
     }
   }
 

@@ -3,10 +3,10 @@ import { cx } from '../cx'
 import { Button } from '../Button'
 import { Price } from '../Price'
 import { ProductTile } from '../ProductTile'
+import { addLabel, STOCK_CLASS, stockLevel, stockText } from './stock'
 import './ProductCard.css'
 
-/** What the shelf says about stock: a hint, not a promise (checkout still re-checks). */
-export const LOW_STOCK = 5
+export { LOW_STOCK } from './stock'
 
 export type ProductCardProps = {
   name: string
@@ -28,6 +28,12 @@ export type ProductCardProps = {
   renderName?: (name: string) => ReactNode
 }
 
+function StockHint({ stock }: Readonly<{ stock: number | undefined }>) {
+  const level = stockLevel(stock)
+  if (level === 'none' || stock === undefined) return null
+  return <span className={cx('ed-stock', STOCK_CLASS[level])}>{stockText(level, stock)}</span>
+}
+
 export function ProductCard({
   name,
   description,
@@ -40,9 +46,8 @@ export function ProductCard({
   onAdd,
   headingLevel = 3,
   renderName,
-}: ProductCardProps) {
+}: Readonly<ProductCardProps>) {
   const out = stock === 0
-  const low = !out && stock !== undefined && stock <= LOW_STOCK
   const Heading = headingLevel === 2 ? 'h2' : 'h3'
   return (
     <article className="ed-card ed-product">
@@ -53,11 +58,7 @@ export function ProductCard({
         {description ? <p className="ed-product-desc">{description}</p> : null}
         <div className="ed-product-foot">
           <Price amount={price} compareAt={compareAt} />
-          {stock === undefined ? null : (
-            <span className={cx('ed-stock', out ? 'is-out' : low ? 'is-low' : 'is-in')}>
-              {out ? 'Out of stock' : low ? `Only ${stock} left` : `${stock} in stock`}
-            </span>
-          )}
+          <StockHint stock={stock} />
         </div>
         {onAdd ? (
           <Button
@@ -67,7 +68,7 @@ export function ProductCard({
             disabled={out}
             onClick={onAdd}
           >
-            {out ? 'Out of stock' : inCart ? `In your cart (${inCart})` : 'Add to cart'}
+            {addLabel(out, inCart)}
           </Button>
         ) : null}
       </div>

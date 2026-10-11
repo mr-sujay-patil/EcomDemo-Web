@@ -24,14 +24,15 @@ export function applyTheme(theme: Theme) {
 
 /** The colour theme: remembered in this browser only (localStorage), safe to lose. */
 export function useTheme() {
-  const [theme, setThemeState] = useState<Theme>(stored)
+  const [theme, setTheme] = useState<Theme>(stored)
 
   useEffect(() => {
     applyTheme(theme)
   }, [theme])
 
-  const setTheme = useCallback((next: Theme) => {
-    setThemeState(next)
+  // Applies the choice and remembers it; the toggle calls this, never the bare state setter.
+  const chooseTheme = useCallback((next: Theme) => {
+    setTheme(next)
     try {
       if (next === 'system') localStorage.removeItem(THEME_KEY)
       else localStorage.setItem(THEME_KEY, next)
@@ -40,5 +41,5 @@ export function useTheme() {
     }
   }, [])
 
-  return { theme, setTheme }
+  return { theme, setTheme: chooseTheme }
 }

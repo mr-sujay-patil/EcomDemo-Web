@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useState, type SubmitEvent } from 'react'
 import { Link, useSearchParams } from 'react-router'
 import { Alert } from '@/components/Alert'
 import { Button, buttonClass } from '@/components/Button'
@@ -10,7 +10,7 @@ import type { ProductResponse } from '@/features/catalog/products'
 import { categoriesOf, categoryLabel, categoryOf, OTHER } from '@/features/catalog/shelf'
 import { useAddAction } from '@/features/cart/useAddAction'
 import { isSearchUnavailable, useSearchResults } from './api'
-import { filterCatalogue, parseSearch, toSearchParams, type SearchState } from './search'
+import { filterCatalogue, parseSearch, resultsCaption, toSearchParams, type SearchState } from './search'
 import './search.css'
 
 export function SearchPage() {
@@ -18,7 +18,6 @@ export function SearchPage() {
   const state = parseSearch(params)
   const results = useSearchResults(state)
   const catalogue = useProducts()
-  const unavailable = isSearchUnavailable(results.error)
 
   return (
     <div className="search-page">
@@ -31,38 +30,49 @@ export function SearchPage() {
         categories={catalogue.data ? categoriesOf(catalogue.data).filter((category) => category !== OTHER) : []}
         apply={(next) => setParams(toSearchParams(next))}
       />
-      {state.q === '' ? (
-        <p>
-          Type what you are looking for in the box at the top. Describing what it is for works, such as “something to
-          type on”.
-        </p>
-      ) : results.isPending ? (
-        <p role="status">Searching…</p>
-      ) : results.isSuccess ? (
-        <Results products={results.data} mode="meaning" state={state} />
-      ) : unavailable ? (
-        <Fallback state={state} catalogue={catalogue} />
-      ) : (
-        <ErrorPanel error={results.error} onRetry={() => void results.refetch()} />
-      )}
+      <SearchOutcome state={state} results={results} catalogue={catalogue} />
     </div>
   )
+}
+
+/** What the search shows under the filters: a hint before a query, then loading, the results, the fallback, or the error. */
+function SearchOutcome({
+  state,
+  results,
+  catalogue,
+}: Readonly<{
+  state: SearchState
+  results: ReturnType<typeof useSearchResults>
+  catalogue: ReturnType<typeof useProducts>
+}>) {
+  if (state.q === '') {
+    return (
+      <p>
+        Type what you are looking for in the box at the top. Describing what it is for works, such as “something to type
+        on”.
+      </p>
+    )
+  }
+  if (results.isPending) return <p role="status">Searching…</p>
+  if (results.isSuccess) return <Results products={results.data} mode="meaning" state={state} />
+  if (isSearchUnavailable(results.error)) return <Fallback state={state} catalogue={catalogue} />
+  return <ErrorPanel error={results.error} onRetry={() => void results.refetch()} />
 }
 
 function Filters({
   state,
   categories,
   apply,
-}: {
+}: Readonly<{
   state: SearchState
   categories: string[]
   apply: (next: SearchState) => void
-}) {
+}>) {
   const [error, setError] = useState<string | null>(null)
   // A shared link may name a category the catalogue no longer has: keep it so the control still says what is filtered.
   const options = state.category && !categories.includes(state.category) ? [...categories, state.category] : categories
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     const data = new FormData(event.currentTarget)
     const text = (name: string) => {
@@ -133,32 +143,35 @@ function Filters({
 }
 
 /** Search by meaning is off: say so, then filter the catalogue by the words typed. */
-function Fallback({ state, catalogue }: { state: SearchState; catalogue: ReturnType<typeof useProducts> }) {
+function Fallback({ state, catalogue }: Readonly<{ state: SearchState; catalogue: ReturnType<typeof useProducts> }>) {
   return (
     <>
       <Alert tone="info" title="Search by description isn't available right now">
         We are matching the words you typed against product names and descriptions instead.
       </Alert>
-      {catalogue.isPending ? (
-        <p role="status">Searching…</p>
-      ) : catalogue.isError ? (
-        <ErrorPanel error={catalogue.error} onRetry={() => void catalogue.refetch()} />
-      ) : (
-        <Results products={filterCatalogue(catalogue.data, state)} mode="words" state={state} />
-      )}
+      <FallbackResults state={state} catalogue={catalogue} />
     </>
   )
+}
+
+function FallbackResults({
+  state,
+  catalogue,
+}: Readonly<{ state: SearchState; catalogue: ReturnType<typeof useProducts> }>) {
+  if (catalogue.isPending) return <p role="status">Searching…</p>
+  if (catalogue.isError) return <ErrorPanel error={catalogue.error} onRetry={() => void catalogue.refetch()} />
+  return <Results products={filterCatalogue(catalogue.data, state)} mode="words" state={state} />
 }
 
 function Results({
   products,
   mode,
   state,
-}: {
+}: Readonly<{
   products: ProductResponse[]
   mode: 'meaning' | 'words'
   state: SearchState
-}) {
+}>) {
   const prefetch = usePrefetchProduct()
   const cart = useAddAction()
   return (
@@ -170,11 +183,7 @@ function Results({
       ) : null}
       {/* aria-live: a changed count is announced without being a loading message. */}
       <p className="ed-caption" aria-live="polite">
-        {products.length === 0
-          ? `Nothing matches “${state.q}”. Try other words, or fewer filters.`
-          : `${products.length} ${products.length === 1 ? 'product' : 'products'}, ${
-              mode === 'meaning' ? 'best match first' : 'matched on words in the name and description'
-            }`}
+        {resultsCaption(products.length, state.q, mode)}
       </p>
       {/* The server's order is the ranking: no sorting here. */}
       <ul className="search-grid">

@@ -79,6 +79,8 @@ export function ImportPage() {
                 </tr>
               </thead>
               <tbody>
+                {/* A CSV line has no id and may repeat; the table is rebuilt for each file, so its line number is its key
+                    (Sonar S6479 accepted in sonar-project.properties, web KI-038). */}
                 {preview.rows.map((row, index) => (
                   <tr key={index}>
                     {IMPORT_HEADER.map((name, column) => (
@@ -119,20 +121,21 @@ function Result({
   result,
   restarting,
   onRestart,
-}: {
+}: Readonly<{
   result: ImportResult
   restarting: boolean
   onRestart: () => void
-}) {
+}>) {
   const { execution } = result
   const failed = isFailed(result)
+  // A failed run is danger; a finished one that skipped rows is a warning; a clean one is a success.
+  let tone: 'danger' | 'warning' | 'success' = 'success'
+  if (failed) tone = 'danger'
+  else if (execution.skipCount > 0) tone = 'warning'
   return (
     <section className="stack" aria-labelledby="result-title">
       <h2 id="result-title">Result</h2>
-      <Alert
-        tone={failed ? 'danger' : execution.skipCount > 0 ? 'warning' : 'success'}
-        title={failed ? `The import ended as ${execution.status}.` : 'The import finished.'}
-      >
+      <Alert tone={tone} title={failed ? `The import ended as ${execution.status}.` : 'The import finished.'}>
         {execution.failureMessage ? <p>{execution.failureMessage}</p> : null}
       </Alert>
       <dl className="admin-facts">

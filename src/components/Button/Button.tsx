@@ -40,7 +40,8 @@ export function Button({
       aria-busy={loading || undefined}
       className={buttonClass({ variant, size, block, iconOnly: !children, className })}
     >
-      {loading ? <span className="ed-spinner" aria-hidden /> : icon ? <Icon name={icon} size={iconSize} /> : null}
+      {loading ? <span className="ed-spinner" aria-hidden /> : null}
+      {!loading && icon ? <Icon name={icon} size={iconSize} /> : null}
       {children ? <span>{children}</span> : null}
       {iconRight ? <Icon name={iconRight} size={iconSize} /> : null}
     </button>

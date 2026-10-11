@@ -15,7 +15,7 @@ function useReference(error: unknown) {
   return reference
 }
 
-function Explanation({ reference }: { reference: string }) {
+function Explanation({ reference }: Readonly<{ reference: string }>) {
   return (
     <div className="stack">
       <p>
@@ -31,7 +31,7 @@ function Explanation({ reference }: { reference: string }) {
  * The page when the layout itself broke, or something outside the router did: nothing of the shop can be assumed, so this
  * stands alone (its own `main`, a plain link home that reloads the whole app).
  */
-export function RootErrorPage({ error }: { error: unknown }) {
+export function RootErrorPage({ error }: Readonly<{ error: unknown }>) {
   const reference = useReference(error)
   return (
     <main className="page stack" role="alert">
@@ -55,7 +55,7 @@ export function RootRouteError() {
  * The page in place of one route's content when it broke: the header and footer around it (the layout) keep working, so
  * the shopper can still search, open the cart or go elsewhere.
  */
-export function RouteErrorPage({ error }: { error: unknown }) {
+export function RouteErrorPage({ error }: Readonly<{ error: unknown }>) {
   const reference = useReference(error)
   return (
     <div className="stack" role="alert">
@@ -76,7 +76,7 @@ export function RouteError() {
 }
 
 /** Shown by the unhandled-rejection handler: the same reference, as an alert on the page that is already there. */
-export function RejectionAlert({ reference, onClose }: { reference: string; onClose: () => void }) {
+export function RejectionAlert({ reference, onClose }: Readonly<{ reference: string; onClose: () => void }>) {
   return (
     <Alert tone="danger" title="Something did not work in the background" onClose={onClose}>
       <ErrorReference reference={reference} />

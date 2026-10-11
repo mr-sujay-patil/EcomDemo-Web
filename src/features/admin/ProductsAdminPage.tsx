@@ -2,8 +2,7 @@ import { useState } from 'react'
 import { Link, useLocation } from 'react-router'
 import { usePageTitle } from '@/app/pageTitle'
 import { Alert } from '@/components/Alert'
-import { buttonClass } from '@/components/Button'
-import { Button } from '@/components/Button'
+import { Button, buttonClass } from '@/components/Button'
 import { ErrorPanel } from '@/components/ErrorPanel'
 import { TextField } from '@/components/TextField'
 import { formatPrice } from '@/lib/money'
@@ -97,7 +96,7 @@ export function ProductsAdminPage() {
 }
 
 /** Typing the product's name is the confirmation: a delete cannot be done by a stray click or Enter. */
-function DeleteDialog({ product, onClose }: { product: ProductResponse | null; onClose: () => void }) {
+function DeleteDialog({ product, onClose }: Readonly<{ product: ProductResponse | null; onClose: () => void }>) {
   const [typed, setTyped] = useState('')
   const [failure, setFailure] = useState<Failure | null>(null)
   const [done, setDone] = useState<string | null>(null)

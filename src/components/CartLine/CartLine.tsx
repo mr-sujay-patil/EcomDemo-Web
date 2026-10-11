@@ -37,7 +37,7 @@ export function CartLine({
   max,
   onQuantity,
   onRemove,
-}: CartLineProps) {
+}: Readonly<CartLineProps>) {
   return (
     <div className="ed-cartline-wrap">
       <div className="ed-cartline">

@@ -23,6 +23,13 @@ const when = new Intl.DateTimeFormat('en-IN', { dateStyle: 'medium', timeStyle: 
 const shown = (iso: string | undefined) =>
   iso && !Number.isNaN(Date.parse(iso)) ? when.format(new Date(iso)) : undefined
 
+/** The badge the order shows: settled as CONFIRMED or CANCELLED, PENDING while it is still being worked out. */
+function badgeOf(phase: OrderPhase): 'CONFIRMED' | 'CANCELLED' | 'PENDING' {
+  if (phase === 'confirmed') return 'CONFIRMED'
+  if (phase === 'cancelled') return 'CANCELLED'
+  return 'PENDING'
+}
+
 export function OrderPage() {
   const id = parseId(useParams().id)
   usePageTitle(id === null ? 'Order' : `Order #${id}`)
@@ -80,7 +87,7 @@ export function OrderPage() {
 
   const { items, totalAmount, placedAt } = order.data
   const reason = status.data?.reason || order.data.statusReason || undefined
-  const badge = phase === 'confirmed' ? 'CONFIRMED' : phase === 'cancelled' ? 'CANCELLED' : 'PENDING'
+  const badge = badgeOf(phase)
   // The API does not say which step failed; a declined payment says so in its words.
   const failedAt: SagaStep = reason?.startsWith('Payment declined') ? 'payment' : 'stock'
   const settledAt = shown(status.data?.changedAt ?? order.data.statusChangedAt)
@@ -125,11 +132,11 @@ function Outcome({
   phase,
   reason,
   items,
-}: {
+}: Readonly<{
   phase: OrderPhase
   reason: string | undefined
   items: { productId: number; productName: string; quantity: number }[]
-}) {
+}>) {
   if (phase === 'confirmed') {
     return (
       <>
@@ -168,10 +175,10 @@ function Outcome({
 function Cancelled({
   reason,
   items,
-}: {
+}: Readonly<{
   reason: string | undefined
   items: { productId: number; productName: string; quantity: number }[]
-}) {
+}>) {
   const add = useAddToCart()
   const navigate = useNavigate()
   const [failed, setFailed] = useState<string[]>([])

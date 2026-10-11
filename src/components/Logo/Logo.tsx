@@ -11,7 +11,7 @@ export type LogoProps = {
 }
 
 /** A shipping tag on a loose string, and the wordmark. Outlined, so it needs no font. */
-export function Logo({ variant = 'full', height = 28, className }: LogoProps) {
+export function Logo({ variant = 'full', height = 28, className }: Readonly<LogoProps>) {
   const width = variant === 'mark' ? 32 : 42 + MARK.width
   return (
     <svg

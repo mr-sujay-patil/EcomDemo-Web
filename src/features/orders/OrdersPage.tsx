@@ -112,7 +112,7 @@ export function OrdersPage() {
 }
 
 /** The badge, and for a cancelled order the server's reason under it. */
-function Status({ order }: { order: Order }) {
+function Status({ order }: Readonly<{ order: Order }>) {
   return (
     <>
       <StatusBadge status={order.status} />

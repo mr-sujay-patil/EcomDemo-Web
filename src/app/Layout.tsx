@@ -30,6 +30,18 @@ function isRouteHandle(handle: unknown): handle is RouteHandle {
   return typeof handle === 'object' && handle !== null && 'title' in handle && typeof handle.title === 'string'
 }
 
+function skipToContent(event: MouseEvent<HTMLAnchorElement>) {
+  // The browser would scroll to #main but not always move focus there.
+  event.preventDefault()
+  document.getElementById('main')?.focus()
+}
+
+/** The cart button's name: the count when there is one, so a screen reader hears it without the badge. */
+function cartLabel(count: number): string {
+  if (!count) return 'Cart'
+  return `Cart, ${count} ${count === 1 ? 'item' : 'items'}`
+}
+
 export function Layout() {
   const { pathname } = useLocation()
   const matches = useMatches()
@@ -64,12 +76,6 @@ export function Layout() {
     heading.tabIndex = -1
     heading.focus()
   }, [pathname])
-
-  function skipToContent(event: MouseEvent<HTMLAnchorElement>) {
-    // The browser would scroll to #main but not always move focus there.
-    event.preventDefault()
-    document.getElementById('main')?.focus()
-  }
 
   return (
     <div className="site">
@@ -124,7 +130,7 @@ export function Layout() {
           <Link
             to="/cart"
             className={buttonClass({ variant: 'secondary', iconOnly: true })}
-            aria-label={cartCount ? `Cart, ${cartCount} ${cartCount === 1 ? 'item' : 'items'}` : 'Cart'}
+            aria-label={cartLabel(cartCount)}
           >
             <Icon name="cart" size={18} />
           </Link>

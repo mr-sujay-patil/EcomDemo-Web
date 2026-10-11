@@ -163,8 +163,8 @@ describe('the sign-in page', () => {
       await submit(user)
       await heading('Everything for the desk')
 
-      expect(localStorage.length).toBe(0)
-      expect(sessionStorage.length).toBe(0)
+      expect(localStorage).toHaveLength(0)
+      expect(sessionStorage).toHaveLength(0)
       expect(document.cookie).toBe('')
       expect(router.state.location.search + router.state.location.hash).not.toContain('a.b.c')
       expect(container).not.toHaveTextContent('a.b.c')

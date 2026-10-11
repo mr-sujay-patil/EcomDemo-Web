@@ -42,7 +42,7 @@ function cachedName(queryClient: QueryClient, productId: number): string | undef
  * is not repeated, web KI-037), through the cart's own mutation queue, and then reads the server cart again. An admin's sign-in replays nothing. When the session ends the report goes too. Must sit inside the
  * `SessionProvider` (it needs the session and the query cache).
  */
-export function GuestCartProvider({ children }: { children: ReactNode }) {
+export function GuestCartProvider({ children }: Readonly<{ children: ReactNode }>) {
   const [store] = useState(createGuestCartStore)
   const { store: sessions } = useSessionContext()
   const { session, role } = useSession()

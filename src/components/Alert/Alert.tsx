@@ -11,7 +11,7 @@ const ALERT_ICON: Record<Tone, IconName> = { info: 'info', success: 'check', war
 export type AlertProps = { tone?: Tone; title?: string; children?: ReactNode; onClose?: () => void }
 
 /** `danger` is announced at once (`role="alert"`); the others politely (`role="status"`). */
-export function Alert({ tone = 'info', title, children, onClose }: AlertProps) {
+export function Alert({ tone = 'info', title, children, onClose }: Readonly<AlertProps>) {
   return (
     <div className={cx('ed-alert', `ed-alert--${tone}`)} role={tone === 'danger' ? 'alert' : 'status'}>
       <Icon name={ALERT_ICON[tone]} size={20} />

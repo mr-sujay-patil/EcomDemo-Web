@@ -40,7 +40,11 @@ export function categoryOf(product: ProductResponse): string {
 /** The filter's choices, derived from the products: alphabetical, with "Other" last. */
 export function categoriesOf(products: readonly ProductResponse[]): string[] {
   const names = [...new Set(products.map(categoryOf))]
-  return names.sort((a, b) => (a === OTHER ? 1 : b === OTHER ? -1 : a.localeCompare(b, 'en')))
+  return names.sort((a, b) => {
+    if (a === OTHER) return 1
+    if (b === OTHER) return -1
+    return a.localeCompare(b, 'en')
+  })
 }
 
 function isSortKey(value: string | null): value is SortKey {
@@ -113,5 +117,6 @@ export function stockHint(quantity: number): string {
 }
 
 export function stockTone(quantity: number): 'out' | 'low' | 'in' {
-  return quantity <= 0 ? 'out' : quantity <= LOW_STOCK_THRESHOLD ? 'low' : 'in'
+  if (quantity <= 0) return 'out'
+  return quantity <= LOW_STOCK_THRESHOLD ? 'low' : 'in'
 }

@@ -68,9 +68,6 @@ export function CartPage() {
     place.error instanceof ApiError && place.error.status === 409 ? parseStockRefusal(place.error.message) : null
   const refusedLine = refusal ? items.find((item) => item.productName === refusal.productName) : undefined
   const failure = setQuantity.error ?? remove.error ?? add.error ?? (refusedLine ? null : place.error)
-  // The shop is busy (a checkout it shed, or a slow stock check): not "your order failed". The cart is kept, and the answer says
-  // when to try again; the button stays, and the order is never sent twice by itself.
-  const busy = failure === place.error && failure instanceof ApiError && failure.status === 503
   const dismiss = () => {
     setQuantity.reset()
     remove.reset()
@@ -80,19 +77,7 @@ export function CartPage() {
   return (
     <div className="stack">
       <h1>Your cart</h1>
-      {failure && busy ? (
-        <Alert tone="warning" title="The shop is busy right now" onClose={dismiss}>
-          Your cart is kept. {retryHint(failure) ?? 'Try again in a moment.'}
-        </Alert>
-      ) : failure ? (
-        <Alert
-          tone="danger"
-          title={failure === place.error ? 'Your order was not placed' : 'Your cart was not changed'}
-          onClose={dismiss}
-        >
-          {failure.message}
-        </Alert>
-      ) : null}
+      {failure ? <FailureAlert failure={failure} ordering={failure === place.error} onClose={dismiss} /> : null}
       {removed ? (
         <Alert tone="success">
           <div className="cart-undo">
@@ -128,21 +113,14 @@ export function CartPage() {
                   quantity={item.quantity}
                   notice={
                     refusal && refusedLine === item ? (
-                      <div className="cart-refusal" role="alert">
-                        <p>{place.error?.message}</p>
-                        {refusal.available > 0 ? (
-                          <button
-                            type="button"
-                            className={buttonClass({ variant: 'secondary', size: 'sm' })}
-                            onClick={() => {
-                              place.reset()
-                              setQuantity.mutate({ productId: item.productId, quantity: refusal.available })
-                            }}
-                          >
-                            {`Lower to ${refusal.available}`}
-                          </button>
-                        ) : null}
-                      </div>
+                      <StockRefusalNotice
+                        message={place.error?.message}
+                        available={refusal.available}
+                        onLower={() => {
+                          place.reset()
+                          setQuantity.mutate({ productId: item.productId, quantity: refusal.available })
+                        }}
+                      />
                     ) : null
                   }
                   onQuantity={(quantity) => {
@@ -166,6 +144,49 @@ export function CartPage() {
           </div>
         </div>
       )}
+    </div>
+  )
+}
+
+/**
+ * A refused change or order, shown on top. The shop being busy (a checkout it shed, or a slow stock check) is not "your
+ * order failed": the cart is kept, the answer says when to try again, the button stays, and the order is never sent twice
+ * by itself.
+ */
+function FailureAlert({
+  failure,
+  ordering,
+  onClose,
+}: Readonly<{ failure: Error; ordering: boolean; onClose: () => void }>) {
+  const busy = ordering && failure instanceof ApiError && failure.status === 503
+  if (busy) {
+    return (
+      <Alert tone="warning" title="The shop is busy right now" onClose={onClose}>
+        Your cart is kept. {retryHint(failure) ?? 'Try again in a moment.'}
+      </Alert>
+    )
+  }
+  return (
+    <Alert tone="danger" title={ordering ? 'Your order was not placed' : 'Your cart was not changed'} onClose={onClose}>
+      {failure.message}
+    </Alert>
+  )
+}
+
+/** A 409 about one line's stock, next to that line, with a button to lower it to what is left when anything is. */
+function StockRefusalNotice({
+  message,
+  available,
+  onLower,
+}: Readonly<{ message: string | undefined; available: number; onLower: () => void }>) {
+  return (
+    <div className="cart-refusal" role="alert">
+      <p>{message}</p>
+      {available > 0 ? (
+        <button type="button" className={buttonClass({ variant: 'secondary', size: 'sm' })} onClick={onLower}>
+          {`Lower to ${available}`}
+        </button>
+      ) : null}
     </div>
   )
 }

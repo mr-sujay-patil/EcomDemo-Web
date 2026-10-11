@@ -1,4 +1,4 @@
-import type { FormEvent, ReactNode } from 'react'
+import type { SubmitEvent, ReactNode } from 'react'
 import { Button } from '../Button'
 import { Logo } from '../Logo'
 import { TextField } from '../TextField'
@@ -34,8 +34,8 @@ export function Header({
   account,
   cart,
   tools,
-}: HeaderProps) {
-  function submit(event: FormEvent<HTMLFormElement>) {
+}: Readonly<HeaderProps>) {
+  function submit(event: SubmitEvent<HTMLFormElement>) {
     event.preventDefault()
     const query = new FormData(event.currentTarget).get('q')
     onSearch?.(typeof query === 'string' ? query : '')

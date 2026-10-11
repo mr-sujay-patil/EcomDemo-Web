@@ -22,7 +22,7 @@ export function QuantityStepper({
   max = 99,
   onChange,
   label = 'Quantity',
-}: QuantityStepperProps) {
+}: Readonly<QuantityStepperProps>) {
   const [inner, setInner] = useState(defaultValue)
   const current = value ?? inner
   function set(next: number) {

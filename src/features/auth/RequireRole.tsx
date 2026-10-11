@@ -9,7 +9,7 @@ import { useSession } from './useSession'
  * afterwards. Signed in as the wrong role: "Not permitted", in place (a 403 is not a login prompt). The guard only
  * mirrors the server, which checks every call; it is never the protection.
  */
-export function RequireRole({ role }: { role: Role }) {
+export function RequireRole({ role }: Readonly<{ role: Role }>) {
   const { session, role: mine } = useSession()
   const location = useLocation()
 
