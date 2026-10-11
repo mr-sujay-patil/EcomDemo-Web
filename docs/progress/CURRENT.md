@@ -5,21 +5,21 @@
 - **Updated:** 2026-10-11
 - **Task:** Fix KI-032: a 5xx reference the gateway answered itself (catalogue down, `/fallback/catalog`) finds the gateway's log line in Loki and the trace in Tempo, now that backend KI-035 is fixed (backend PR #94, merge `a85202fefc0e1390f63bda4c93ce85c3b8266f60`). `docs/KNOWN_ISSUES.md` row KI-032 (Backend gaps table); Phase 23 Done-when: "the reference finds the gateway's log line and the trace"
 - **Branch:** `fix/ki-032-gateway-reference` (cut from `main` at `dbd1ba0`, the merge of PR #46; KI-038 merged and merge-verified there)
-- **Step:** BRANCHED
-- **Backend pinned at:** commit `669a9ed1dfcc8ef0d89608c87ef05421bb157fb6`; this fix moves it to `a85202fefc0e1390f63bda4c93ce85c3b8266f60` (backend KI-035)
+- **Step:** TESTING
+- **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` (backend PR #94, KI-035; moved from `669a9ed` in `d16a81f`)
 - **Waiting for user:** NO
 
 ## Checklist
 - [x] Pre-flight: KI-038 merged (`dbd1ba0`) and merge-verified; branch cut; KI-032 In progress
-- [ ] Pin moved to `a85202f` everywhere it is written; the delta since `669a9ed` checked for contract changes (controllers, DTOs, OpenAPI, compose)
-- [ ] Regression check: the real service-down spec finds the on-screen reference's gateway line in Loki and its server span in Tempo (`span.correlation_id`); helpers unit-tested
-- [ ] `docs/troubleshooting.md` Path 2 rewritten (Loki and TraceQL by the reference; the derived link); Phase 23 test report note
-- [ ] Decisions `[Fix KI-032]`; KI-032 Fixed; development-environment pin row
+- [x] Pin moved to `a85202f` everywhere it is written; delta since `669a9ed` checked: no controller, DTO, route, OpenAPI, compose, Dockerfile or application config change (`git diff`; `api:check` live only in CI)
+- [x] Regression check: the real service-down spec finds both references' gateway line in Loki and trace in Tempo (`span.correlation_id`); `scripts/observability.ts` unit-tested (20). Not runnable here (backend build has no network from Docker builds)
+- [x] `docs/troubleshooting.md` Path 2 rewritten (Loki and TraceQL by the reference; the derived link); Phase 23 test report note
+- [x] Decisions `[Fix KI-032]` x3; KI-032 Fixed (PR number pending); KI-039 recorded (Alloy keeps project `ecomdemo` only); development-environment pin row
 - [ ] Full `npm ci && npm run verify`; e2e/perf (local if a backend stack can be built here, otherwise CI)
 - [ ] PR opened
 
 ## Next action
-Move the pin (`chore(backend): pin a85202f (backend KI-035)`): `.github/workflows/ci.yml`, `.github/workflows/backend-images.yml`, `README.md`, `docs/process/development-environment.md` (old pin into "Previous pins"), a `docs/decisions.md` line. Then the regression check in `e2e/observability.spec.ts` ("really stopped").
+Finish the full `npm ci && npm run verify` (running), then push and open the PR `Fix KI-032: ...`, put its number into KI-032's status and this file (PR_OPEN), push, STOP.
 
 ## ⚠️ Environment notes (this machine)
 - This session runs in a cloud container (not the owner's WSL machine): Node 24 at `/opt/node24/bin`; the backend team's working copy is `/home/user/ecomdemo` (read only, never checked out or changed); a read-only clone for this fix is at `/home/user/ecomdemo-backend-readonly` (`a85202f`, push URL `no-push`).
