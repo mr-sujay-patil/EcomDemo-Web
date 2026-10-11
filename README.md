@@ -154,10 +154,10 @@ Then open **http://localhost:9010/dashboard?id=ecomdemo-web** and sign in as `ad
 |---|---|
 | `compose.sonar.yaml` | SonarQube (`26.9.0.129388-community`, the backend's build) and PostgreSQL, project `ecomdemo-web-sonar`, port **127.0.0.1:9010**: its own names, volumes and port, so it runs beside the backend team's SonarQube on 9000 |
 | `scripts/sonar-setup.sh` | the quality gate as code (`EcomDemo Web way`): every condition on new code, coverage ≥ 80 %, no new issue, duplication ≤ 3 %, every hotspot reviewed, reliability and security A. Idempotent; `--no-token` skips the new token |
-| `sonar-project.properties` | what is analysed: `src/`, tests as tests, `src/api/generated/` left out, coverage from `coverage/lcov.info` |
+| `sonar-project.properties` | what is analysed: `src/`, tests as tests, `src/api/generated/` left out, coverage from `coverage/lcov.info`; and the three rules accepted on purpose, each with its reason (web KI-038) |
 | `scripts/sonar-scan.sh` (`npm run sonar`) | the pinned `sonar-scanner-cli` image on the stack's network, the repository mounted read-only; fails when the gate fails |
 
-The gate looks only at **new code**, so the first analysis passes with nothing to judge, and from then on each change must meet it. Coverage and duplication conditions are skipped by SonarQube for changes under 20 new lines. The first analysis's findings are web KI-038.
+The gate looks only at **new code**, so the first analysis passes with nothing to judge, and from then on each change must meet it. Coverage and duplication conditions are skipped by SonarQube for changes under 20 new lines. The first analysis's 144 findings (web KI-038) were fixed or accepted with a reason, so the dashboard starts at zero: any issue it shows is new.
 
 If it does not start: `docker logs ecomdemo-web-sonarqube`. "max virtual memory areas … too low" → `sudo sysctl -w vm.max_map_count=524288` on the host. "high disk watermark … exceeded" or "Fail to execute es request" → Elasticsearch wants at least 10 to 15 % of the disk free. `AccessDeniedException: /usr/src` from `npm run sonar` → the scanner runs as uid 1000 and must be able to read the checkout. The scanner's download cache is the volume `ecomdemo-web-sonar_scanner-home` (`docker volume rm` it to clear).
 
