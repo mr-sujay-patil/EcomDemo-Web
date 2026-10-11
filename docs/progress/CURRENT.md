@@ -17,10 +17,11 @@
 - [x] Docs: `docs/performance.md` (Fix KI-027 section, local stand-in numbers: photo load delay 2183 → 741 ms), `docs/security.md`, decisions `[Fix KI-027]` x8, KI-027 Fixed (PR #49; CI numbers after the perf job)
 - [x] Full `npm ci && npm run verify` exit 0 (1083 tests, 88 files; was 1054); `createRetryingFetch` now requires its sender (the client always passes one; the unused default broke 100% coverage). e2e, perf only in CI (no backend buildable here)
 - [x] PR opened (#49)
-- [ ] CI green on PR #49; its perf numbers (with the calibration line) added to KI-027 and `docs/performance.md`
+- [x] CI run 1 (`a31c92d`) green but LCP barely moved (shelf 2.88 s, product 2.77 s): the calibration read a warm Chrome (phones 920 to 955) and the early request waited for `theme-init.js` (load delay 1810 ms). Fixed: script first in `<head>` (`5cd8c52`), fresh-Chrome benchmark (`80e7ed3`); reproduced and checked against the nginx image here
+- [x] CI run 2 (`80e7ed3`, run 38158715384) green: 1.98x; shelf 2.87 s, product 2.63 s (load delay 1082 ms); both still over 2.5 s → KI-042 (Open, owner). guest-cart flake with a backend 500 → KI-041 (Needs check). Numbers in KI-027 and `docs/performance.md`
 
 ## Next action
-Wait for CI on PR #49 and fix it if red. From its perf job log, copy the median table and the "CPU calibration" line into KI-027's row and `docs/performance.md` ("After the fix", replacing the placeholder sentence); if both pages are under 2.5 s with a margin above about 0.15 s, propose promoting LCP to an error (the owner decides). Then STOP for `approved, merge it`. After the merge: local `npm ci && npm run verify` on `main`, CI on `main` green, then give the owner the tag `ki-027-fixed` as a command.
+Wait for CI on the docs commit, then STOP for the owner's review and `approved, merge it`. LCP stays a warning (both pages over 2.5 s; KI-042 needs the owner: first `npm run perf` on the reference desktop with the current build). After the merge: local `npm ci && npm run verify` on `main`, CI on `main` green, then give the owner the tag `ki-027-fixed` as a command.
 
 ## ⚠️ Environment notes (this machine)
 - This session runs in a cloud container (not the owner's WSL machine): Node 24 at `/opt/node24/bin`; the backend team's working copy is `/home/user/ecomdemo` (read only, never checked out or changed); a read-only clone is at `/home/user/ecomdemo-backend-readonly` (`a85202f`, push URL `no-push`).

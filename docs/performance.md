@@ -7,7 +7,7 @@ How fast the shop is on a simulated phone (Lighthouse benchmark index about 1100
 | Budget | Where it is checked | Fails the build? |
 |---|---|---|
 | Lighthouse performance score at least 90 | `lighthouserc.cjs`, the shelf and a product page, cold | yes |
-| LCP at most 2.5 s | the shelf and a product page, with the CPU slowdown calibrated to the machine (web KI-027) | **warning only, for now**: to be promoted to a failure once CI shows both pages under it with the calibrated slowdown (see "Fix KI-027") |
+| LCP at most 2.5 s | the shelf and a product page, with the CPU slowdown calibrated to the machine (web KI-027) | **warning only, for now**: both pages are still over it on CI with the calibrated slowdown (web KI-042); to be promoted to a failure once both are under it with a margin |
 | CLS at most 0.1 | the shelf and a product page | yes |
 | CLS at most 0.1, blocking time at most 200 ms, a click answered within 200 ms | the cart and an order, signed in (`scripts/perf-flows.mjs`) | yes |
 | JavaScript on the shelf at most 170 KB gzipped | `scripts/check-budgets.mjs` (every `npm run verify`) and Lighthouse (bytes as sent) | yes |
@@ -72,7 +72,7 @@ The flows were written after the fixes, so they have no "before". One earlier re
 
 ## What is left
 
-- **LCP is still a warning, not a failure**, until CI confirms the fix below with a margin (the owner's call to promote it).
+- **LCP is still a warning, not a failure**: after the fix both pages are still over 2.5 s on CI (shelf 2.87 s, product page 2.63 s at the calibrated slowdown). The remaining gap is web KI-042.
 - **The shelf's LCP has about 4% headroom on a fast machine** (2.40 s against 2.5 s here, 2.25 s in another run) and none on CI (2.46 to 2.89 s). Another 10 KB of JavaScript would cost it further.
 - **No Brotli.** nginx's `alpine-slim` image has no Brotli module; Brotli would take roughly another 10% off the JavaScript.
 - **HTTP/2** is not used between the browser and the container (it needs TLS); the Ingress or a CDN would add it.
@@ -86,16 +86,32 @@ Before the fix (CI, PR #48's perf run, benchmark index about 2345, constant 4x):
 
 **2. A cold product page asks for its data from `index.html`.** A small inline script recognises `/products/:id` (the same ids the page accepts), issues the same GET the app makes (same URL, `Accept`, a fresh `X-Correlation-Id`; no token, a product read is public and a fresh page has none) and leaves the promise on `window.__ecomdemoEarly`. The API client takes it, once, instead of asking again (`src/api/earlyRequest.ts`), under its usual middleware and retry policy. When the answer names a same-origin photo, the script preloads it at high priority, and the img reuses that download. The chain becomes page, data, photo, with the app's JavaScript downloading at the same time. The Content-Security-Policy allows that one script by its sha256 hash (`docs/security.md`), checked by `npm run verify`. The price: a copy of the route (`/products/:id`) and of the request's shape lives in the HTML, and both are pinned by tests (`src/app/earlyProductRequest.test.ts` runs the shipped script; `e2e/catalog.spec.ts` checks one product request and one photo request in a real browser, under the production policy).
 
-After the fix: **CI's numbers go here once the PR's perf job has run** (the agent's container cannot build the backend, so the real measurement is CI's).
+**What PR #49's first CI run showed, and the two corrections it led to.** The first CI run (`a31c92d`, run 38157082130) passed but barely moved LCP: shelf 2.88 s (runs 2.87, 3.11, 2.88), product page 2.77 s (2.77, 2.77, 2.86). Its log said why, twice over:
 
-What could be measured without the backend (the agent's cloud container, 2026-10-11): the production build under `vite preview` against a stand-in API that serves three products and a 10 KB PNG (an image with real detail: Chrome leaves flat, low-detail images out of LCP), Lighthouse at a fixed 2.1x so the only difference is the early request, three runs, median. This machine was busy during the runs (each run's simulated phone was 400 to 700, not 1100), so the absolute numbers are pessimistic; the phases are the point:
+- **The calibration was warm, Lighthouse was cold.** The calibration's five samples were 2190 then 2531 to 2657 (median 2574, so 2.34x), but each Lighthouse run benchmarks in a Chrome it has just started, and those runs measured 2172 to 2232. Each run therefore simulated a phone of 920 to 955, 16% slower than the target. Now every calibration sample starts its own Chrome and takes one reading, as a Lighthouse run does. Against the nginx container here, the runs then simulated 917 to 1215 around the 1100 target.
+- **The early request waited for `theme-init.js`.** The photo's load delay was still 1810 ms. Reproduced here against the real nginx image (this branch's build on the earlier image, the same stand-in API): the inline script came after `<script src="/theme-init.js">`, which blocks the parser, so it ran only once that file had arrived. Under simulated slow 4G that file shares the link with all the JavaScript and CSS, and the product request started after them (observed at 131.6 ms, after the CSS at 115 ms). `vite preview`, used for the first local measurement, happened not to show it. The script is now first in `<head>` (same text, same hash).
 
-| Product page | LCP | The photo's load delay | Its render delay |
-|---|---|---|---|
-| Before (`main`'s `index.html`) | 2.89 s | 2183 ms | 194 ms |
-| After (the early request) | 2.76 s | **741 ms** | 1519 ms |
+Measured here against the nginx image, a stand-in API with a 10 KB detailed PNG (Chrome leaves flat, low-detail images out of LCP), three runs, median. This container is busy and slow, so absolute numbers are pessimistic; the phases are the point:
 
-The chain is broken: the photo is asked for about 1.4 s sooner and has arrived long before the page draws it. The page's LCP is now bounded by the app's own start-up (React rendering the img), which is CPU time, the same thing that bounds the shelf. On a machine that simulates the target phone (the calibration's job), that start-up is the 2.2 to 2.4 s the reference desktop measures for the shelf. The same local run with the calibration on (1.1x to 1.4x on this busy machine, before the photo was made LCP-eligible) gave the shelf 2.15 to 2.43 s.
+| Product page | Slowdown | LCP | The photo's load delay | Its render delay |
+|---|---|---|---|---|
+| Inline script after `theme-init.js` | 2.1x fixed | 2.82 s | 1817 ms | 466 ms |
+| Inline script first in `<head>` | 2.1x fixed | 2.72 s | **728 ms** | 1460 ms |
+| First in `<head>`, calibrated (fresh-Chrome benchmark) | 1.25x | 2.63 s | 767 ms | 1500 ms |
+
+The chain is broken: the photo is asked for about 1.1 s sooner and has arrived long before the page draws it. What is left is the page itself: the photo can only be drawn once the app's JavaScript (about 160 KB over slow 4G, render-blocking) has arrived and React has rendered, the same cost that bounds the shelf. Getting further under 2.5 s means less JavaScript before the first render, not an earlier photo.
+
+**PR #49's second CI run** (`80e7ed3`, run 38158715384, both corrections in), compared with the run before the fix (PR #48):
+
+| | Before (PR #48, constant 4x) | After (PR #49, calibrated) |
+|---|---|---|
+| CPU slowdown | 4x (index about 2345: a phone of about 590) | **1.98x** (fresh-Chrome median 2176: a phone of 1099; the runs simulated 748 to 1204) |
+| Shelf LCP, median (runs) | 2.89 s (2.75, 2.91, 2.89) | **2.87 s** (2.87, 2.88, 2.87) |
+| Product page LCP, median (runs) | 2.79 s (2.79, 2.78, 2.80) | **2.63 s** (2.63, 2.79, 2.63) |
+| The product photo's load delay | 1947 ms | **1082 ms** |
+| Performance score (shelf / product) | 92 / 92 | 93 / 94 |
+
+**Both pages are still over 2.5 s on CI, so LCP stays a warning.** The product page gained 0.16 s, and the rest of it is render delay (928 ms), not the chain. The shelf did not move: with the calibrated slowdown CI simulates the same phone as the reference desktop, yet the shelf is 2.87 s there against the 2.25 to 2.40 s measured on that desktop **in Phase 21, on Phase 21's build** (128 KB of JavaScript; the shelf now loads 159 KB after Phases 22 to 25). So the remaining gap looks like the page, not the runner. It is recorded as **web KI-042**: the first check is `npm run perf` on the reference desktop with the current build.
 
 ## Running it
 
