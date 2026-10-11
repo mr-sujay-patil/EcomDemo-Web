@@ -401,9 +401,8 @@ describe('the clock: one minute of warning, then the end', () => {
     renderRoute('/draft', { store: s }, table)
 
     vi.setSystemTime(Date.now() + 400_000)
-    act(() => {
-      fireEvent.focus(window)
-    })
+    // fireEvent wraps itself in act(), so the session's update is flushed before the assertion.
+    fireEvent.focus(window)
 
     expect(s.getSnapshot().endedBy).toBe('expired')
   })

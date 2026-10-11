@@ -141,8 +141,8 @@ describe('the session store', () => {
     store.start(session())
     store.end('signed-out')
 
-    expect(localStorage.length).toBe(0)
-    expect(sessionStorage.length).toBe(0)
+    expect(localStorage).toHaveLength(0)
+    expect(sessionStorage).toHaveLength(0)
     expect(document.cookie).toBe('')
   })
 })

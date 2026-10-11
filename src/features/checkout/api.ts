@@ -54,7 +54,7 @@ export function usePlaceOrder() {
         if (!(error instanceof ApiError) || error.status !== 0) throw error
         const [cart, orders] = await Promise.all([fetchCart().catch(() => null), fetchOrders().catch(() => null)])
         const newest = orders?.reduce<Order | null>((best, order) => (!best || order.id > best.id ? order : best), null)
-        if (cart && cart.items.length === 0 && newest) return newest
+        if (cart?.items.length === 0 && newest) return newest
         throw error
       }
     },

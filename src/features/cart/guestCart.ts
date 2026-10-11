@@ -76,8 +76,7 @@ const clamp = (quantity: number) => Math.max(1, Math.min(MAX_QUANTITY, Math.trun
 
 /** One more of a product (or `quantity` more), up to `MAX_QUANTITY`; a new product goes last. A full cart takes no new product. */
 export function addLine(lines: readonly GuestLine[], productId: number, quantity = 1): GuestLine[] {
-  const existing = lines.find((line) => line.productId === productId)
-  if (existing) {
+  if (lines.some((line) => line.productId === productId)) {
     return lines.map((line) =>
       line.productId === productId ? { ...line, quantity: clamp(line.quantity + quantity) } : line,
     )

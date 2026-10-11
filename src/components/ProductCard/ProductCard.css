@@ -4,6 +4,8 @@
   flex-direction: column;
   height: 100%;
   box-sizing: border-box;
+  /* A product's name can be a link that covers the whole card; the Add to cart button stays above it. */
+  position: relative;
   min-width: 0;
   font-family: var(--font-sans);
 }
@@ -59,10 +61,6 @@
 }
 .ed-stock.is-out {
   color: var(--ink-muted);
-}
-/* A product's name can be a link that covers the whole card; the Add to cart button stays above it. */
-.ed-product {
-  position: relative;
 }
 .ed-product-name a {
   color: inherit;

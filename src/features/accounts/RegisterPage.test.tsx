@@ -127,8 +127,8 @@ describe('the register page', () => {
       await submit(user)
       await screen.findByRole('heading', { level: 1, name: 'Sign in' })
 
-      expect(localStorage.length).toBe(0)
-      expect(sessionStorage.length).toBe(0)
+      expect(localStorage).toHaveLength(0)
+      expect(sessionStorage).toHaveLength(0)
     })
   })
 
