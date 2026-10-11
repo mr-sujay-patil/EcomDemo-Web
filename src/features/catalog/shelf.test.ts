@@ -66,6 +66,12 @@ describe('categories', () => {
     expect(categoriesOf(products)).toEqual(['Audio', 'Kitchen', OTHER])
   })
 
+  it('puts "Other" last wherever it comes in the products', () => {
+    const otherFirst = [product(1, 'a', 1, null), product(2, 'b', 1, 'Kitchen'), product(3, 'c', 1, 'Audio')]
+    expect(categoriesOf(otherFirst)).toEqual(['Audio', 'Kitchen', OTHER])
+    expect(categoriesOf([...otherFirst].reverse())).toEqual(['Audio', 'Kitchen', OTHER])
+  })
+
   it('groups a missing or blank category as "Other"', () => {
     expect(categoryOf(product(9, 'x', 1, null))).toBe(OTHER)
     expect(categoryOf(product(9, 'x', 1, '  '))).toBe(OTHER)
