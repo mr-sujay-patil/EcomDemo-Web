@@ -15,7 +15,7 @@
 - [x] Product page: red (`9c40776`, 11 of 15 failed), green (`0c7b455`): inline script in `index.html` (same GET, Accept + X-Correlation-Id, photo preloaded), taken once by the API client (`src/api/earlyRequest.ts`). CSP: red (`5ca2e29`, 4 of 5), green (`2b363d1`): sha256 in `nginx/security-headers.conf`, checked by `scripts/check-dist.mjs`; CI image check accepts 'self' + hashes only
 - [x] E2E (`8d153a0`): one product request under the production CSP (early request taken), one photo request with no route set (Playwright disables the cache while any route is set). Here against a stand-in API: red with `main`'s index.html (2 failed), green 6 of 6 (repeat 3)
 - [x] Docs: `docs/performance.md` (Fix KI-027 section, local stand-in numbers: photo load delay 2183 → 741 ms), `docs/security.md`, decisions `[Fix KI-027]` x8, KI-027 Fixed (PR #NN; CI numbers after the perf job)
-- [ ] Full `npm ci && npm run verify`; perf only in CI (no backend buildable here)
+- [x] Full `npm ci && npm run verify` exit 0 (1083 tests, 88 files; was 1054); `createRetryingFetch` now requires its sender (the client always passes one; the unused default broke 100% coverage). e2e, perf only in CI (no backend buildable here)
 - [ ] PR opened
 
 ## Next action
