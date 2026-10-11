@@ -5,13 +5,13 @@
 - **Updated:** 2026-10-11
 - **Task:** Phase 25: Code Quality Dashboard (SonarQube) (web KI-014, approved by the user on 2026-10-11: self-hosted SonarQube Community mirroring the backend's Phase 12; no SonarQube Cloud, no CI gate, no secret), `docs/phases/phase-25-sonarqube.md`
 - **Branch:** `feature/phase-25-sonarqube` (cut from `main` at `70d64f6`, the merge of PR #44; Phase 24 verified: CI on `main` green, tag `phase-24-complete` to push by the owner, tag pushes are refused here with 403)
-- **Step:** BRANCHED
+- **Step:** IMPLEMENTING
 - **Backend pinned at:** commit `669a9ed1dfcc8ef0d89608c87ef05421bb157fb6` (unchanged; this phase needs nothing from the backend)
 - **Waiting for user:** no
 
 ## Checklist
 - [x] Phase file, tracker (Phase 24 ✅, Phase 25 row), KI-014 moved to "Covered by an approved phase"
-- [ ] `compose.sonar.yaml` (project `ecomdemo-web-sonar`, 127.0.0.1:9010, own names and volumes, pinned tags)
+- [x] `compose.sonar.yaml` (project `ecomdemo-web-sonar`, 127.0.0.1:9010, own names and volumes, pinned tags)
 - [ ] `scripts/sonar-setup.sh` (wait, admin password from env, project, gate on new code, attach, token printed once)
 - [ ] `sonar-project.properties`, `npm run sonar` (scanner Docker image), lcov reporter in `vite.config.ts`
 - [ ] `scripts/sonar.test.ts` (config checks, no stack)
