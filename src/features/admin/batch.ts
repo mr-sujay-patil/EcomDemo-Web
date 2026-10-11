@@ -55,3 +55,12 @@ export async function fetchBackfill(executionId: number, signal?: AbortSignal): 
 /** The run is over (the poll stops). Anything unknown keeps being polled, but a screen that never ends is stopped by the person leaving. */
 export const BACKFILL_DONE = ['COMPLETED', 'FAILED', 'STOPPED', 'ABANDONED']
 export const BACKFILL_POLL_MS = 2000
+
+/** The line that says where a backfill run is: done with the count indexed, failed with the reason, or how far it got. */
+export function backfillSummary(status: BackfillStatus): string {
+  if (status.status === 'COMPLETED') {
+    return `Done: ${status.indexedProducts} of ${status.totalProducts} products are indexed.`
+  }
+  if (status.status === 'FAILED') return `The run failed. ${status.failure}`
+  return `${status.status}: ${status.written} of ${status.totalProducts} written…`
+}

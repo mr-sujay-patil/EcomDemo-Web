@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, type UseQueryResult } from '@tanstack/react-query'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { Link, useNavigate, useParams } from 'react-router'
@@ -20,7 +20,7 @@ import { TextAreaField } from './TextAreaField'
 /** `/admin/products/new` and `/admin/products/:id`. */
 export function ProductFormPage() {
   const { id: param } = useParams()
-  const id = param === undefined ? null : /^\d+$/.test(param) ? Number(param) : NaN
+  const id = productIdOf(param)
   usePageTitle(id === null ? 'New product' : 'Edit product')
 
   // A full replace must start from what the server holds now, not from a shelf cached minutes ago: stock moves with orders.
@@ -40,16 +40,32 @@ export function ProductFormPage() {
       </p>
       <h1>{id === null ? 'New product' : 'Edit product'}</h1>
       {id === null ? <ProductForm id={null} /> : null}
-      {id !== null && product.isError ? (
-        product.error instanceof ApiError && product.error.status === 404 ? (
-          <NotFound />
-        ) : (
-          <ErrorPanel error={product.error} onRetry={() => void product.refetch()} />
-        )
-      ) : null}
-      {id !== null && product.isPending && !product.isError ? <p role="status">Loading the product…</p> : null}
-      {id !== null && product.data ? <ProductForm id={id} product={product.data} /> : null}
+      {id === null ? null : <ExistingProduct id={id} product={product} />}
     </div>
+  )
+}
+
+/** `null` for a new product, the number for an id of digits only, `Number.NaN` for anything else (shown as not found). */
+function productIdOf(param: string | undefined): number | null {
+  if (param === undefined) return null
+  return /^\d+$/.test(param) ? Number(param) : Number.NaN
+}
+
+/**
+ * The edit page's body: the product's own 404, any other failure with a retry, loading, then the form. A failed refetch
+ * keeps the form (and what was typed in it) under the error, as before.
+ */
+function ExistingProduct({ id, product }: Readonly<{ id: number; product: UseQueryResult<ProductResponse> }>) {
+  const notFound = product.error instanceof ApiError && product.error.status === 404
+  return (
+    <>
+      {product.isError && notFound ? <NotFound /> : null}
+      {product.isError && !notFound ? (
+        <ErrorPanel error={product.error} onRetry={() => void product.refetch()} />
+      ) : null}
+      {product.isPending && !product.isError ? <p role="status">Loading the product…</p> : null}
+      {product.data ? <ProductForm id={id} product={product.data} /> : null}
+    </>
   )
 }
 

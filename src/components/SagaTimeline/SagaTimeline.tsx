@@ -1,15 +1,9 @@
-import { Icon, type IconName } from '../Icon'
+import { Icon } from '../Icon'
 import { StatusBadge, type OrderStatus } from '../StatusBadge'
+import { reachedIndex, STEPS, stepIcon, stepNote, stepState, type SagaStep } from './steps'
 import './SagaTimeline.css'
 
-export type SagaStep = 'placed' | 'stock' | 'payment' | 'confirmed'
-
-const STEPS: { key: SagaStep; label: string; icon: IconName }[] = [
-  { key: 'placed', label: 'Order placed', icon: 'package' },
-  { key: 'stock', label: 'Stock reserved', icon: 'drive' },
-  { key: 'payment', label: 'Payment taken', icon: 'check' },
-  { key: 'confirmed', label: 'Confirmed', icon: 'truck' },
-]
+export type { SagaStep } from './steps'
 
 export type SagaTimelineProps = {
   status?: OrderStatus
@@ -23,8 +17,6 @@ export type SagaTimelineProps = {
   times?: Partial<Record<SagaStep, string>>
 }
 
-type StepState = 'done' | 'current' | 'failed' | 'todo' | 'skipped'
-
 /** A packing slip with tick boxes. The words say what is happening; colour only backs them up. */
 export function SagaTimeline({
   status = 'PENDING',
@@ -33,10 +25,8 @@ export function SagaTimeline({
   reason,
   orderId,
   times = {},
-}: SagaTimelineProps) {
-  const indexOf = (key: SagaStep) => STEPS.findIndex((step) => step.key === key)
-  const reached =
-    status === 'CONFIRMED' ? STEPS.length : status === 'CANCELLED' ? indexOf(failedAt ?? 'stock') : indexOf(current)
+}: Readonly<SagaTimelineProps>) {
+  const reached = reachedIndex(status, current, failedAt)
   return (
     <section className="ed-saga" aria-label="Order progress">
       <header className="ed-saga-head">
@@ -45,26 +35,9 @@ export function SagaTimeline({
       </header>
       <ol className="ed-saga-steps">
         {STEPS.map((step, index) => {
-          const state: StepState =
-            index < reached
-              ? 'done'
-              : index === reached
-                ? status === 'CANCELLED'
-                  ? 'failed'
-                  : 'current'
-                : status === 'CANCELLED'
-                  ? 'skipped'
-                  : 'todo'
-          const note =
-            state === 'failed'
-              ? reason
-              : state === 'current'
-                ? 'In progress…'
-                : state === 'skipped'
-                  ? 'Not reached'
-                  : times[step.key]
-          const icon: IconName =
-            state === 'done' ? 'check' : state === 'failed' ? 'x' : state === 'current' ? 'clock' : step.icon
+          const state = stepState(index, reached, status)
+          const note = stepNote(state, reason, times[step.key])
+          const icon = stepIcon(state, step.icon)
           return (
             <li key={step.key} className={`ed-step is-${state}`}>
               <span className="ed-step-dot">

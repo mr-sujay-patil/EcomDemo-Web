@@ -1,17 +1,15 @@
-import { supportReference } from '@/api/errors'
-import { ApiError } from '@/api/errors'
+import { ApiError, supportReference } from '@/api/errors'
 import { usePageTitle } from '@/app/pageTitle'
 import { Alert } from '@/components/Alert'
 import { Button } from '@/components/Button'
 import { useBackfill } from './api'
-import { BACKFILL_DONE } from './batch'
+import { BACKFILL_DONE, backfillSummary } from './batch'
 
 export function SearchIndexPage() {
   usePageTitle('Search index')
   const { start, run } = useBackfill()
   const status = run.data
   const running = start.isPending || (status !== undefined && !BACKFILL_DONE.includes(status.status))
-  const unavailable = start.error instanceof ApiError && start.error.status === 503
 
   return (
     <div className="stack">
@@ -25,28 +23,29 @@ export function SearchIndexPage() {
           Rebuild the search index
         </Button>
       </div>
-      {start.isError ? (
-        <Alert tone="danger" title={unavailable ? 'Search is not available right now.' : start.error.message}>
-          {unavailable ? <p>No embedding model is configured on the server.</p> : null}
-          {supportReference(start.error) ? <code>{supportReference(start.error)}</code> : null}
-        </Alert>
-      ) : null}
+      {start.isError ? <StartFailure error={start.error} /> : null}
       {run.isError ? <Alert tone="danger" title={run.error.message} /> : null}
       {status ? (
         <section className="stack" aria-labelledby="run-title">
           <h2 id="run-title">Run {status.executionId}</h2>
-          <p role="status">
-            {status.status === 'COMPLETED'
-              ? `Done: ${status.indexedProducts} of ${status.totalProducts} products are indexed.`
-              : status.status === 'FAILED'
-                ? `The run failed. ${status.failure}`
-                : `${status.status}: ${status.written} of ${status.totalProducts} written…`}
-          </p>
+          <p role="status">{backfillSummary(status)}</p>
           {status.totalProducts > 0 ? (
             <progress max={status.totalProducts} value={status.written} aria-label="Products indexed in this run" />
           ) : null}
         </section>
       ) : null}
     </div>
+  )
+}
+
+/** Why the run did not start: 503 means the server has no embedding model, anything else says what the server said. */
+function StartFailure({ error }: Readonly<{ error: Error }>) {
+  const unavailable = error instanceof ApiError && error.status === 503
+  const reference = supportReference(error)
+  return (
+    <Alert tone="danger" title={unavailable ? 'Search is not available right now.' : error.message}>
+      {unavailable ? <p>No embedding model is configured on the server.</p> : null}
+      {reference ? <code>{reference}</code> : null}
+    </Alert>
   )
 }
