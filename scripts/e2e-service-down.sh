@@ -6,7 +6,7 @@
 #   SERVICE=ecomdemo-catalog-service bash scripts/e2e-service-down.sh
 # The spec also finds the on-screen reference in Loki (the gateway's own line) and in Tempo (span.correlation_id), web KI-032:
 # LOKI_URL and TEMPO_URL (default localhost:3100 and :3200; `bash scripts/backend-stack.sh env` prints the shifted ones).
-# Loki has lines only if Alloy ships this stack's logs (it keeps the compose project "ecomdemo" only: docs/troubleshooting.md).
+# Loki has lines only if Alloy ships this stack's logs: start the stack with scripts/backend-stack.sh (web KI-039). CI runs this too.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 

@@ -197,7 +197,7 @@ test.describe('with the catalogue service really stopped', () => {
     for (const id of [reference, retryReference]) {
       await expect
         .poll(async () => (await gatewayLines(id)).filter(({ line }) => line.includes('-> 503')).length, {
-          message: `the gateway's "-> 503" line for ${id} in Loki (${lokiUrl}). Empty Loki? Alloy ships only the compose project "ecomdemo": docs/troubleshooting.md`,
+          message: `the gateway's "-> 503" line for ${id} in Loki (${lokiUrl}). Empty Loki? Start the stack with scripts/backend-stack.sh (its Alloy override, web KI-039): docs/troubleshooting.md`,
           timeout: 90_000,
         })
         .toBe(1)

@@ -28,7 +28,7 @@ The read-only clone is set up once, in Phase 0:
 
 Reading it is allowed (files, `git log`, `git fetch --tags`, checking out a newer tag when the pin moves). Writing is never allowed: no commits, branches, pushes, PRs, issues or comments on the backend. Never check out a tag in `~/projects/ecomdemo`: that would move the backend team's work.
 
-> ⚠️ **Logs reach Loki only from the compose project `ecomdemo`.** The backend's Alloy config keeps containers whose project label is exactly `ecomdemo`; a clone in `ecomdemo-backend-readonly` has a project of that name, so Loki stays empty (traces are fine). To read logs here, mount a copy of `docker/alloy/config.alloy` with the project name changed through a local override file (outside both repositories); never run this clone as project `ecomdemo` (its volumes are the backend team's). Details: `docs/troubleshooting.md`; recorded as web KI-039 (CI's Loki is empty for the same reason).
+> ⚠️ **Start the clone with `scripts/backend-stack.sh`, or Loki stays empty.** The backend's Alloy config keeps containers whose compose project label is exactly `ecomdemo`, and this clone runs as project `ecomdemo-backend-readonly`. Since web KI-039 the wrapper mounts a copy of the clone's own `docker/alloy/config.alloy` with that rule pointed at this stack's project (generated at every start into `.local/backend-stack/`, ignored; a backend change it does not recognise stops the start). A plain `docker compose up` in the clone has no logs in Loki (traces are fine). Never run this clone as project `ecomdemo` (its volumes are the backend team's). Details: `docs/troubleshooting.md`.
 
 ## Running the backend stack next to the backend team's
 
@@ -37,11 +37,13 @@ The backend's compose file gives every container a fixed name (`ecomdemo-<servic
     bash scripts/backend-stack.sh up        # builds if needed, starts, waits until healthy
     eval "$(bash scripts/backend-stack.sh env)"   # API_TARGET=http://localhost:28080, GATEWAY_CONTAINER=webstack-gateway-service, LOKI_URL, TEMPO_URL (:23100, :23200)
     bash scripts/backend-stack.sh down      # stops and removes the containers, never the volumes
-    bash scripts/backend-stack.sh config    # what would run: each container name and host port
+    bash scripts/backend-stack.sh config    # what would run: each container name and host port, and Alloy's mounted config
 
 It leaves the clone untouched and starts it with a generated Compose override: containers become `webstack-<service>` and every published host port moves up by 20000 (gateway **28080**, Grafana 23000, Loki 23100, Tempo 23200, Prometheus 39090, the databases 25432 to 25437). The project name stays `ecomdemo-backend-readonly`, so networks and volumes are separate from the backend team's `ecomdemo`. Nothing inside the stack refers to a container name (the services reach each other by service name), so nothing else changes. With the shifted ports the web tools need `API_TARGET` (the dev proxy, the E2E pre-check) and `GATEWAY_CONTAINER` (`npm run e2e:docker`, `npm run perf`, `npm run e2e:service-down` find the gateway by container name): that is what `env` prints. The Windows app on 5435 no longer matters (the customer database is on 25435), so `CUSTOMER_DB_PORT` is not needed.
 
-CI is unaffected: it runs on its own runner with the backend's defaults.
+The same override mounts the Alloy config that ships this stack's logs to Loki (web KI-039, the note above).
+
+CI starts its stack with this script too, with the backend's own names and ports (`STACK_PREFIX=ecomdemo PORT_SHIFT=0`, and `NO_REBUILD=1` after loading its cached images), so it gets the same Alloy override: one code path for the laptop and the runner.
 
 ## Running the backend stack
 
