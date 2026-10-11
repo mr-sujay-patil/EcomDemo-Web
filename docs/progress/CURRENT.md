@@ -3,27 +3,25 @@
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
 - **Updated:** 2026-10-11
-- **Task:** Fix KI-039 (web side, approved by the owner 2026-10-11: "KI-039 web-side"): Loki gets no logs from this repo's backend stacks, because the backend's Alloy keeps only the compose project `ecomdemo`. This repo applies the Alloy override itself (`scripts/backend-stack.sh`, and CI through the same script), generated at stack start from the pinned backend's own `docker/alloy/config.alloy`, failing loudly if its project rule is not found; then the KI-032 check (`npm run e2e:service-down`) can run, in CI too. `docs/KNOWN_ISSUES.md` row KI-039 (Fix queue)
-- **Branch:** `fix/ki-039-backend-logs-to-loki` (cut from `main` at `f86e750`, the merge of PR #47; KI-032 merged and merge-verified there: local verify 1034 tests, CI on `main` green)
-- **Step:** PR_OPEN (PR #48, KI-039 and KI-040)
+- **Task:** Fix KI-027 (approved by the owner 2026-10-11: "calibrate the CPU slowdown for the runner, and for the product page fetch its data from a small inline script in index.html"): LCP misses the 2.5 s budget in CI (PR #48's perf run: shelf 2.89 s, product page 2.79 s, benchmark index about 2345). `docs/KNOWN_ISSUES.md` row KI-027 (Fix queue), `docs/performance.md` "What is left"
+- **Branch:** `fix/ki-027-lcp-budget` (cut from `main` at `d486b76`, the merge of PR #48; KI-039 and KI-040 merged and merge-verified there: local verify 1054 tests, CI on `main` green)
+- **Step:** PR_OPEN (PR #49)
 - **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` (unchanged by this fix)
-- **Waiting for user:** YES: CI on PR #48, then the owner's review and `approved, merge it`
+- **Waiting for user:** YES: CI on PR #49, then the owner's review and `approved, merge it`
 
 ## Checklist
-- [x] Pre-flight: KI-032 merged (`f86e750`) and merge-verified; branch cut; KI-039 moved to the Fix queue, In progress
-- [x] Regression test first (red, `75a260d`): `scripts/alloy-override.test.ts` on the pinned file (`scripts/fixtures/backend-config.alloy`); no-op stub: 12 of 14 failed
-- [x] Generator `scripts/alloy-override.mjs` + `scripts/backend-stack.sh` mounts `.local/backend-stack/config.alloy` over Alloy's config (`dd30c79`; 14 of 14 pass). Real check here: Loki + Alloy from the pinned compose and a fake `gateway-service` container: 0 lines with the backend's config, 134 with the generated one
-- [x] CI (`3659f08`): stack through `scripts/backend-stack.sh` (`STACK_PREFIX=ecomdemo PORT_SHIFT=0`, `NO_REBUILD=1` on a cache hit), Loki gateway-line check after e2e, `npm run e2e:service-down` after perf
-- [x] Docs: `docs/troubleshooting.md`, `docs/process/development-environment.md`, decisions `[Fix KI-039]` x4, KI-039 Fixed (PR #48), KI-032 note, spec hint
-- [x] Full `npm ci && npm run verify` exit 0 (1048 tests, 85 files); e2e, perf and `e2e:service-down` only in CI (no backend buildable here)
-- [x] PR opened (#48)
-- [x] CI run 1 on PR #48 (`36c1483`): stack, e2e, Loki check, perf green; `e2e:service-down` red at the root-service assertion for the Retry reference (KI-040). Owner approved fixing it in this PR (2026-10-11)
-- [x] KI-040: red unit tests (`5a75f19`, 6 failed; green in `c88d9a3`) for reading a Tempo trace by id (`scripts/observability.ts`), then green; the spec checks the root only for the first reference, and for the Retry that the `correlation_id` span is a gateway-service SERVER span whose parent is the browser's span from its `traceparent`
-- [x] Docs (`[Fix KI-040]` x2, KI-040 Fixed), `npm run verify` exit 0 (1054 tests, 85 files), pushed, PR body updated
-- [ ] CI green on the PR
+- [x] Pre-flight: KI-039/040 merged (`d486b76`) and merge-verified; branch cut; KI-027 moved to the Fix queue, In progress
+- [x] Calibration: red (`962b6c9`, 7 of 9 failed on a constant-4x stub), green (`fae37c7`, 9 of 9): `scripts/perf-calibrate.mjs` (Lighthouse 12.6.1's own `computeBenchmarkIndex`, median of 5, slowdown = index / 1100) → `PERF_CPU_SLOWDOWN` → `lighthouserc.cjs`; `perf-report.mjs` prints the phone each run simulated. Here: index 2305 → 2.1x
+- [x] Product page: red (`9c40776`, 11 of 15 failed), green (`0c7b455`): inline script in `index.html` (same GET, Accept + X-Correlation-Id, photo preloaded), taken once by the API client (`src/api/earlyRequest.ts`). CSP: red (`5ca2e29`, 4 of 5), green (`2b363d1`): sha256 in `nginx/security-headers.conf`, checked by `scripts/check-dist.mjs`; CI image check accepts 'self' + hashes only
+- [x] E2E (`8d153a0`): one product request under the production CSP (early request taken), one photo request with no route set (Playwright disables the cache while any route is set). Here against a stand-in API: red with `main`'s index.html (2 failed), green 6 of 6 (repeat 3)
+- [x] Docs: `docs/performance.md` (Fix KI-027 section, local stand-in numbers: photo load delay 2183 → 741 ms), `docs/security.md`, decisions `[Fix KI-027]` x8, KI-027 Fixed (PR #49; CI numbers after the perf job)
+- [x] Full `npm ci && npm run verify` exit 0 (1083 tests, 88 files; was 1054); `createRetryingFetch` now requires its sender (the client always passes one; the unused default broke 100% coverage). e2e, perf only in CI (no backend buildable here)
+- [x] PR opened (#49)
+- [x] CI run 1 (`a31c92d`) green but LCP barely moved (shelf 2.88 s, product 2.77 s): the calibration read a warm Chrome (phones 920 to 955) and the early request waited for `theme-init.js` (load delay 1810 ms). Fixed: script first in `<head>` (`5cd8c52`), fresh-Chrome benchmark (`80e7ed3`); reproduced and checked against the nginx image here
+- [x] CI run 2 (`80e7ed3`, run 38158715384) green: 1.98x; shelf 2.87 s, product 2.63 s (load delay 1082 ms); both still over 2.5 s → KI-042 (Open, owner). guest-cart flake with a backend 500 → KI-041 (Needs check). Numbers in KI-027 and `docs/performance.md`
 
 ## Next action
-Wait for CI on PR #48 and fix it if red (the step "Stop the catalogue and find the reference in Loki and Tempo" is the one KI-040 changed; it has never passed yet). Then STOP for `approved, merge it`. After the merge: local `npm ci && npm run verify` on `main`, CI on `main` green, then give the owner the tags `ki-039-fixed` and `ki-040-fixed` as commands (tag pushes are refused here).
+Wait for CI on the docs commit, then STOP for the owner's review and `approved, merge it`. LCP stays a warning (both pages over 2.5 s; KI-042 needs the owner: first `npm run perf` on the reference desktop with the current build). After the merge: local `npm ci && npm run verify` on `main`, CI on `main` green, then give the owner the tag `ki-027-fixed` as a command.
 
 ## ⚠️ Environment notes (this machine)
 - This session runs in a cloud container (not the owner's WSL machine): Node 24 at `/opt/node24/bin`; the backend team's working copy is `/home/user/ecomdemo` (read only, never checked out or changed); a read-only clone is at `/home/user/ecomdemo-backend-readonly` (`a85202f`, push URL `no-push`).
@@ -34,3 +32,4 @@ Wait for CI on PR #48 and fix it if red (the step "Stop the catalogue and find t
 - Tag `ki-020-fixed` is not pushed: the owner runs `git tag ki-020-fixed 1f584e6 && git push origin ki-020-fixed`.
 - Not on `origin` either (checked 2026-10-11 with `git ls-remote --tags`): `phase-25-complete` (`57fecf0`) and `ki-038-fixed` (`dbd1ba0`): the owner runs `git tag phase-25-complete 57fecf0 && git tag ki-038-fixed dbd1ba0 && git push origin phase-25-complete ki-038-fixed`.
 - Tag `ki-032-fixed` (`f86e750`): the owner runs `git tag ki-032-fixed f86e750 && git push origin ki-032-fixed` (check with `git ls-remote --tags origin` first).
+- Tags `ki-039-fixed` and `ki-040-fixed` (`d486b76`, PR #48): the owner runs `git tag ki-039-fixed d486b76 && git tag ki-040-fixed d486b76 && git push origin ki-039-fixed ki-040-fixed`.

@@ -21,9 +21,13 @@ const realSleep = (ms: number) => new Promise<void>((resolve) => setTimeout(reso
  * - Nothing else is retried: not other 4xx, not 5xx, not an aborted request.
  */
 export function createRetryingFetch({
-  fetch: send = (request) => fetch(request),
+  fetch: send,
   sleep = realSleep,
-}: { fetch?: Fetch; sleep?: (ms: number) => Promise<void> } = {}): Fetch {
+}: {
+  /** What sends a request: the client's (the network, or index.html's early request for the same GET: web KI-027). */
+  fetch: Fetch
+  sleep?: (ms: number) => Promise<void>
+}): Fetch {
   return async (request) => {
     if (request.method !== 'GET') return send(request)
 

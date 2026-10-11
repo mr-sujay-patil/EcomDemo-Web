@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs'
+import type { APIRequestContext, Page } from '@playwright/test'
 import { expect, test } from './fixtures'
 import { allProducts, madeByTheAdminSpec, everyShelfCard } from './live-data'
 import { abortedRequestError, gatewayUnreachable } from './screens'
@@ -77,4 +79,89 @@ test('a catalogue larger than one backend page is read to the end', async ({ pag
     { page: 1, size: 100 },
     { page: 2, size: 100 },
   ])
+})
+
+test.describe('a cold product page (web KI-027)', () => {
+  // The real photos, not the stub: the photo's own request count is part of what is checked.
+  test.use({ realImages: true })
+
+  /** Any product with a photo, from the live catalogue (web KI-025): the photo is what the early request is for. */
+  async function productWithPhoto(request: APIRequestContext) {
+    const product = (await allProducts(request)).find(
+      (candidate) => !madeByTheAdminSpec(candidate) && candidate.imageUrl,
+    )
+    expect(product, 'the catalogue has a product with a photo').toBeTruthy()
+    return product as { id: number; name: string; imageUrl: string }
+  }
+
+  /** Every request the page makes for the product and for its photo, and every status they were answered with. */
+  function countRequests(page: Page, { id, imageUrl }: { id: number; imageUrl: string }) {
+    const counts = { product: 0, photo: 0, statuses: [] as number[] }
+    const ours = (url: string) => [`/api/products/${id}`, imageUrl].includes(new URL(url).pathname)
+    page.on('request', (sent) => {
+      const { pathname } = new URL(sent.url())
+      if (pathname === `/api/products/${id}`) counts.product += 1
+      if (pathname === imageUrl) counts.photo += 1
+    })
+    page.on('response', (answer) => {
+      if (ours(answer.url())) counts.statuses.push(answer.status())
+    })
+    return counts
+  }
+
+  test('asks for its product once, the early request index.html made, under the production CSP', async ({
+    page,
+    request,
+  }) => {
+    const product = await productWithPhoto(request)
+    // The preview server sends no Content-Security-Policy; nginx does. This page load gets nginx's own policy, read from its
+    // file, so the inline script must pass it here (the cspGuard fixture fails the test on any violation).
+    const policy = /add_header\s+Content-Security-Policy\s+"([^"]*)"/.exec(
+      readFileSync('nginx/security-headers.conf', 'utf8'),
+    )?.[1]
+    expect(policy, 'nginx/security-headers.conf has a Content-Security-Policy').toBeTruthy()
+    await page.route(
+      (url) => url.pathname === `/products/${product.id}`,
+      async (route) => {
+        const response = await route.fetch()
+        await route.fulfill({ response, headers: { ...response.headers(), 'content-security-policy': policy ?? '' } })
+      },
+    )
+    const counts = countRequests(page, product)
+
+    await page.goto(`/products/${product.id}`)
+
+    await expect(page.getByRole('heading', { level: 1, name: product.name })).toBeVisible()
+    await expect(page.getByRole('img', { name: product.name })).toBeVisible()
+    // The app took index.html's request (so it ran: the policy allowed it) rather than asking again.
+    const taken = await page.evaluate(
+      () => (window as { __ecomdemoEarly?: { taken?: boolean } }).__ecomdemoEarly?.taken,
+    )
+    expect(taken).toBe(true)
+    expect(counts.product).toBe(1)
+  })
+
+  test.describe('with no route set', () => {
+    // The browser asks for /favicon.ico, which `vite preview` answers 404 (the app has none; nginx answers it with index.html).
+    // Every other spec has a route set, which hides that request; here it shows. Only that 404 is let through: the product's
+    // and the photo's answers are checked to be 200 below, so the allowance cannot hide them.
+    test.use({ allowedConsoleErrors: [/Failed to load resource: the server responded with a status of 404/] })
+
+    test('downloads its photo once: the img uses what index.html preloaded', async ({ page, request }) => {
+      // No page.route here, on purpose: Playwright turns the browser's cache off while any route is set, and then the img cannot
+      // reuse the preload (measured: two photo requests with any route, one without).
+      const product = await productWithPhoto(request)
+      const counts = countRequests(page, product)
+
+      await page.goto(`/products/${product.id}`)
+
+      await expect(page.getByRole('img', { name: product.name })).toBeVisible()
+      await expect
+        .poll(() => page.evaluate(() => document.querySelector('link[rel="preload"][as="image"]') !== null))
+        .toBe(true)
+      expect(counts.product).toBe(1)
+      expect(counts.photo).toBe(1)
+      expect(counts.statuses).toEqual([200, 200])
+    })
+  })
 })

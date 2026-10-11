@@ -1,6 +1,7 @@
 // Prints the median of the Lighthouse CI runs in .lighthouseci/ for each page, as a table (and as perf-results/lighthouse.md).
 // `node scripts/perf-report.mjs [label]`: the label goes in the file name, so a before and an after can sit side by side.
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
+import { driftFromTarget, TARGET_BENCHMARK_INDEX } from './perf-calibrate.mjs'
 
 const dir = '.lighthouseci'
 const label = process.argv[2] ?? 'run'
@@ -44,8 +45,15 @@ for (const [path, group] of pages) {
   })
 }
 
+// The CPU slowdown the runs used (calibrated to this machine by scripts/perf.sh, web KI-027) and the phone each run simulated:
+// each run benchmarks the machine again, so a run on a busier moment simulated a slower phone than the target.
+const slowdowns = [...new Set(runs.map((run) => run.configSettings.throttling.cpuSlowdownMultiplier))]
+const drift = driftFromTarget(
+  runs.map((run) => run.environment.benchmarkIndex),
+  slowdowns[0],
+)
 const lines = [
-  `Lighthouse, mobile, simulated slow 4G and 4x CPU; median of the runs per page (${label})`,
+  `Lighthouse, mobile, simulated slow 4G and ${slowdowns.join(' / ')}x CPU; median of the runs per page (${label})`,
   '',
   '| Page | Runs | Performance | FCP | LCP | TBT | CLS | JavaScript | Fonts | Everything |',
   '|---|---|---|---|---|---|---|---|---|---|',
@@ -69,6 +77,11 @@ for (const [path, group] of pages) {
   )
 }
 lines.push(...why)
+lines.push(
+  '',
+  `CPU calibration: slowdown ${slowdowns.join(' / ')}x; the phone each run simulated (its benchmark index / the slowdown, target ` +
+    `${TARGET_BENCHMARK_INDEX}): ${drift.simulated.join(', ')}; the furthest is ${(drift.worst * 100).toFixed(0)}% from the target.`,
+)
 console.log(lines.join('\n'))
 mkdirSync('perf-results', { recursive: true })
 writeFileSync(`perf-results/lighthouse-${label}.md`, `${lines.join('\n')}\n`)

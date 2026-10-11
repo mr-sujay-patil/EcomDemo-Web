@@ -4,10 +4,38 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
+    <!-- A product page loaded cold asks for its data here, before the app's JavaScript has downloaded, and preloads the photo the answer names: the photo is the page's largest paint and was the end of a chain (page, script, data, photo). The app takes this request instead of asking again (src/api/earlyRequest.ts). Inline and first in <head>, so it starts with the page: after a parser-blocking script (theme-init.js) it would wait for that file, which shares the slow link with all the JavaScript and CSS (measured: the request then started after them); the Content-Security-Policy allows exactly this text by its sha256 hash (nginx/security-headers.conf, checked by scripts/check-dist.mjs). Web KI-027, docs/performance.md. -->
+    <script>
+      ;(function () {
+        var id = /^\/products\/([1-9]\d{0,15})\/?$/.exec(location.pathname)
+        if (!id || !window.fetch) return
+        var path = '/api/products/' + id[1]
+        var correlationId = window.crypto && crypto.randomUUID ? crypto.randomUUID() : null
+        var headers = { Accept: 'application/json' }
+        if (correlationId) headers['X-Correlation-Id'] = correlationId
+        var response = fetch(path, { headers: headers })
+        window.__ecomdemoEarly = { path: path, correlationId: correlationId, response: response }
+        response
+          .then(function (answer) {
+            return answer.ok ? answer.clone().json() : null
+          })
+          .then(function (product) {
+            var photo = product && product.imageUrl
+            if (typeof photo !== 'string' || !/^\/(?!\/)/.test(photo)) return
+            var link = document.createElement('link')
+            link.rel = 'preload'
+            link.setAttribute('as', 'image')
+            link.href = photo
+            link.setAttribute('fetchpriority', 'high')
+            document.head.appendChild(link)
+          })
+          .catch(function () {})
+      })()
+    </script>
     <title>EcomDemo</title>
     <!-- One face is preloaded: the headings (the h1 is what the shelf paints last). The body text and the rest load when a page uses them: a second preload competes with the JavaScript for the same slow link and made the product page's LCP worse (docs/performance.md). -->
     <link rel="preload" href="/src/styles/fonts/Newsreader-SemiBold.woff2" as="font" type="font/woff2" crossorigin />
-    <!-- Applies a saved Light or Dark choice before the first paint (public/theme-init.js). A file, not inline code: the Content-Security-Policy allows no inline script. -->
+    <!-- Applies a saved Light or Dark choice before the first paint (public/theme-init.js). A file, not inline code: the Content-Security-Policy allows an inline script only by its hash, and this one has no reason to need that exception. -->
     <script src="/theme-init.js"></script>
   </head>
   <body>

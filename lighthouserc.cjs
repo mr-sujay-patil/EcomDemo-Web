@@ -7,16 +7,25 @@
 // fonts <= 120 KB. ("No chunk over 100 KB gzipped" is checked on the build itself: scripts/check-budgets.mjs.)
 const base = process.env.PERF_BASE_URL ?? 'http://localhost:8070'
 
+// The CPU slowdown, calibrated to the machine running the test (web KI-027): scripts/perf.sh measures Lighthouse's benchmark index
+// here and sets PERF_CPU_SLOWDOWN = index / 1100, so a fast desktop and a CI runner simulate the same phone (the one the budgets
+// were set on: the reference desktop, index about 4400, at 4x). Without it (lhci run by hand) this is Lighthouse's constant 4x.
+const cpuSlowdownMultiplier = Number(process.env.PERF_CPU_SLOWDOWN ?? 4)
+if (!Number.isFinite(cpuSlowdownMultiplier) || cpuSlowdownMultiplier < 1)
+  throw new Error(`PERF_CPU_SLOWDOWN must be a number of at least 1, got ${process.env.PERF_CPU_SLOWDOWN}`)
+
 module.exports = {
   ci: {
     collect: {
       url: [`${base}/`, `${base}/products/1`],
       numberOfRuns: 3,
       settings: {
-        // Lighthouse's own mobile preset: a phone-sized screen, 4x CPU slowdown, a slow-4G network, simulated.
+        // Lighthouse's own mobile preset (a phone-sized screen, a slow-4G network, simulated), with the CPU slowdown calibrated
+        // above instead of its constant 4x. Lighthouse merges this one field into its slow-4G defaults (RTT, throughput).
         formFactor: 'mobile',
         screenEmulation: { mobile: true, width: 412, height: 823, deviceScaleFactor: 1.75, disabled: false },
         throttlingMethod: 'simulate',
+        throttling: { cpuSlowdownMultiplier },
         onlyCategories: ['performance'],
         chromeFlags: '--headless=new --no-sandbox',
       },
