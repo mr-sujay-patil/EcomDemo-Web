@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Performance against the production image: build it, start ONLY `web` on the backend's network, then
-#   1. Lighthouse CI (lighthouserc.cjs): the shelf and a product page, cold, three runs each, mobile, throttled; the median is
+#   1. Lighthouse CI (lighthouserc.cjs): the shelf and a product page, cold, three runs each, mobile, throttled (the CPU slowdown
+#      calibrated to this machine first: scripts/perf-calibrate.mjs); the median is
 #      judged against the budgets (performance, LCP, CLS, JavaScript and font bytes);
 #   2. scripts/perf-flows.mjs: the cart and an order, signed in (CLS, blocking time, the click's own delay), three runs.
 # The median table of each is printed whatever the verdict, and kept in perf-results/. Exits 1 if any budget is broken.
@@ -33,6 +34,13 @@ mkdir -p perf-results
 rm -rf .lighthouseci
 status=0
 
+# The CPU slowdown for THIS machine, so every machine simulates the same phone (web KI-027, scripts/perf-calibrate.mjs): 4x on
+# the reference desktop where the budgets were set, about 2.1x on a CI runner. Measured here, just before the runs, in the same
+# Chrome. PERF_CPU_SLOWDOWN set by the caller wins (to compare with the old constant 4x, for instance).
+if [ -z "${PERF_CPU_SLOWDOWN:-}" ]; then
+  PERF_CPU_SLOWDOWN="$(node scripts/perf-calibrate.mjs)" || exit 1
+fi
+export PERF_CPU_SLOWDOWN
 npx lhci collect --config=lighthouserc.cjs || exit 1
 node scripts/perf-report.mjs current
 # GitHub's artifact upload skips hidden folders: keep the raw runs where it will take them.
