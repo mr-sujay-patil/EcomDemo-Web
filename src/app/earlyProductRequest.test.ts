@@ -23,8 +23,6 @@ function runAt(path: string, answer: () => Promise<Response>) {
 const json = (body: unknown, status = 200) =>
   Promise.resolve(new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } }))
 const preloads = () => [...document.head.querySelectorAll<HTMLLinkElement>('link[rel="preload"][as="image"]')]
-/** Lets the script's `.then` chain run. */
-const settle = () => new Promise((resolve) => setTimeout(resolve, 0))
 
 beforeEach(() => {
   for (const link of preloads()) link.remove()
@@ -53,14 +51,13 @@ describe("index.html's early product request", () => {
     expect(holder.__ecomdemoEarly?.path).toBe('/api/products/7')
     expect(holder.__ecomdemoEarly?.correlationId).toBe(init.headers['X-Correlation-Id'])
     // The app still gets the whole answer: the script read a copy.
-    await settle()
     const response = await holder.__ecomdemoEarly?.response
     expect(await response?.json()).toEqual({ id: 7, imageUrl: null })
   })
 
   it("preloads the product's photo as soon as the answer names it, at high priority", async () => {
     runAt('/products/7/', () => json({ id: 7, imageUrl: '/api/products/7/image' }))
-    await settle()
+    await vi.waitFor(() => expect(preloads()).not.toEqual([]))
 
     expect(preloads().map((link) => [link.getAttribute('href'), link.getAttribute('fetchpriority')])).toEqual([
       ['/api/products/7/image', 'high'],
@@ -72,15 +69,17 @@ describe("index.html's early product request", () => {
     runAt('/products/8', () => json({ id: 8, imageUrl: 'https://cdn.example/8.png' }))
     runAt('/products/9', () => json({ id: 9, imageUrl: '//cdn.example/9.png' }))
     runAt('/products/10', () => json({ status: 404, message: 'gone', imageUrl: '/api/x' }, 404))
-    await settle()
+    // A control, started last: once its photo is preloaded, the four before it have had their turn.
+    runAt('/products/11', () => json({ id: 11, imageUrl: '/api/products/11/image' }))
+    await vi.waitFor(() => expect(preloads()).not.toEqual([]))
 
-    expect(preloads()).toEqual([])
+    expect(preloads().map((link) => link.getAttribute('href'))).toEqual(['/api/products/11/image'])
   })
 
   it('swallows its own network failure (the app retries it), so nothing is reported as unhandled', async () => {
     runAt('/products/7', () => Promise.reject(new TypeError('Failed to fetch')))
-    await settle()
 
+    // Vitest fails the run on an unhandled rejection; the app's client, which takes this promise, sees the failure.
     await expect(holder.__ecomdemoEarly?.response).rejects.toThrow('Failed to fetch')
     expect(preloads()).toEqual([])
   })

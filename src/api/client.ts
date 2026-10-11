@@ -5,6 +5,7 @@ import type { paths as AssistantPaths } from './generated/assistant'
 import type { paths as CatalogPaths } from './generated/catalog'
 import type { paths as CustomerPaths } from './generated/customer'
 import type { paths as InventoryPaths } from './generated/inventory'
+import { takeEarlyResponse } from './earlyRequest'
 import { createRetryingFetch } from './retry'
 
 type TokenProvider = () => string | null
@@ -89,9 +90,12 @@ type ClientOptions = {
 export function createApiClient<Paths extends object>({ fetch, sleep, getToken }: ClientOptions = {}) {
   // The documents' paths already start with /api, so the base is the origin alone; relative URLs
   // cannot be built into a Request outside a browser, hence `location.origin`.
+  // A request index.html already made on this page load (a cold product page, web KI-027) is taken instead of asking again,
+  // once; everything else goes to the network. Under the retry policy, so a retry is always a real request.
+  const network = fetch ?? ((request: Request) => globalThis.fetch(request))
   const client = createClient<Paths>({
     baseUrl: typeof location === 'undefined' ? 'http://localhost' : location.origin,
-    fetch: createRetryingFetch({ fetch, sleep }),
+    fetch: createRetryingFetch({ fetch: (request) => takeEarlyResponse(request) ?? network(request), sleep }),
   })
   client.use(createMiddleware(getToken ?? (() => currentToken())))
   return client
