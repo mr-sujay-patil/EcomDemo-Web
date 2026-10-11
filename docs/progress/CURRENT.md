@@ -5,9 +5,9 @@
 - **Updated:** 2026-10-11
 - **Task:** Phase 25: Code Quality Dashboard (SonarQube) (web KI-014, approved by the user on 2026-10-11: self-hosted SonarQube Community mirroring the backend's Phase 12; no SonarQube Cloud, no CI gate, no secret), `docs/phases/phase-25-sonarqube.md`
 - **Branch:** `feature/phase-25-sonarqube` (cut from `main` at `70d64f6`, the merge of PR #44; Phase 24 verified: CI on `main` green, tag `phase-24-complete` to push by the owner, tag pushes are refused here with 403)
-- **Step:** TESTING
+- **Step:** PR_OPEN (PR #45)
 - **Backend pinned at:** commit `669a9ed1dfcc8ef0d89608c87ef05421bb157fb6` (unchanged; this phase needs nothing from the backend)
-- **Waiting for user:** no
+- **Waiting for user:** YES: CI on PR #45, then the owner's review and `approved, merge it`
 
 ## Checklist
 - [x] Phase file, tracker (Phase 24 ✅, Phase 25 row), KI-014 moved to "Covered by an approved phase"
@@ -18,10 +18,11 @@
 - [x] Real run: stack up (an uncommitted tmpfs override for the search index: this disk reports 8 % free), setup twice (idempotent, drift corrected), `npm run sonar` twice: gate OK, coverage 99.2 %, 144 code smells (KI-038), 0 bugs, 0 vulnerabilities, 0 hotspots; a throwaway project showed the gate FAILING on new issues (exit 3); stack down
 - [x] Decisions `[Phase 25]` x8, README, development-environment ports, KI-038, test report (`docs/test-reports/phase-25.md`, two dashboard screenshots), `RECENT.md` (Phase 23 archived), tracker 🔵
 - [x] Full `npm ci && npm run verify` (exit 0, 996 tests, 80 files)
-- [ ] PR opened
+- [x] PR opened (#45)
+- [ ] CI green on the PR
 
 ## Next action
-Push the branch and open the PR `Phase 25: Code Quality Dashboard (SonarQube)` with the template filled in (perf skipped: no app code; e2e not needed: no app code); put the PR number into `RECENT.md` (`PR #PRNUM`) and here, set the step to PR_OPEN, commit and push. Then STOP for the owner's review.
+Wait for CI on PR #45 and fix it if red (`verify` runs the new `scripts/sonar.test.ts`; `e2e` and `perf` are unaffected, no app code changed). Then STOP for the owner's `approved, merge it`. After the merge: local `npm ci && npm run verify` on `main`, CI on `main` green, tag `phase-25-complete` (tag pushes are refused here with 403: give the owner the command).
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.
