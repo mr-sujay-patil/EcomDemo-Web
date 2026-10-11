@@ -69,9 +69,9 @@ jobs:
     permissions:
       contents: read
     env:
-      # The backend this app is tested against: a commit of its `main` (the KI-060 merge), pinned by SHA because a tag can be moved.
+      # The backend this app is tested against: a commit of its `main` (the KI-035 merge, backend PR #94), pinned by SHA because a tag can be moved.
       # The name stays BACKEND_TAG; any ref works. Override with a repository variable when the pin moves.
-      BACKEND_TAG: ${{ vars.BACKEND_TAG || '669a9ed1dfcc8ef0d89608c87ef05421bb157fb6' }}
+      BACKEND_TAG: ${{ vars.BACKEND_TAG || 'a85202fefc0e1390f63bda4c93ce85c3b8266f60' }}
     steps:
       # The same side-by-side layout as a laptop, so e2e/global-setup.ts finds ../ecomdemo-backend-readonly.
       - name: Check out the code
