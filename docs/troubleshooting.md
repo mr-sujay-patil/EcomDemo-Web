@@ -6,7 +6,7 @@ When something breaks, the shopper sees a calm page with **Reference: `<id>`** a
 
 | What | Where it comes from | What it finds |
 |---|---|---|
-| **Reference** = `X-Correlation-Id` | made by the browser for every call (`src/api/client.ts`), reused by the gateway, echoed in the response, written by every backend service into its log lines (`correlation_id`) | the **log lines** (Loki) of the services that handled the request |
+| **Reference** = `X-Correlation-Id` | made by the browser for every call (`src/api/client.ts`), reused by the gateway, echoed in the response, written by the gateway (since backend KI-035) and every backend service into its log lines (`correlation_id`), and put on the gateway's server span (`span.correlation_id`) | the **log lines** (Loki) of the gateway and the services that handled the request, and the **trace** (Tempo, TraceQL) |
 | **Trace id** | made by the browser for every call to `/api` **made after the first paint** (`src/app/tracing.ts`, started by `src/app/startTracing.ts`; see below), sent as `traceparent: 00-<trace id>-<span id>-01`; the gateway and every service continue it | the **trace** (Tempo): which services ran, in what order, how long each took |
 | `traceId` in a log line | the same trace id, written by each service next to the correlation id | the step from a log line to its trace |
 
@@ -23,8 +23,8 @@ Tracing is its own chunk of JavaScript, loaded after the page's first paint, whe
 
 ## Path 1: the request reached a service (the usual case)
 
-1. **Loki.** In Grafana, Explore, the Loki data source, `{service_name=~".+"} | correlation_id="<reference>"`. Each service that handled the request has a line (`GET /api/products -> 200 in 19ms`), with `correlation_id` and `trace_id` as fields.
-2. **Tempo.** Click `traceId` in the line (Grafana's Loki data source turns it into a link), or Explore, Tempo, "TraceQL" or "Trace ID", paste it. The trace shows the gateway span and every service behind it.
+1. **Loki.** In Grafana, Explore, the Loki data source, `{service_name=~".+"} | correlation_id="<reference>"`. The gateway (since backend KI-035) and each service that handled the request have a line (`GET /api/products -> 200 in 19ms`), with `correlation_id` and `trace_id` as fields.
+2. **Tempo.** Click `traceId` in the line (Grafana's Loki data source turns it into a link), or Explore, Tempo, "TraceQL" or "Trace ID", paste it; or TraceQL `{ span.correlation_id = "<reference>" }` (Path 2). The trace shows the gateway span and every service behind it.
 
 From a terminal, the same, with the stack's ports:
 
@@ -39,24 +39,25 @@ curl -s localhost:3200/api/traces/<trace id>
 
 ## Path 2: the gateway answered it itself (a service is down or slow)
 
-This is the case the phase was about, and **the reference alone does not lead anywhere yet**.
+When a catalogue service is down, the gateway answers `503` after its 2-second limit (circuit breaker, `/fallback/catalog`), and no backend service sees the request. **Since backend KI-035 (pinned from `a85202f`, web KI-032) the reference finds it anyway**, in both places:
 
-When a catalogue service is down, the gateway answers `503` after its 2-second limit (circuit breaker, `/fallback/catalog`). No backend service sees the request, and the **gateway writes no request log line** (the backend lists this as its KI-035; `CorrelationIdWebFilter` stamps the id but, being reactive, puts it in no log). So searching Loki for the reference finds **nothing**, and so does searching by trace id. What remains is the trace:
+1. **Loki, the gateway's own line.** The gateway writes one line per request (`GET /api/products -> 503 in 2003ms`) with `correlation_id` and `traceId` in the ECS JSON; Alloy puts both in structured metadata. In Explore, Loki: `{service_name="gateway-service"} | correlation_id = "<reference>"`, or Path 1's query for every service (here the gateway's line is the only one there is). The line's `trace_id` field is the trace.
+2. **Tempo, by the reference alone.** The gateway's server span carries the attribute `correlation_id`, so Explore, Tempo, TraceQL: `{ span.correlation_id = "<reference>" }`. This works **also for a failure on first load**, whose call had no `traceparent` (tracing starts after the first paint): the gateway started the trace itself and named it with the reference.
+3. **Grafana's links.** From a log line, `traceId` opens the trace, and the derived field **"All logs for this request"** queries `{service_name=~".+"} | correlation_id = …` (every service since KI-035; it used to look in `app` only).
 
-1. In the browser: DevTools, Network, the failed `/api/products` request, **Request Headers, `traceparent`**. Its second field is the trace id. **A failure on first load has none** (tracing starts after the first paint): press Retry and take the `traceparent` of the new request, or go to step 3. (This is the one thing a support person cannot get from the shopper, who has only the reference. The page does not show the trace id.)
-2. Tempo, by that trace id.
-3. Without the trace id: TraceQL by what the failure looks like, for example `{ resource.service.name = "gateway-service" && name = "http get /fallback/catalog" }` around the time the shopper reports.
+From a terminal, with the stack's ports (`bash scripts/backend-stack.sh env` prints the shifted ones, `LOKI_URL` and `TEMPO_URL`):
 
-**Worked example, the real failure (as of Phase 23, when tracing started before the first call).** The catalogue service container was stopped (`scripts/e2e-service-down.sh`, which always starts it again) and the shelf opened:
+```
+curl -sG localhost:3100/loki/api/v1/query_range \
+  --data-urlencode 'query={service_name="gateway-service"} | correlation_id = `<reference>`' \
+  --data-urlencode "start=$(( $(date +%s) - 900 ))000000000" --data-urlencode "end=$(date +%s)000000000"
+curl -sG localhost:3200/api/search --data-urlencode 'q={ span.correlation_id = "<reference>" }' \
+  --data-urlencode "start=$(( $(date +%s) - 900 ))" --data-urlencode "end=$(date +%s)"
+```
 
-- The page showed *"The product catalogue is temporarily unavailable. Please try again shortly."* and **Reference `83132222-06d4-460f-bd71-9969d951d972`** (screenshots: `docs/test-reports/phase-23/shelf-service-down-*.png`; the header and footer stayed usable).
-- The request carried `X-Correlation-Id: 83132222-06d4-460f-bd71-9969d951d972` and `traceparent: 00-ee7bf1ed09212e483437da129dd02560-c7359b900dfa278f-01`; the response echoed the same correlation id.
-- **Loki:** no line for `correlation_id="83132222-…"`, none for `trace_id="ee7bf1ed…"`, in any service. As expected: nothing past the gateway ran.
-- **Tempo, trace `ee7bf1ed09212e483437da129dd02560`:** `gateway-service`, `http get /fallback/catalog`, 1068 ms, with a short `evalsha` (the rate limiter's Redis call). The browser's trace id is the trace, so the browser really started it.
+**How it is proven.** `npm run e2e:service-down` (stops the catalogue container, runs one spec, starts it again) takes both references the shelf shows, the first call's (no `traceparent`) and the Retry's, through exactly these two queries: one gateway line with `-> 503` and a trace id, and one trace with that id, rooted in `gateway-service` (for the Retry, the trace the browser started). The queries live in `scripts/observability.ts`. The spec needs Loki to have this stack's logs (the ⚠️ under "Before you start"). The backend's own compose smoke test checks the gateway's line for its own `503` from `/fallback/catalog` on every run. Without the trace id or the reference, TraceQL by what the failure looks like still works: `{ resource.service.name = "gateway-service" && name = "http get /fallback/catalog" }` around the time the shopper reports.
 
-**The same failure with tracing after the first paint (web KI-033), a second real run.** The catalogue container stopped, the shelf opened: the first call had a correlation id and **no `traceparent`**. Pressing Retry made a call with **`X-Correlation-Id: 911d2dbb-8ce5-4919-a094-8dadca732bd9`** and **`traceparent: 00-459cd510c7427270a26ed3d58dbee04b-17d23017bf0d1b96-01`**; the page showed that call's reference. **Tempo, trace `459cd510c7427270a26ed3d58dbee04b`:** `gateway-service`, `http get /fallback/catalog`, 257 ms (the breaker was already open, so quicker than the first call's two seconds), with the short `evalsha`. Loki still had nothing for the reference or the trace id (the gateway logs no request).
-
-What would close the gap is for the **gateway to log one line per request** with the correlation id and the trace id, or to put the correlation id on its server span. That is a backend change; it is recorded as web KI-032 for the owner to relay. Until then, Path 2 needs the trace id or the time.
+**Before KI-035 (Phase 23, kept for the record).** On a real failure, reference `83132222-06d4-460f-bd71-9969d951d972`, `traceparent: 00-ee7bf1ed09212e483437da129dd02560-c7359b900dfa278f-01`: Loki had nothing for the reference or the trace id (the gateway logged no request), and Tempo had the trace (`gateway-service`, `http get /fallback/catalog`, 1068 ms, with a short `evalsha`, the rate limiter's Redis call) only by its trace id, taken from the browser's request headers. With tracing after the first paint (web KI-033) a first-load failure had no trace id at all; a second run used Retry (`911d2dbb-8ce5-4919-a094-8dadca732bd9`, trace `459cd510c7427270a26ed3d58dbee04b`, 257 ms with the breaker open). Screenshots: `docs/test-reports/phase-23/shelf-service-down-*.png`.
 
 ## What the page can and cannot catch
 

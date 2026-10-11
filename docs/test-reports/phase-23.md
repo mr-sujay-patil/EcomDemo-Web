@@ -33,6 +33,8 @@ Tried on the real failure, the pinned backend, with Grafana's data sources (Loki
 
 **So half of the Done-when item is proven and half is not:** the browser starts the trace and it can be found; the reference alone cannot find a gateway-answered failure in Loki, because the gateway logs nothing. Not worked around. The message for the backend team is in the PR.
 
+> **Update (fix KI-032, 2026-10-11):** the missing half is closed by the backend (KI-035, backend PR #94, pinned from `a85202f`): the gateway logs one line per request with `correlation_id` and `traceId`, and puts `correlation_id` on its server span. `npm run e2e:service-down` now asserts that both references the shelf shows find the gateway's `-> 503` line in Loki and its trace in Tempo (`{ span.correlation_id = "<id>" }`); `docs/troubleshooting.md` Path 2 has the queries. This report is kept as it was run.
+
 **An environment finding:** Loki was empty at first because Alloy ships only containers of the compose project `ecomdemo`, and this clone's project is `ecomdemo-backend-readonly`. Worked around locally with an override file outside both repositories that mounts a patched copy of the Alloy config (the clone is untouched; running the stack as project `ecomdemo` would have attached the backend team's volumes). Written up in `docs/troubleshooting.md` and `docs/process/development-environment.md`.
 
 Screenshots of the shelf with the catalogue really down, at 360 and 1280 px, light and dark: `docs/test-reports/phase-23/shelf-service-down-{1280,360}-{light,dark}.png`.
