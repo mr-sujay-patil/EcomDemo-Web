@@ -47,8 +47,11 @@ describe('the Alloy config this repo mounts (web KI-039)', () => {
     const removed = before.filter((line) => !after.includes(line))
 
     // The two regex lines, plus the header that says the file is generated and from where.
-    expect(removed).toEqual(['    regex         = "ecomdemo"'])
-    expect(added.filter((line) => !line.startsWith('//'))).toEqual(['    regex         = "ecomdemo-backend-readonly"'])
+    expect(removed).toEqual(Array(2).fill('    regex         = "ecomdemo"'))
+    expect(added.filter((line) => !line.startsWith('//'))).toEqual(
+      Array(2).fill('    regex         = "ecomdemo-backend-readonly"'),
+    )
+    expect(after).toHaveLength(before.length + 1)
     expect(after[0]).toMatch(/^\/\/ GENERATED .*scripts\/alloy-override\.mjs/)
   })
 
@@ -57,7 +60,10 @@ describe('the Alloy config this repo mounts (web KI-039)', () => {
   })
 
   it('fails loudly when the backend file has no project rule, instead of mounting a copy that changes nothing', () => {
-    const noRule = pinned.replaceAll('__meta_docker_container_label_com_docker_compose_project', '__meta_docker_container_label_other')
+    const noRule = pinned.replaceAll(
+      '__meta_docker_container_label_com_docker_compose_project',
+      '__meta_docker_container_label_other',
+    )
 
     expect(() => retargetAlloyConfig(noRule, 'ecomdemo-backend-readonly')).toThrow(/project rule/)
     expect(() => retargetAlloyConfig('', 'ecomdemo-backend-readonly')).toThrow(/project rule/)
@@ -75,7 +81,7 @@ describe('the Alloy config this repo mounts (web KI-039)', () => {
 })
 
 describe('every backend stack this repo starts mounts it (web KI-039)', () => {
-  it('scripts/backend-stack.sh generates the copy from the clone and mounts it over Alloy\'s config', () => {
+  it("scripts/backend-stack.sh generates the copy from the clone and mounts it over Alloy's config", () => {
     const script = read('scripts/backend-stack.sh')
 
     expect(script).toContain('node scripts/alloy-override.mjs')
