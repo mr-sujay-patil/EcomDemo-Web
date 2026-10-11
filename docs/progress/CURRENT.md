@@ -2,27 +2,25 @@
 
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
-- **Updated:** 2026-10-10
-- **Task:** Phase 24: Guest Cart (web KI-012, approved by the user on 2026-10-10), `docs/phases/phase-24-guest-cart.md`
-- **Branch:** `feature/phase-24-guest-cart` (cut from `main` at `8c2d000`; KI-025 merged as PR #43, CI on `main` green, local `npm ci && npm run verify` on `main` 904 tests passed in this session; tags `ki-020-fixed` and `ki-025-fixed` still to push by the owner, 403 here)
-- **Step:** PR_OPEN (PR #44)
-- **Backend pinned at:** commit `669a9ed1dfcc8ef0d89608c87ef05421bb157fb6` (unchanged; this phase needs no backend change)
-- **Waiting for user:** YES: CI on the PR (its `e2e` and `perf` jobs are the only real run of the new E2E specs and the budget), then `approved, merge it`
+- **Updated:** 2026-10-11
+- **Task:** Phase 25: Code Quality Dashboard (SonarQube) (web KI-014, approved by the user on 2026-10-11: self-hosted SonarQube Community mirroring the backend's Phase 12; no SonarQube Cloud, no CI gate, no secret), `docs/phases/phase-25-sonarqube.md`
+- **Branch:** `feature/phase-25-sonarqube` (cut from `main` at `70d64f6`, the merge of PR #44; Phase 24 verified: CI on `main` green, tag `phase-24-complete` to push by the owner, tag pushes are refused here with 403)
+- **Step:** BRANCHED
+- **Backend pinned at:** commit `669a9ed1dfcc8ef0d89608c87ef05421bb157fb6` (unchanged; this phase needs nothing from the backend)
+- **Waiting for user:** no
 
 ## Checklist
-- [x] Decisions recorded (`[Phase 24]` x11 in `docs/decisions.md`, including the unknown-outcome rule from review finding KI-037)
-- [x] Review findings: KI-036 (Needs check table restored) and KI-037 (replay reads the cart, marks before sending, never resends an applied POST) fixed in this phase
-- [x] Guest cart store (`localStorage`, versioned key, validated reads, in-memory fallback, `storage` event) with unit tests
-- [x] Signed-out Add to cart (shelf, product page, search) and the header count use the guest cart
-- [x] `/cart` signed out: `GuestCartPage` via `CartRoute` (current prices by id, loading, empty, error, gone product, stock hint, Undo, Sign in to check out)
-- [x] Replay on sign-in (`GuestCartProvider`, Web Lock, partial failure, Try again, cart re-read) and `GuestCartNotice`, with tests
-- [x] E2E: `e2e/guest-cart.spec.ts`; `cart-guest` in `e2e/screens.ts` (scratch run here: 18 passed); routes, cart and keyboard-flows specs changed to the new behaviour
-- [x] Full `npm ci && npm run verify` (981 tests, 79 files); test report; README, module and architecture docs; `RECENT.md` (Phase 22 archived); tracker 🔵
-- [x] PR opened
-- [ ] CI green on the PR
+- [x] Phase file, tracker (Phase 24 ✅, Phase 25 row), KI-014 moved to "Covered by an approved phase"
+- [ ] `compose.sonar.yaml` (project `ecomdemo-web-sonar`, 127.0.0.1:9010, own names and volumes, pinned tags)
+- [ ] `scripts/sonar-setup.sh` (wait, admin password from env, project, gate on new code, attach, token printed once)
+- [ ] `sonar-project.properties`, `npm run sonar` (scanner Docker image), lcov reporter in `vite.config.ts`
+- [ ] `scripts/sonar.test.ts` (config checks, no stack)
+- [ ] Real run: stack up, setup twice, `npm run test:coverage && npm run sonar`, gate and metrics from the web API, stack down
+- [ ] Decisions `[Phase 25]`, README, development-environment ports, test report, `RECENT.md` (Phase 23 archived), tracker 🔵
+- [ ] Full `npm ci && npm run verify`; PR opened
 
 ## Next action
-Wait for CI on the PR and fix it if red (the `e2e` job is the first real run of `e2e/guest-cart.spec.ts` and of the changed routes, cart and keyboard-flows specs; `perf` judges the shelf, now 8 files and 134.8 KB). Then STOP for the owner's `approved, merge it`. After the merge: local `npm ci && npm run verify` on `main`, CI on `main` green, tag `phase-24-complete` (tag pushes are refused here with 403: give the owner the command).
+Write `compose.sonar.yaml` (mirror the backend's: SonarQube `26.9.0.129388-community` + `postgres:18.6-alpine3.24`, names `ecomdemo-web-sonarqube` / `ecomdemo-web-sonar-db`, port `127.0.0.1:9010`), then `scripts/sonar-setup.sh` and `sonar-project.properties`.
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.
