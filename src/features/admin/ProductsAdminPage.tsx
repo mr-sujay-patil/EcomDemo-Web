@@ -97,7 +97,7 @@ export function ProductsAdminPage() {
 }
 
 /** Typing the product's name is the confirmation: a delete cannot be done by a stray click or Enter. */
-function DeleteDialog({ product, onClose }: { product: ProductResponse | null; onClose: () => void }) {
+function DeleteDialog({ product, onClose }: Readonly<{ product: ProductResponse | null; onClose: () => void }>) {
   const [typed, setTyped] = useState('')
   const [failure, setFailure] = useState<Failure | null>(null)
   const [done, setDone] = useState<string | null>(null)

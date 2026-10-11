@@ -17,7 +17,7 @@ const STATUS: Record<OrderStatus, { tone: Tone; label: string; icon: IconName }>
 export type StatusBadgeProps = { status?: OrderStatus; tone?: Tone; children?: ReactNode }
 
 /** A printed label. It always carries a word and an icon, never colour alone. */
-export function StatusBadge({ status, tone, children }: StatusBadgeProps) {
+export function StatusBadge({ status, tone, children }: Readonly<StatusBadgeProps>) {
   const known = status ? STATUS[status] : undefined
   return (
     <span className={cx('ed-badge', `ed-badge--${tone ?? known?.tone ?? 'neutral'}`)}>

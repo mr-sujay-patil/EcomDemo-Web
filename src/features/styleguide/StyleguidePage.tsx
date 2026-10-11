@@ -48,7 +48,7 @@ const icons: IconName[] = [
 /** The samples do nothing when pressed: they are here to be looked at. */
 const noop = () => undefined
 
-function Specimen({ title, note, children }: { title: string; note?: string; children: ReactNode }) {
+function Specimen({ title, note, children }: Readonly<{ title: string; note?: string; children: ReactNode }>) {
   const id = `sg-${title.toLowerCase().replace(/\s+/g, '-')}`
   return (
     <section className="sg-section" aria-labelledby={id}>
@@ -59,7 +59,7 @@ function Specimen({ title, note, children }: { title: string; note?: string; chi
   )
 }
 
-function Case({ label, children }: { label: string; children: ReactNode }) {
+function Case({ label, children }: Readonly<{ label: string; children: ReactNode }>) {
   return (
     <div className="sg-case">
       <p className="ed-overline">{label}</p>

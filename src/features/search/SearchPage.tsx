@@ -53,11 +53,11 @@ function Filters({
   state,
   categories,
   apply,
-}: {
+}: Readonly<{
   state: SearchState
   categories: string[]
   apply: (next: SearchState) => void
-}) {
+}>) {
   const [error, setError] = useState<string | null>(null)
   // A shared link may name a category the catalogue no longer has: keep it so the control still says what is filtered.
   const options = state.category && !categories.includes(state.category) ? [...categories, state.category] : categories
@@ -133,7 +133,7 @@ function Filters({
 }
 
 /** Search by meaning is off: say so, then filter the catalogue by the words typed. */
-function Fallback({ state, catalogue }: { state: SearchState; catalogue: ReturnType<typeof useProducts> }) {
+function Fallback({ state, catalogue }: Readonly<{ state: SearchState; catalogue: ReturnType<typeof useProducts> }>) {
   return (
     <>
       <Alert tone="info" title="Search by description isn't available right now">
@@ -154,11 +154,11 @@ function Results({
   products,
   mode,
   state,
-}: {
+}: Readonly<{
   products: ProductResponse[]
   mode: 'meaning' | 'words'
   state: SearchState
-}) {
+}>) {
   const prefetch = usePrefetchProduct()
   const cart = useAddAction()
   return (

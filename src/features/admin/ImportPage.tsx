@@ -119,11 +119,11 @@ function Result({
   result,
   restarting,
   onRestart,
-}: {
+}: Readonly<{
   result: ImportResult
   restarting: boolean
   onRestart: () => void
-}) {
+}>) {
   const { execution } = result
   const failed = isFailed(result)
   return (

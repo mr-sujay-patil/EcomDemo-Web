@@ -8,7 +8,7 @@ export type FormErrorProps = {
 }
 
 /** An error that belongs to no single field: wrong credentials, the server being down. Announced at once. */
-export function FormError({ children, reference }: FormErrorProps) {
+export function FormError({ children, reference }: Readonly<FormErrorProps>) {
   if (!children) return null
   return (
     <Alert tone="danger" title={children}>

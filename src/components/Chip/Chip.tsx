@@ -6,7 +6,7 @@ import './Chip.css'
 export type ChipProps = { selected?: boolean; count?: number; onClick?: () => void; children: ReactNode }
 
 /** A filter tag, not a pill. A toggle button: `aria-pressed` says whether it is on. */
-export function Chip({ selected, count, onClick, children }: ChipProps) {
+export function Chip({ selected, count, onClick, children }: Readonly<ChipProps>) {
   return (
     <button
       type="button"

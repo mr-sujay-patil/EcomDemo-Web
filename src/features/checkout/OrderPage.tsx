@@ -125,11 +125,11 @@ function Outcome({
   phase,
   reason,
   items,
-}: {
+}: Readonly<{
   phase: OrderPhase
   reason: string | undefined
   items: { productId: number; productName: string; quantity: number }[]
-}) {
+}>) {
   if (phase === 'confirmed') {
     return (
       <>
@@ -168,10 +168,10 @@ function Outcome({
 function Cancelled({
   reason,
   items,
-}: {
+}: Readonly<{
   reason: string | undefined
   items: { productId: number; productName: string; quantity: number }[]
-}) {
+}>) {
   const add = useAddToCart()
   const navigate = useNavigate()
   const [failed, setFailed] = useState<string[]>([])

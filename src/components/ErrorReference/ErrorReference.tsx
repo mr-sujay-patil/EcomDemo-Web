@@ -7,7 +7,7 @@ import './ErrorReference.css'
  * overflows a 360 px screen) and breaks anywhere. When the browser will not copy (no clipboard, an insecure page), the
  * button says so and the text stays selectable.
  */
-export function ErrorReference({ reference }: { reference: string }) {
+export function ErrorReference({ reference }: Readonly<{ reference: string }>) {
   const [copied, setCopied] = useState<'no' | 'yes' | 'failed'>('no')
 
   async function copy() {

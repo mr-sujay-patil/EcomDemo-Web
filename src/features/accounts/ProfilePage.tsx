@@ -33,7 +33,7 @@ export function ProfilePage() {
   )
 }
 
-function Profile({ profile }: { profile: CustomerResponse }) {
+function Profile({ profile }: Readonly<{ profile: CustomerResponse }>) {
   const { updateProfile } = useSession()
   const form = useForm<ProfileValues>({
     resolver: zodResolver(profileSchema),

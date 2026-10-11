@@ -52,11 +52,11 @@ function Shelf({
   products,
   shelf,
   show,
-}: {
+}: Readonly<{
   products: ProductResponse[]
   shelf: ShelfState
   show: (next: Partial<ShelfState>) => void
-}) {
+}>) {
   const prefetch = usePrefetchProduct()
   const cart = useAddAction()
   const result = applyShelf(products, shelf)

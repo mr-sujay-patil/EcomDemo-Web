@@ -25,7 +25,7 @@ export function AssistantMessage({
   sources,
   onConfirm,
   onDismiss,
-}: AssistantMessageProps) {
+}: Readonly<AssistantMessageProps>) {
   const mine = role === 'user'
   return (
     <div className={cx('ed-msg', mine ? 'is-user' : 'is-assistant')}>

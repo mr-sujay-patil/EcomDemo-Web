@@ -32,11 +32,11 @@ export function AppProviders({
   client,
   session,
   children,
-}: {
+}: Readonly<{
   client: QueryClient
   session?: SessionStore
   children: ReactNode
-}) {
+}>) {
   return (
     <QueryClientProvider client={client}>
       <SessionProvider store={session}>

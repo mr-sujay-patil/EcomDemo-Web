@@ -33,7 +33,7 @@ const MAX_TIMEOUT_MS = 2 ** 31 - 1
  * at expiry (and warns a minute before), and clears the person's data from the query cache whenever it ends.
  * Must sit inside the `QueryClientProvider`.
  */
-export function SessionProvider({ store: given, children }: { store?: SessionStore; children: ReactNode }) {
+export function SessionProvider({ store: given, children }: Readonly<{ store?: SessionStore; children: ReactNode }>) {
   const [store] = useState(() => given ?? createSessionStore())
   const [drafts] = useState(createDraftStore)
   const queryClient = useQueryClient()

@@ -26,7 +26,7 @@ export type ProductTileProps = {
   priority?: boolean
 }
 
-export function ProductTile({ category, image, alt = '', size = 'md', priority = false }: ProductTileProps) {
+export function ProductTile({ category, image, alt = '', size = 'md', priority = false }: Readonly<ProductTileProps>) {
   // The url that failed, so a different image for the same tile gets its own chance.
   const [failed, setFailed] = useState<string | null>(null)
   if (image && image !== failed) {

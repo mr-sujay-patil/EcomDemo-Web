@@ -11,7 +11,7 @@ export type IconProps = {
   className?: string
 }
 
-export function Icon({ name, size = 20, label, className }: IconProps) {
+export function Icon({ name, size = 20, label, className }: Readonly<IconProps>) {
   return (
     <svg
       className={cx('ed-icon', className)}

@@ -10,7 +10,7 @@ export type PriceProps = {
 }
 
 /** Set like a receipt: mono, Indian digit grouping. */
-export function Price({ amount, compareAt, size = 'md' }: PriceProps) {
+export function Price({ amount, compareAt, size = 'md' }: Readonly<PriceProps>) {
   return (
     <span className={cx('ed-price', `ed-price--${size}`)}>
       <span className="ed-price-now">{formatPrice(amount)}</span>

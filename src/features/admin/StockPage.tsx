@@ -53,7 +53,7 @@ export function StockPage() {
   )
 }
 
-function StockRow({ product, quantity }: { product: ProductResponse; quantity: number | undefined }) {
+function StockRow({ product, quantity }: Readonly<{ product: ProductResponse; quantity: number | undefined }>) {
   const set = useSetStock()
   const [typed, setTyped] = useState('')
   const [problem, setProblem] = useState<string | null>(null)

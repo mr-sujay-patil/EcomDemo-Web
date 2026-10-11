@@ -12,7 +12,7 @@ export type StaffNoteProps = {
 }
 
 /** Signed and dated, so a reader can tell a person wrote it. */
-export function StaffNote({ children, name, role, date, initials }: StaffNoteProps) {
+export function StaffNote({ children, name, role, date, initials }: Readonly<StaffNoteProps>) {
   const shown =
     initials ??
     name

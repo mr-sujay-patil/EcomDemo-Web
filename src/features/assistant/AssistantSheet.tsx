@@ -15,7 +15,7 @@ import './assistant.css'
  * traps focus inside, makes the page behind inert, closes on Escape, and gives focus back to the button that opened it.
  * The conversation lives in the component that renders this, so closing the sheet does not lose it.
  */
-export function AssistantSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+export function AssistantSheet({ open, onClose }: Readonly<{ open: boolean; onClose: () => void }>) {
   const dialog = useRef<HTMLDialogElement | null>(null)
   const field = useRef<HTMLTextAreaElement>(null)
 
@@ -53,7 +53,10 @@ export function AssistantSheet({ open, onClose }: { open: boolean; onClose: () =
   )
 }
 
-function SheetBody({ field, close }: { field: React.RefObject<HTMLTextAreaElement | null>; close: () => void }) {
+function SheetBody({
+  field,
+  close,
+}: Readonly<{ field: React.RefObject<HTMLTextAreaElement | null>; close: () => void }>) {
   const { role } = useSession()
   const location = useLocation()
 
@@ -77,7 +80,10 @@ function SheetBody({ field, close }: { field: React.RefObject<HTMLTextAreaElemen
   return <Conversation field={field} close={close} />
 }
 
-function Conversation({ field, close }: { field: React.RefObject<HTMLTextAreaElement | null>; close: () => void }) {
+function Conversation({
+  field,
+  close,
+}: Readonly<{ field: React.RefObject<HTMLTextAreaElement | null>; close: () => void }>) {
   const conversation = useConversation()
   const [text, setText] = useState('')
   const thread = useRef<HTMLDivElement>(null)
@@ -158,7 +164,7 @@ function Conversation({ field, close }: { field: React.RefObject<HTMLTextAreaEle
   )
 }
 
-function TurnView({ turn, conversation }: { turn: Turn; conversation: ReturnType<typeof useConversation> }) {
+function TurnView({ turn, conversation }: Readonly<{ turn: Turn; conversation: ReturnType<typeof useConversation> }>) {
   if (turn.role === 'user') return <AssistantMessage role="user">{turn.text}</AssistantMessage>
   if (turn.role === 'note') {
     return (
@@ -173,10 +179,10 @@ function TurnView({ turn, conversation }: { turn: Turn; conversation: ReturnType
 function AssistantTurn({
   turn,
   conversation,
-}: {
+}: Readonly<{
   turn: Extract<Turn, { role: 'assistant' }>
   conversation: ReturnType<typeof useConversation>
-}) {
+}>) {
   const { proposal } = turn
   // Category and photo for the proposal's tile come from the product (already cached once the shelf was open).
   const product = useProduct(

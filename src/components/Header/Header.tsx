@@ -34,7 +34,7 @@ export function Header({
   account,
   cart,
   tools,
-}: HeaderProps) {
+}: Readonly<HeaderProps>) {
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     const query = new FormData(event.currentTarget).get('q')

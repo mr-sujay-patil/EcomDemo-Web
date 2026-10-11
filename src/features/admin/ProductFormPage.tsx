@@ -81,7 +81,7 @@ function NotFound() {
   )
 }
 
-function ProductForm({ id, product }: { id: number | null; product?: ProductResponse }) {
+function ProductForm({ id, product }: Readonly<{ id: number | null; product?: ProductResponse }>) {
   const navigate = useNavigate()
   const form = useForm<ProductValues>({
     resolver: zodResolver(productSchema),
@@ -148,7 +148,10 @@ function ProductForm({ id, product }: { id: number | null; product?: ProductResp
  * Asks the shop's language model for a description. The server saves it to the product as it answers (web KI-022), so
  * the person is told that first, the old text is kept in memory, and "Restore previous" puts it back with a normal PUT.
  */
-function GenerateDescription({ product, onText }: { product: ProductResponse; onText: (text: string) => void }) {
+function GenerateDescription({
+  product,
+  onText,
+}: Readonly<{ product: ProductResponse; onText: (text: string) => void }>) {
   const generate = useGenerateDescription()
   const save = useSaveProduct(product.id)
   const [asking, setAsking] = useState(false)
