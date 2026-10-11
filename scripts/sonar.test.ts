@@ -95,6 +95,33 @@ describe('the analysis covers the app’s own code, and only that (sonar-project
   })
 })
 
+describe('every accepted finding is decided, narrow and explained (web KI-038)', () => {
+  const raw = read('sonar-project.properties').split('\n')
+  const ids = list('sonar.issue.ignore.multicriteria')
+
+  it('accepts only the rules decided on in [Fix KI-038], each in the files it was decided for', () => {
+    const accepted = Object.fromEntries(
+      ids.map((id): [string, string] => [
+        properties.get(`sonar.issue.ignore.multicriteria.${id}.ruleKey`) ?? '',
+        properties.get(`sonar.issue.ignore.multicriteria.${id}.resourceKey`) ?? '',
+      ]),
+    )
+    expect(accepted).toEqual({
+      'typescript:S6819': 'src/**/*.tsx',
+      'typescript:S1135': 'src/content/**',
+      'typescript:S6479': 'src/features/admin/ImportPage.tsx',
+    })
+  })
+
+  it('gives each accepted rule its reason in a comment right above it', () => {
+    for (const id of ids) {
+      const at = raw.findIndex((line) => line.startsWith(`sonar.issue.ignore.multicriteria.${id}.ruleKey=`))
+      expect(at, id).toBeGreaterThan(0)
+      expect(raw[at - 1]?.trimStart().startsWith('#'), id).toBe(true)
+    }
+  })
+})
+
 describe('the quality gate is code, and judges new code (scripts/sonar-setup.sh)', () => {
   it('sets the backend’s six conditions, every one on new code, coverage at 80', () => {
     const conditions = [...setup.matchAll(/^\s*"(\w+)\|(LT|GT)\|(\d+)\|/gm)].map(([, metric, op, threshold]) => ({

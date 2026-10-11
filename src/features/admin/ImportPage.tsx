@@ -79,6 +79,8 @@ export function ImportPage() {
                 </tr>
               </thead>
               <tbody>
+                {/* A CSV line has no id and may repeat; the table is rebuilt for each file, so its line number is its key
+                    (Sonar S6479 accepted in sonar-project.properties, web KI-038). */}
                 {preview.rows.map((row, index) => (
                   <tr key={index}>
                     {IMPORT_HEADER.map((name, column) => (
