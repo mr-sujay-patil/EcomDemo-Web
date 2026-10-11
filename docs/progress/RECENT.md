@@ -16,6 +16,7 @@
 -->
 
 ## Phase 25: Code Quality Dashboard (tag: phase-25-complete, PR #45)
+**Merged:** 2026-10-11 as `57fecf0`; merge-verified (local `npm ci && npm run verify` on `main` exit 0 with 996 tests, CI on `main` green).
 **What exists now:** An optional, self-hosted SonarQube Community Build (`compose.sonar.yaml`, project `ecomdemo-web-sonar`, **127.0.0.1:9010**, containers `ecomdemo-web-sonarqube` / `ecomdemo-web-sonar-db`) analyses `src/` with the pinned scanner image (`npm run sonar`) and judges it with the gate `EcomDemo Web way`: the backend's six conditions, all on new code, coverage 80. No account, no CI job, no secret in the repository (web KI-014).
 **Key code:** `compose.sonar.yaml`; `scripts/sonar-setup.sh` (wait for UP, admin password from `SONAR_ADMIN_PASSWORD` replacing the factory one, project `ecomdemo-web`, gate as code with drift correction, attach, project analysis token printed once; `--no-token`); `scripts/sonar-scan.sh` (scanner `12.2.0.4256_8.1.0` on the stack network as `http://sonarqube:9000`, repo mounted read-only, cache volume `ecomdemo-web-sonar_scanner-home`); `sonar-project.properties`; `vite.config.ts` adds the `lcov` reporter. Decisions [Phase 25].
 **Config & infrastructure:** env `SONAR_ADMIN_PASSWORD`, `SONAR_TOKEN` (user's shell only), optional `SONAR_PORT`, `SONAR_URL`, `SONAR_HOST_URL`, `SONAR_NETWORK`, `SONAR_DB_PASSWORD`. Python 3 and curl for the setup script. SonarQube needs ~2 GB, and Elasticsearch 10-15 % free disk.

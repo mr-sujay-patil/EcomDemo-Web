@@ -83,4 +83,4 @@ Status: ⬜ Not started · 🟡 In progress · 🔵 PR open · ✅ Done (verifie
 | 22 | [Security](phases/phase-22-security.md) | CSP + npm audit + Trivy | `feature/phase-22-security` | Quality | none | ✅ |
 | 23 | [Observability](phases/phase-23-observability.md) | Error reporting + trace propagation | `feature/phase-23-observability` | Quality | `X-Correlation-Id`; backend tracing (Tempo) | ✅ |
 | 24 | [Guest Cart](phases/phase-24-guest-cart.md) | Browser storage + replay after sign-in (web KI-012) | `feature/phase-24-guest-cart` | Shopping | none (the cart API at the pin) | ✅ |
-| 25 | [Code Quality Dashboard](phases/phase-25-sonarqube.md) | SonarQube Community, self-hosted (web KI-014) | `feature/phase-25-sonarqube` | Quality | none | 🔵 |
+| 25 | [Code Quality Dashboard](phases/phase-25-sonarqube.md) | SonarQube Community, self-hosted (web KI-014) | `feature/phase-25-sonarqube` | Quality | none | ✅ |
