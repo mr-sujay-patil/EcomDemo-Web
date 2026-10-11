@@ -5,7 +5,7 @@
 - **Updated:** 2026-10-11
 - **Task:** Phase 25: Code Quality Dashboard (SonarQube) (web KI-014, approved by the user on 2026-10-11: self-hosted SonarQube Community mirroring the backend's Phase 12; no SonarQube Cloud, no CI gate, no secret), `docs/phases/phase-25-sonarqube.md`
 - **Branch:** `feature/phase-25-sonarqube` (cut from `main` at `70d64f6`, the merge of PR #44; Phase 24 verified: CI on `main` green, tag `phase-24-complete` to push by the owner, tag pushes are refused here with 403)
-- **Step:** IMPLEMENTING
+- **Step:** TESTING
 - **Backend pinned at:** commit `669a9ed1dfcc8ef0d89608c87ef05421bb157fb6` (unchanged; this phase needs nothing from the backend)
 - **Waiting for user:** no
 
@@ -16,11 +16,12 @@
 - [x] `sonar-project.properties`, `npm run sonar` (scanner Docker image), lcov reporter in `vite.config.ts`
 - [x] `scripts/sonar.test.ts` (config checks, no stack)
 - [x] Real run: stack up (an uncommitted tmpfs override for the search index: this disk reports 8 % free), setup twice (idempotent, drift corrected), `npm run sonar` twice: gate OK, coverage 99.2 %, 144 code smells (KI-038), 0 bugs, 0 vulnerabilities, 0 hotspots; a throwaway project showed the gate FAILING on new issues (exit 3); stack down
-- [ ] Decisions `[Phase 25]`, README, development-environment ports, test report, `RECENT.md` (Phase 23 archived), tracker 🔵
-- [ ] Full `npm ci && npm run verify`; PR opened
+- [x] Decisions `[Phase 25]` x8, README, development-environment ports, KI-038, test report (`docs/test-reports/phase-25.md`, two dashboard screenshots), `RECENT.md` (Phase 23 archived), tracker 🔵
+- [x] Full `npm ci && npm run verify` (exit 0, 996 tests, 80 files)
+- [ ] PR opened
 
 ## Next action
-Write `compose.sonar.yaml` (mirror the backend's: SonarQube `26.9.0.129388-community` + `postgres:18.6-alpine3.24`, names `ecomdemo-web-sonarqube` / `ecomdemo-web-sonar-db`, port `127.0.0.1:9010`), then `scripts/sonar-setup.sh` and `sonar-project.properties`.
+Push the branch and open the PR `Phase 25: Code Quality Dashboard (SonarQube)` with the template filled in (perf skipped: no app code; e2e not needed: no app code); put the PR number into `RECENT.md` (`PR #PRNUM`) and here, set the step to PR_OPEN, commit and push. Then STOP for the owner's review.
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.
