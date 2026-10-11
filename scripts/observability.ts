@@ -108,3 +108,83 @@ export function readTempoTraces(body: unknown): FoundTrace[] {
 export function traceIdOf(traceparent: string | undefined): string | undefined {
   return /^00-([0-9a-f]{32})-[0-9a-f]{16}-[0-9a-f]{2}$/.exec(traceparent ?? '')?.[1]
 }
+
+/** The parent span id in a `traceparent` header: the span of the caller (here the browser's fetch span), or undefined. */
+export function parentSpanIdOf(traceparent: string | undefined): string | undefined {
+  return /^00-[0-9a-f]{32}-([0-9a-f]{16})-[0-9a-f]{2}$/.exec(traceparent ?? '')?.[1]
+}
+
+/** Tempo's whole trace by id (web KI-040): every span the trace has, with parents and kinds, which a search does not give. */
+export function tempoTraceUrl(base: string, traceId: string): string {
+  if (!/^[0-9a-f]{1,32}$/i.test(traceId)) throw new Error(`Not a trace id: ${JSON.stringify(traceId)}`)
+  return `${withoutTrailingSlash(base)}/api/v2/traces/${normalizeTraceId(traceId)}`
+}
+
+/** One span of a trace, its ids in hex as in `traceparent`; `kind` is `server`, `client`, `internal`... */
+export type TraceSpan = {
+  serviceName: string
+  traceId: string
+  spanId: string
+  parentSpanId: string
+  name: string
+  kind: string
+  attributes: Record<string, string>
+}
+
+const spanKinds = ['unspecified', 'internal', 'server', 'client', 'producer', 'consumer']
+
+/** OTLP JSON writes ids in base64 (Tempo does); hex is accepted too. An empty id (a root's parent) stays empty. */
+const hexId = (id: unknown): string => {
+  if (typeof id !== 'string' || id === '') return ''
+  if (/^[0-9a-f]+$/i.test(id) && (id.length === 16 || id.length === 32)) return id.toLowerCase()
+  return Array.from(atob(id), (char) => char.charCodeAt(0).toString(16).padStart(2, '0')).join('')
+}
+
+const kindOf = (kind: unknown): string => {
+  if (typeof kind === 'number') return spanKinds[kind] ?? String(kind)
+  return typeof kind === 'string' ? kind.replace(/^SPAN_KIND_/, '').toLowerCase() : ''
+}
+
+const stringAttributes = (attributes: unknown): Record<string, string> =>
+  Object.fromEntries(
+    (Array.isArray(attributes) ? attributes : []).flatMap((attribute: unknown) => {
+      const value = isRecord(attribute) && isRecord(attribute['value']) ? attribute['value']['stringValue'] : undefined
+      return isRecord(attribute) && typeof attribute['key'] === 'string' && typeof value === 'string'
+        ? [[attribute['key'], value]]
+        : []
+    }),
+  )
+
+const listOf = (value: unknown): unknown[] => (Array.isArray(value) ? value : [])
+
+/** Reads Tempo's trace by id: `/api/v2/traces` (`{ trace: { resourceSpans } }`) or the older `/api/traces` (`{ batches }`). */
+export function readTempoTrace(body: unknown): TraceSpan[] {
+  const resourceSpans = isRecord(body)
+    ? isRecord(body['trace'])
+      ? body['trace']['resourceSpans']
+      : body['batches']
+    : undefined
+  if (!Array.isArray(resourceSpans)) throw new Error(`Not a Tempo trace: ${JSON.stringify(body)?.slice(0, 200)}`)
+  return resourceSpans.flatMap((resource: unknown) => {
+    if (!isRecord(resource)) return []
+    const serviceName =
+      stringAttributes(isRecord(resource['resource']) ? resource['resource']['attributes'] : [])['service.name'] ?? ''
+    return listOf(resource['scopeSpans'] ?? resource['instrumentationLibrarySpans']).flatMap((scope: unknown) =>
+      listOf(isRecord(scope) ? scope['spans'] : []).flatMap((span: unknown) =>
+        isRecord(span)
+          ? [
+              {
+                serviceName,
+                traceId: hexId(span['traceId']),
+                spanId: hexId(span['spanId']),
+                parentSpanId: hexId(span['parentSpanId']),
+                name: typeof span['name'] === 'string' ? span['name'] : '',
+                kind: kindOf(span['kind']),
+                attributes: stringAttributes(span['attributes']),
+              },
+            ]
+          : [],
+      ),
+    )
+  })
+}
