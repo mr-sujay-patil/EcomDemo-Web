@@ -14,7 +14,7 @@
 // derives the multiplier from this benchmark. Its device table calls an index of 800 to 1200 "high-end mobile".
 //
 // `node scripts/perf-calibrate.mjs` benchmarks this machine with Lighthouse's own function, in the Chrome Lighthouse will use
-// (CHROME_PATH), five times, and prints the slowdown for the median. scripts/perf.sh passes it to lighthouserc.cjs.
+// (CHROME_PATH), five times, each in a freshly started Chrome as a Lighthouse run does, and prints the slowdown for the median. scripts/perf.sh passes it to lighthouserc.cjs.
 import { createRequire } from 'node:module'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 
@@ -56,21 +56,27 @@ export function driftFromTarget(benchmarkIndexes, multiplier, target = TARGET_BE
 
 const BENCHMARK_RUNS = 5
 
-/** Lighthouse's own benchmark, from the Lighthouse that Lighthouse CI runs (not a copy), in a headless Chrome. */
+/**
+ * Lighthouse's own benchmark, from the Lighthouse that Lighthouse CI runs (not a copy), measured the way a Lighthouse run measures
+ * it: once, in a Chrome that has just started (headless, the same flags as lighthouserc.cjs). A Chrome that has warmed up scores
+ * higher: on CI the first reading in a fresh Chrome was 2190 and the next four in the same one 2531 to 2657, while the Lighthouse
+ * runs themselves measured 2172 to 2232, so a warm median simulated a phone 16% slower than the target. Each sample is a new Chrome.
+ */
 async function benchmarkThisMachine(chromePath) {
   const fromLhci = createRequire(createRequire(import.meta.url).resolve('@lhci/cli/package.json'))
   const { pageFunctions } = await import(pathToFileURL(fromLhci.resolve('lighthouse/core/lib/page-functions.js')).href)
   const { default: puppeteer } = await import('puppeteer-core')
-  const browser = await puppeteer.launch({ executablePath: chromePath, headless: true, args: ['--no-sandbox'] })
-  try {
-    const page = await browser.newPage()
-    const indexes = []
-    for (let run = 0; run < BENCHMARK_RUNS; run += 1)
+  const indexes = []
+  for (let run = 0; run < BENCHMARK_RUNS; run += 1) {
+    const browser = await puppeteer.launch({ executablePath: chromePath, headless: true, args: ['--no-sandbox'] })
+    try {
+      const page = await browser.newPage()
       indexes.push(await page.evaluate(pageFunctions.computeBenchmarkIndex))
-    return indexes
-  } finally {
-    await browser.close()
+    } finally {
+      await browser.close()
+    }
   }
+  return indexes
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
