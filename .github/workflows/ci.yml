@@ -318,7 +318,9 @@ jobs:
           for header in Content-Security-Policy Referrer-Policy X-Content-Type-Options Permissions-Policy Cross-Origin-Opener-Policy; do
             echo "$headers" | grep -qi "^$header:" || { echo "missing header: $header"; exit 1; }
           done
-          echo "$headers" | grep -qi "^content-security-policy:.*script-src 'self';"
+          # script-src is 'self' plus only sha256 hashes of inline scripts (web KI-027): never 'unsafe-inline'.
+          echo "$headers" | grep -qiE "^content-security-policy:.*script-src 'self'( 'sha256-[A-Za-z0-9+/]+=*')*;"
+          if echo "$headers" | grep -qi "unsafe-inline"; then echo "the CSP allows 'unsafe-inline'"; exit 1; fi
           docker rm --force web
 
       # web KI-035: against a stand-in HTTPS gateway, nginx proxies only when the certificate chains to API_CA_FILE and names

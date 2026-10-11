@@ -1,8 +1,10 @@
 // What the production build may contain, checked on dist/ after `npm run build` (so in `npm run verify` and in CI):
+//   - every inline script in index.html allowed by its exact sha256 in the nginx Content-Security-Policy (checkInlineScripts);
 //   - no secret-shaped text (keys, tokens, passwords) and no source maps or .env files;
 //   - no backend address: the app talks to `/api` on its own origin and nothing else. Any absolute URL has to be one of the
 //     few namespaces and documentation links that libraries carry in their code (the allowlist below, each with its reason).
 // A hit fails the build. Adding to the allowlist is a review decision: a real address in the bundle is a bug, not an entry.
+import { createHash } from 'node:crypto'
 import { readdirSync, readFileSync } from 'node:fs'
 import { join, extname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -68,9 +70,40 @@ export function checkDist(files) {
   return { failures }
 }
 
-/** Stub (fix KI-027 fills it in). */
-export function checkInlineScripts() {
-  return []
+/**
+ * The Content-Security-Policy allows no inline script except by the sha256 of its exact text (web KI-027: index.html's early
+ * product request). A browser blocks one whose hash is not in `script-src`, silently for the visitor, so the build checks it:
+ * every inline script in the built index.html must have its hash in nginx/security-headers.conf, no hash may be left for a
+ * script that is gone, and 'unsafe-inline' and 'unsafe-eval' are never allowed. Returns the problems found.
+ */
+export function checkInlineScripts(indexHtml, securityHeadersConf) {
+  const policy = securityHeadersConf.match(/add_header\s+Content-Security-Policy\s+"([^"]*)"/)?.[1]
+  const scriptSrc = policy
+    ?.split(';')
+    .map((directive) => directive.trim().split(/\s+/))
+    .find(([name]) => name === 'script-src')
+  if (!scriptSrc) return ['nginx/security-headers.conf: no Content-Security-Policy with a script-src was found']
+  if (scriptSrc.some((source) => source === "'unsafe-inline'" || source === "'unsafe-eval'"))
+    return ["nginx/security-headers.conf: script-src must not allow 'unsafe-inline' or 'unsafe-eval'"]
+
+  const allowed = scriptSrc.filter((source) => source.startsWith("'sha256-"))
+  const inline = [...indexHtml.matchAll(/<script\b([^>]*)>([\s\S]*?)<\/script>/g)]
+    .filter(([, attributes]) => !/\bsrc\s*=/.test(attributes))
+    .map(([, , text]) => `'sha256-${createHash('sha256').update(text, 'utf8').digest('base64')}'`)
+  return [
+    ...inline
+      .filter((hash) => !allowed.includes(hash))
+      .map(
+        (hash) =>
+          `index.html: an inline script is not allowed by the Content-Security-Policy's script-src (the browser will block it); add ${hash} to nginx/security-headers.conf`,
+      ),
+    ...allowed
+      .filter((hash) => !inline.includes(hash))
+      .map(
+        (hash) =>
+          `nginx/security-headers.conf: script-src allows ${hash}, which matches no inline script in index.html; remove it`,
+      ),
+  ]
 }
 
 function readDist(root) {
@@ -88,8 +121,13 @@ function readDist(root) {
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const files = readDist('dist')
-  const { failures } = checkDist(files)
-  console.log(`check-dist: ${files.size} files scanned for secrets, source maps and backend addresses.`)
+  const failures = [
+    ...checkDist(files).failures,
+    ...checkInlineScripts(readFileSync('dist/index.html', 'utf8'), readFileSync('nginx/security-headers.conf', 'utf8')),
+  ]
+  console.log(
+    `check-dist: ${files.size} files scanned for secrets, source maps and backend addresses; inline scripts checked against the CSP.`,
+  )
   if (failures.length > 0) {
     for (const failure of failures) console.error(`check-dist: ${failure}`)
     process.exit(1)
