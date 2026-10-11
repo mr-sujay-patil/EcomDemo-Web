@@ -5,21 +5,21 @@
 - **Updated:** 2026-10-11
 - **Task:** Fix KI-027 (approved by the owner 2026-10-11: "calibrate the CPU slowdown for the runner, and for the product page fetch its data from a small inline script in index.html"): LCP misses the 2.5 s budget in CI (PR #48's perf run: shelf 2.89 s, product page 2.79 s, benchmark index about 2345). `docs/KNOWN_ISSUES.md` row KI-027 (Fix queue), `docs/performance.md` "What is left"
 - **Branch:** `fix/ki-027-lcp-budget` (cut from `main` at `d486b76`, the merge of PR #48; KI-039 and KI-040 merged and merge-verified there: local verify 1054 tests, CI on `main` green)
-- **Step:** IMPLEMENTING
+- **Step:** TESTING
 - **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` (unchanged by this fix)
 - **Waiting for user:** no
 
 ## Checklist
 - [x] Pre-flight: KI-039/040 merged (`d486b76`) and merge-verified; branch cut; KI-027 moved to the Fix queue, In progress
 - [x] Calibration: red (`962b6c9`, 7 of 9 failed on a constant-4x stub), green (`fae37c7`, 9 of 9): `scripts/perf-calibrate.mjs` (Lighthouse 12.6.1's own `computeBenchmarkIndex`, median of 5, slowdown = index / 1100) → `PERF_CPU_SLOWDOWN` → `lighthouserc.cjs`; `perf-report.mjs` prints the phone each run simulated. Here: index 2305 → 2.1x
-- [ ] Product page: red unit tests for the prefetch consumer, then the inline script in `index.html` (same GET, same headers that matter, photo preloaded), consumed once by the API client's fetch; CSP hash checked at build
-- [ ] E2E: the product page loaded cold makes exactly one product request
-- [ ] Docs: `docs/performance.md`, `docs/security.md`, decisions `[Fix KI-027]`, KI-027 Fixed (PR #NN)
+- [x] Product page: red (`9c40776`, 11 of 15 failed), green (`0c7b455`): inline script in `index.html` (same GET, Accept + X-Correlation-Id, photo preloaded), taken once by the API client (`src/api/earlyRequest.ts`). CSP: red (`5ca2e29`, 4 of 5), green (`2b363d1`): sha256 in `nginx/security-headers.conf`, checked by `scripts/check-dist.mjs`; CI image check accepts 'self' + hashes only
+- [x] E2E (`8d153a0`): one product request under the production CSP (early request taken), one photo request with no route set (Playwright disables the cache while any route is set). Here against a stand-in API: red with `main`'s index.html (2 failed), green 6 of 6 (repeat 3)
+- [x] Docs: `docs/performance.md` (Fix KI-027 section, local stand-in numbers: photo load delay 2183 → 741 ms), `docs/security.md`, decisions `[Fix KI-027]` x8, KI-027 Fixed (PR #NN; CI numbers after the perf job)
 - [ ] Full `npm ci && npm run verify`; perf only in CI (no backend buildable here)
 - [ ] PR opened
 
 ## Next action
-Product page prefetch: red unit tests for the consumer in `src/api/` (one product request, headers, once only, fall-through to the normal fetch), then the inline script in `index.html` and the CSP hash.
+Run the full `npm ci && npm run verify`, push, open the PR (template as PR #48), put its number in KI-027 and here, step PR_OPEN.
 
 ## ⚠️ Environment notes (this machine)
 - This session runs in a cloud container (not the owner's WSL machine): Node 24 at `/opt/node24/bin`; the backend team's working copy is `/home/user/ecomdemo` (read only, never checked out or changed); a read-only clone is at `/home/user/ecomdemo-backend-readonly` (`a85202f`, push URL `no-push`).
