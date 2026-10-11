@@ -2,9 +2,12 @@ import {
   correlationSpanQuery,
   gatewayLineQuery,
   lokiQueryRangeUrl,
+  parentSpanIdOf,
   readLokiLines,
+  readTempoTrace,
   readTempoTraces,
   tempoSearchUrl,
+  tempoTraceUrl,
   traceIdOf,
 } from '../scripts/observability'
 import { expect, test } from './fixtures'
@@ -197,7 +200,7 @@ test.describe('with the catalogue service really stopped', () => {
     for (const id of [reference, retryReference]) {
       await expect
         .poll(async () => (await gatewayLines(id)).filter(({ line }) => line.includes('-> 503')).length, {
-          message: `the gateway's "-> 503" line for ${id} in Loki (${lokiUrl}). Empty Loki? Alloy ships only the compose project "ecomdemo": docs/troubleshooting.md`,
+          message: `the gateway's "-> 503" line for ${id} in Loki (${lokiUrl}). Empty Loki? Start the stack with scripts/backend-stack.sh (its Alloy override, web KI-039): docs/troubleshooting.md`,
           timeout: 90_000,
         })
         .toBe(1)
@@ -211,10 +214,35 @@ test.describe('with the catalogue service really stopped', () => {
           timeout: 90_000,
         })
         .toEqual([loggedTraceId])
-      const [trace] = await tracesFor(id)
-      expect(trace?.rootServiceName).toBe('gateway-service')
     }
+    // The first call had no traceparent, so the gateway started its trace: the gateway's span is the root.
+    expect((await tracesFor(reference))[0]?.rootServiceName).toBe('gateway-service')
+
     // The retried call carried a traceparent: the trace the reference finds is the one the browser started.
-    expect((await tracesFor(retryReference))[0]?.traceId).toBe(traceIdOf(sent.get(retryReference)))
+    const retryTraceId = traceIdOf(sent.get(retryReference))
+    expect((await tracesFor(retryReference))[0]?.traceId).toBe(retryTraceId)
+    // Web KI-040: so that trace's root is the browser's fetch span, which the app never exports (src/app/tracing.ts: no
+    // exporter), and Tempo's search can only say "<root span not yet received>". What it can prove is the join: the span that
+    // carries the reference is the gateway's SERVER span, and its parent is exactly the browser span the traceparent named.
+    const response = await request.get(tempoTraceUrl(tempoUrl, retryTraceId ?? ''))
+    expect(response.ok(), `Tempo at ${tempoUrl} answered ${response.status()} for trace ${retryTraceId}`).toBe(true)
+    const referenceSpans = readTempoTrace(await response.json()).filter(
+      ({ attributes }) => attributes['correlation_id'] === retryReference,
+    )
+    expect(
+      referenceSpans.map(({ serviceName, kind, traceId, parentSpanId }) => ({
+        serviceName,
+        kind,
+        traceId,
+        parentSpanId,
+      })),
+    ).toEqual([
+      {
+        serviceName: 'gateway-service',
+        kind: 'server',
+        traceId: retryTraceId,
+        parentSpanId: parentSpanIdOf(sent.get(retryReference)),
+      },
+    ])
   })
 })

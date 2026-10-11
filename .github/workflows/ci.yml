@@ -125,20 +125,40 @@ jobs:
           path: backend-images.tar
           key: backend-images-${{ steps.backend.outputs.sha }}
 
+      # Before the stack: scripts/backend-stack.sh runs a Node script (scripts/alloy-override.mjs) when it starts it.
+      - name: Set up Node from .nvmrc
+        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version-file: web/.nvmrc
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      # The stack starts through scripts/backend-stack.sh, the same code path as a laptop (web KI-039): its override mounts a copy of
+      # the backend's own Alloy config that ships THIS project's logs to Loki (the backend's keeps only the project "ecomdemo").
+      # STACK_PREFIX=ecomdemo and PORT_SHIFT=0 keep the backend's own container names and ports (nothing else runs on the runner).
       # A hit: load the tarball and start without building. A miss: build and start as before (slower, same result).
       - name: Load the cached backend images and start the stack
         if: ${{ steps.backend-images.outputs.cache-hit == 'true' }}
-        working-directory: ecomdemo-backend-readonly
+        working-directory: web
+        env:
+          STACK_PREFIX: ecomdemo
+          PORT_SHIFT: '0'
+          NO_REBUILD: '1'
+          WAIT_TIMEOUT: '600'
         run: |
           docker load --input ../backend-images.tar
-          docker compose up --wait --wait-timeout 600
+          bash scripts/backend-stack.sh up
 
       - name: Build and start the backend stack (no cached images)
         if: ${{ steps.backend-images.outputs.cache-hit != 'true' }}
-        working-directory: ecomdemo-backend-readonly
+        working-directory: web
+        env:
+          STACK_PREFIX: ecomdemo
+          PORT_SHIFT: '0'
+          WAIT_TIMEOUT: '600'
         run: |
           echo "::notice::No cached backend images for ${{ steps.backend.outputs.sha }}: building. Run the 'Backend images' workflow to cache them."
-          docker compose up --build --wait --wait-timeout 600
+          bash scripts/backend-stack.sh up
 
       # Printed to the log and to the run's summary page: does the stack still fit a hosted runner?
       - name: Record the stack's footprint
@@ -152,13 +172,6 @@ jobs:
             docker stats --no-stream --format 'table {{.Name}}\t{{.MemUsage}}\t{{.CPUPerc}}'
             echo '```'
           } | tee -a "$GITHUB_STEP_SUMMARY"
-
-      - name: Set up Node from .nvmrc
-        uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
-        with:
-          node-version-file: web/.nvmrc
-          cache: npm
-          cache-dependency-path: web/package-lock.json
 
       - name: Install exact dependencies
         working-directory: web
@@ -186,12 +199,34 @@ jobs:
         working-directory: web
         run: npm run e2e
 
+      # Web KI-039: the suite just sent the gateway hundreds of requests, so Loki must hold gateway lines. Alloy ships every 15 s,
+      # hence a short poll. Cheap, and it names the cause directly if the Alloy override ever stops working.
+      - name: Check the backend's logs reach Loki
+        run: |
+          for attempt in $(seq 1 12); do
+            lines="$(curl -fsS -G http://localhost:3100/loki/api/v1/query_range \
+              --data-urlencode 'query={service_name="gateway-service"}' --data-urlencode since=1h --data-urlencode limit=100 \
+              | python3 -c 'import json, sys; print(sum(len(s["values"]) for s in json.load(sys.stdin)["data"]["result"]))')" || lines=0
+            if [ "$lines" -gt 0 ]; then echo "Loki has $lines gateway lines (limit 100)."; exit 0; fi
+            echo "No gateway lines in Loki yet (attempt $attempt of 12)."
+            sleep 5
+          done
+          echo "::error::Loki has no gateway-service lines: Alloy is not shipping this stack's logs (web KI-039, scripts/backend-stack.sh)."
+          exit 1
+
       # The budgets (docs/performance.md): Lighthouse CI on the production image for the shelf and a product page, and the signed-in
       # cart and order flows, against the backend this job already started. A broken budget fails the job. `npm run perf` builds the
       # image, starts only `web`, and takes it down again.
       - name: Check the performance budgets
         working-directory: web
         run: npm run perf
+
+      # Web KI-032 on a real failure: stop the catalogue service, check the reference the shelf shows finds the gateway's line in
+      # Loki and its trace in Tempo, start the service again (pass or fail). Last of the checks, so a slow restart cannot touch
+      # the suite or the budgets. Runnable here since web KI-039 (Loki gets this stack's logs).
+      - name: Stop the catalogue and find the reference in Loki and Tempo
+        working-directory: web
+        run: npm run e2e:service-down
 
       # The bundle's treemap and its raw numbers, as an artifact to read (rollup-plugin-visualizer is a dev dependency, not in the app).
       - name: Analyse the bundle
