@@ -68,6 +68,11 @@ export function checkDist(files) {
   return { failures }
 }
 
+/** Stub (fix KI-027 fills it in). */
+export function checkInlineScripts() {
+  return []
+}
+
 function readDist(root) {
   const files = new Map()
   const walk = (dir) => {
