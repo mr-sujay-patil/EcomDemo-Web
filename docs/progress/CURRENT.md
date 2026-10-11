@@ -5,9 +5,9 @@
 - **Updated:** 2026-10-11
 - **Task:** Fix KI-038: triage the first SonarQube analysis's 144 maintainability findings rule by rule (fix, or accept with the reason in the code or `sonar-project.properties` and a `[Fix KI-038]` decision), `docs/KNOWN_ISSUES.md` row KI-038
 - **Branch:** `fix/ki-038-sonar-findings` (cut from `main` at `57fecf0`, the merge of PR #45; Phase 25 merge-verified: local `npm ci && npm run verify` on `main` exit 0, 996 tests, and CI on `main` green, run 113; tag `phase-25-complete` for the owner to push, tag pushes are refused here with 403)
-- **Step:** TESTING (PR next)
+- **Step:** PR_OPEN (PR #46)
 - **Backend pinned at:** commit `669a9ed1dfcc8ef0d89608c87ef05421bb157fb6` (unchanged; this fix needs nothing from the backend)
-- **Waiting for user:** no
+- **Waiting for user:** YES: CI on PR #46, then the owner's review and `approved, merge it`
 
 ## Checklist
 - [x] Pre-flight: Phase 25 verified in `main`; branch cut; KI-038 moved to the fix queue (In progress)
@@ -22,10 +22,11 @@
 - [x] Re-analysis: 0 code smells, gate OK (new coverage 99.6 %); without the acceptances 30 (exactly the accepted ones); stack down (volumes kept)
 - [x] Decisions `[Fix KI-038]` x6, KI-038 Fixed, README; full `npm ci && npm run verify` exit 0 (1014 tests, 83 files)
 - [x] Scratch a11y/keyboard/layout/motion/zoom matrix against a stand-in gateway: 914 passed
-- [ ] PR opened
+- [x] PR opened (#46)
+- [ ] CI green on the PR
 
 ## Next action
-Push and open the PR `Fix KI-038: ...`, then set the PR number in KI-038's status and here (PR_OPEN), commit, push, and STOP for the owner's review. After the merge: local `npm ci && npm run verify` on `main`, CI on `main` green, tag `ki-038-fixed` (the owner pushes it: tag pushes are refused here with 403).
+Wait for CI on PR #46 and fix it if red (`verify` ran green locally; `e2e` and `perf` ran only in CI, no backend here). Then STOP for the owner's `approved, merge it`. After the merge: local `npm ci && npm run verify` on `main`, CI on `main` green, tag `ki-038-fixed` (tag pushes are refused here with 403: give the owner `git tag ki-038-fixed <merge sha> && git push origin ki-038-fixed`).
 
 ## ⚠️ Environment notes (this machine)
 - The backend team's own stack (`~/projects/ecomdemo`, compose project `ecomdemo`) was running on 2026-10-06 and reported `phase-34-complete-2-g40fed61` (two commits past the tag). Its API matched the tag (snapshots differ only by `imageUrl` and the image path). Never stop or touch it; starting the clone's stack fails on the container names while it runs.
