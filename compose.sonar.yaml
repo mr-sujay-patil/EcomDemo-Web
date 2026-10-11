@@ -1,0 +1,88 @@
+# SonarQube for the shop's code: a dashboard of bugs, vulnerabilities, security hotspots, code smells, duplication and
+# test coverage, with a quality gate (Phase 25, web KI-014). The design mirrors the backend's Phase 12 (its own
+# compose.sonar.yaml and scripts/sonar-setup.sh, read from its clone): a separate compose file, SonarQube Community pinned
+# to an exact build, its own PostgreSQL, and the quality gate created by a script.
+#
+# A SEPARATE file from compose.yaml, on purpose: SonarQube needs about 2 GB of memory and runs an embedded Elasticsearch,
+# and the shop's container needs neither. It is started only when somebody wants an analysis.
+#
+#   docker compose -f compose.sonar.yaml up -d --wait    start it (first start takes 1 to 2 minutes)
+#   bash scripts/sonar-setup.sh                          admin password, project, quality gate, analysis token
+#   npm run test:coverage && npm run sonar               analyse, wait for the gate
+#   open http://localhost:9010/dashboard?id=ecomdemo-web
+#   docker compose -f compose.sonar.yaml down            stop it, keeping the analysis history
+#
+# It can run BESIDE the backend team's SonarQube (their compose.sonar.yaml: containers ecomdemo-sonarqube and
+# ecomdemo-sonar-db, port 9000, project `ecomdemo`) and beside the backend stack the E2E uses (scripts/backend-stack.sh,
+# containers webstack-*, ports 2xxxx): this file has its own project name (so its own network and volumes), its own
+# container names and its own host port. Nothing here touches theirs.
+name: ecomdemo-web-sonar
+
+services:
+  sonarqube:
+    # Community Build, pinned to the exact build the backend uses. Not `lts-community` (it still resolves to 9.9, which
+    # fails its schema migration on a modern PostgreSQL) and not `community` (a rule set that changes underneath you
+    # changes what the quality gate means): bump it deliberately, in a PR.
+    image: sonarqube:26.9.0.129388-community
+    container_name: ecomdemo-web-sonarqube
+    depends_on:
+      sonar-db:
+        condition: service_healthy
+    environment:
+      # SonarQube keeps its data (analyses, the quality gate, users, tokens) in PostgreSQL. The database is reachable
+      # only inside this compose network, so its password is not a secret worth keeping out of a default; set
+      # SONAR_DB_PASSWORD to change it.
+      SONAR_JDBC_URL: jdbc:postgresql://sonar-db:5432/sonar
+      SONAR_JDBC_USERNAME: ${SONAR_DB_USER:-sonar}
+      SONAR_JDBC_PASSWORD: ${SONAR_DB_PASSWORD:-sonar}
+      # Elasticsearch refuses to start in production mode when the host allows too few memory-mapped areas
+      # (vm.max_map_count, a kernel setting a container cannot change). Skipping that bootstrap check lets it start on
+      # a default Linux kernel; if it still fails with "max virtual memory areas ... is too low", run on the host:
+      #   sudo sysctl -w vm.max_map_count=524288
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: 'true'
+    ports:
+      # Loopback only, and 9010, not SonarQube's 9000: the backend team's own SonarQube publishes 9000.
+      - '127.0.0.1:${SONAR_PORT:-9010}:9000'
+    volumes:
+      # Three named volumes for three different things: the analyses (losing it loses the history that "new code" is
+      # measured against), the plugins, and the logs. Compose prefixes them with the project name, so they are
+      # ecomdemo-web-sonar_sonarqube-data and so on, never the backend's.
+      - sonarqube-data:/opt/sonarqube/data
+      - sonarqube-extensions:/opt/sonarqube/extensions
+      - sonarqube-logs:/opt/sonarqube/logs
+    healthcheck:
+      # The status endpoint says STARTING for a long while before UP (Elasticsearch first, then the database
+      # migration): an open port alone would call it ready far too early. curl, because the image has no wget.
+      test: ['CMD-SHELL', 'curl -sf http://localhost:9000/api/system/status | grep -q ''"status":"UP"''']
+      interval: 10s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
+    # A tool, not the application: it does not come back by itself after a reboot.
+    restart: 'no'
+
+  sonar-db:
+    # SonarQube's own database: its own container and volume, nothing shared with any application database.
+    image: postgres:18.6-alpine3.24
+    container_name: ecomdemo-web-sonar-db
+    environment:
+      POSTGRES_DB: sonar
+      POSTGRES_USER: ${SONAR_DB_USER:-sonar}
+      POSTGRES_PASSWORD: ${SONAR_DB_PASSWORD:-sonar}
+    volumes:
+      # /var/lib/postgresql, not /var/lib/postgresql/data: the postgres 18 image moved its data directory.
+      - sonar-db-data:/var/lib/postgresql
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d sonar']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+      start_period: 10s
+    # No `ports:` on purpose: nothing outside this compose network needs the database.
+    restart: 'no'
+
+volumes:
+  sonarqube-data:
+  sonarqube-extensions:
+  sonarqube-logs:
+  sonar-db-data:

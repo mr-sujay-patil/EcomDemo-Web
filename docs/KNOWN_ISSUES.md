@@ -70,13 +70,13 @@ Adding an issue: take the next free ID, add a row, and add a detail section only
 | ID | Item | Phase |
 |---|---|---|
 | KI-012 | Guest cart kept in the browser and replayed with `POST /api/cart/items` after login (approved by the user on 2026-10-10) | Phase 24 (`docs/phases/phase-24-guest-cart.md`) |
+| KI-014 | Code-quality dashboard as the backend has: self-hosted SonarQube Community mirroring the backend's Phase 12, not SonarQube Cloud, no CI gate, no account or secret (approved by the user on 2026-10-11) | Phase 25 (`docs/phases/phase-25-sonarqube.md`) |
 
 ## Candidates: new capabilities (a phase only if approved)
 
 | ID | Capability | Notes |
 |---|---|---|
 | KI-013 | Server-sent events for order status instead of polling | Needs backend KI-022 first |
-| KI-014 | Code-quality dashboard (SonarQube Cloud) as the backend has | Not in the guide's roadmap; propose as a phase if wanted |
 
 ## Accepted limits
 
@@ -88,4 +88,4 @@ Adding an issue: take the next free ID, add a row, and add a detail section only
 
 | ID | Item | Check |
 |---|---|---|
-| — | none yet | |
+| KI-038 | The first SonarQube analysis (Phase 25, 2026-10-11, commit `66c1345`) reports **144 maintainability issues** and no bug, vulnerability or hotspot: 137 in sources, 7 in tests. By rule: `typescript:S6759` props not read-only (51), `S3358` nested ternaries (29), `S6819` an ARIA role where a native element exists (28, some may be deliberate, Phase 18), `S1874` deprecated `FormEvent` (9), `S5906` (6, tests), `S3776` cognitive complexity over 15 (5, the HIGH ones: `ProductCard`, `SagaTimeline`, `ProductFormPage`, `SearchIndexPage`, `CartPage`), `S3863` (4), and 12 more (`S4624` twice and ten single findings, among them one `S7773` "prefer `Number.NaN`" in `ProductFormPage`, rated Reliability C in the server's MQR mode). The gate judges new code only, so none of these fails it | Triage rule by rule (fix on a `fix/` branch, or accept with the reason in the code, as the backend did in its Phase 12); not fixed in passing Phase 25 (hard rule 7) |

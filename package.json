@@ -27,6 +27,7 @@
     "check:dist": "node scripts/check-dist.mjs",
     "audit:deps": "node scripts/audit-deps.mjs",
     "perf:analyze": "ANALYZE=1 vite build",
+    "sonar": "bash scripts/sonar-scan.sh",
     "e2e:docker": "bash scripts/e2e-docker.sh",
     "e2e:service-down": "bash scripts/e2e-service-down.sh",
     "e2e:k8s": "bash scripts/e2e-k8s.sh",
