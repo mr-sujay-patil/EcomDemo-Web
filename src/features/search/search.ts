@@ -30,7 +30,7 @@ export function parseSearch(params: URLSearchParams): SearchState {
   const category = params.get('category')?.trim()
   return {
     q: (params.get('q') ?? '').trim().slice(0, MAX_QUERY_LENGTH),
-    category: category ? category : null,
+    category: category || null,
     minPrice: parsePrice(params.get('minPrice')),
     maxPrice: parsePrice(params.get('maxPrice')),
   }
@@ -84,4 +84,12 @@ export function filterCatalogue(products: readonly ProductResponse[], state: Sea
     if (state.maxPrice !== null && product.price > state.maxPrice) return false
     return true
   })
+}
+
+/** The line above the results: nothing found with a hint, or the count and how the list is ordered. */
+export function resultsCaption(count: number, query: string, mode: 'meaning' | 'words'): string {
+  if (count === 0) return `Nothing matches “${query}”. Try other words, or fewer filters.`
+  const noun = count === 1 ? 'product' : 'products'
+  const order = mode === 'meaning' ? 'best match first' : 'matched on words in the name and description'
+  return `${count} ${noun}, ${order}`
 }

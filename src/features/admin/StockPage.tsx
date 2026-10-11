@@ -74,7 +74,8 @@ function StockRow({ product, quantity }: Readonly<{ product: ProductResponse; qu
       setTyped('')
     } catch (error) {
       const { message, reference } = failureOf(error, 'The stock level was not saved.')
-      setProblem(`${message}${reference ? ` Reference for support: ${reference}` : ''}`)
+      const support = reference ? ` Reference for support: ${reference}` : ''
+      setProblem(message + support)
     }
   }
 

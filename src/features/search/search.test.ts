@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest'
 import { productFixtures } from '@/test/msw/handlers'
-import { filterCatalogue, MAX_QUERY_LENGTH, parseSearch, toSearchParams, type SearchState } from './search'
+import {
+  filterCatalogue,
+  MAX_QUERY_LENGTH,
+  parseSearch,
+  resultsCaption,
+  toSearchParams,
+  type SearchState,
+} from './search'
 
 const none: SearchState = { q: '', category: null, minPrice: null, maxPrice: null }
 
@@ -52,5 +59,16 @@ describe('filterCatalogue (the fallback)', () => {
       filterCatalogue(productFixtures, { ...none, q: 'fixture', minPrice: 500, maxPrice: 1299 }).map((p) => p.id),
     ).toEqual([1, 3])
     expect(filterCatalogue(productFixtures, { ...none, q: 'fixture', minPrice: 1300 }).map((p) => p.id)).toEqual([2])
+  })
+})
+
+// Taken out of SearchPage for web KI-038 (Sonar S3358); the page's own tests cover the rendering.
+describe('resultsCaption', () => {
+  it('suggests other words when nothing matched', () => {
+    expect(resultsCaption(0, 'desk', 'meaning')).toBe('Nothing matches “desk”. Try other words, or fewer filters.')
+  })
+  it('counts the products and says how they are ordered', () => {
+    expect(resultsCaption(1, 'desk', 'meaning')).toBe('1 product, best match first')
+    expect(resultsCaption(3, 'desk', 'words')).toBe('3 products, matched on words in the name and description')
   })
 })

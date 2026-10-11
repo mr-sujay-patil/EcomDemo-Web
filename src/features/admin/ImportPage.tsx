@@ -126,13 +126,14 @@ function Result({
 }>) {
   const { execution } = result
   const failed = isFailed(result)
+  // A failed run is danger; a finished one that skipped rows is a warning; a clean one is a success.
+  let tone: 'danger' | 'warning' | 'success' = 'success'
+  if (failed) tone = 'danger'
+  else if (execution.skipCount > 0) tone = 'warning'
   return (
     <section className="stack" aria-labelledby="result-title">
       <h2 id="result-title">Result</h2>
-      <Alert
-        tone={failed ? 'danger' : execution.skipCount > 0 ? 'warning' : 'success'}
-        title={failed ? `The import ended as ${execution.status}.` : 'The import finished.'}
-      >
+      <Alert tone={tone} title={failed ? `The import ended as ${execution.status}.` : 'The import finished.'}>
         {execution.failureMessage ? <p>{execution.failureMessage}</p> : null}
       </Alert>
       <dl className="admin-facts">
