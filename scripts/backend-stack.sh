@@ -16,7 +16,9 @@
 # because the running container reads it). A backend whose Alloy service or config no longer looks as expected stops the start.
 #
 # CI starts its stack with this script too, keeping the backend's own container names and ports (.github/workflows/ci.yml):
-#   STACK_PREFIX=ecomdemo PORT_SHIFT=0 NO_BUILD=1 bash scripts/backend-stack.sh up   # NO_BUILD=1: images loaded, never build
+#   STACK_PREFIX=ecomdemo PORT_SHIFT=0 NO_REBUILD=1 bash scripts/backend-stack.sh up
+# NO_REBUILD=1 starts the images already there (CI loads them from its cache) and builds only a missing one, as a plain
+# `docker compose up` does; without it `up` rebuilds (`--build`), which is quick on a laptop's layer cache.
 #
 #   bash scripts/backend-stack.sh up        # build if needed, start, wait until healthy
 #   bash scripts/backend-stack.sh down      # stop and remove the containers (never the volumes)
@@ -77,11 +79,13 @@ PY
 { read -r project; read -r alloy_config; } < "$alloy_source"
 node scripts/alloy-override.mjs "$alloy_config" "$project" "$alloy_copy"
 
+build=(--build)
+[ "${NO_REBUILD:-}" = 1 ] && build=()
+
 compose() { docker compose --project-directory "$backend" -f "$backend/compose.yaml" -f "$override" "$@"; }
 
 case "${1:-}" in
-  # NO_BUILD=1 (CI, after loading the cached images): start what is there, never build.
-  up)   compose up "$([ "${NO_BUILD:-}" = 1 ] && echo --no-build || echo --build)" --wait --wait-timeout "${WAIT_TIMEOUT:-900}" -d ;;
+  up)   compose up "${build[@]}" --wait --wait-timeout "${WAIT_TIMEOUT:-900}" -d ;;
   down) compose --profile tools down ;;
   ps)   compose ps --format 'table {{.Name}}\t{{.Status}}\t{{.Ports}}' ;;
   config)
