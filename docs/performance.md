@@ -73,6 +73,7 @@ The flows were written after the fixes, so they have no "before". One earlier re
 ## What is left
 
 - **LCP is still a warning, not a failure**: after KI-027 both pages were still over 2.5 s on CI (shelf 2.87 s, product page 2.63 s at the calibrated slowdown), recorded as web KI-042; the KI-042 fix (below) cuts the shelf's start-up. LCP becomes an error only once CI shows both pages under 2.5 s with a margin.
+- **The shelf's LCP can move to the body font's swap** (web KI-043): in 3 local runs of 10 after the KI-042 fix, a font decision for the owner.
 - **The shelf's LCP has about 4% headroom on a fast machine** (2.40 s against 2.5 s here, 2.25 s in another run) and none on CI (2.46 to 2.89 s). Another 10 KB of JavaScript would cost it further.
 - **No Brotli.** nginx's `alpine-slim` image has no Brotli module; Brotli would take roughly another 10% off the JavaScript.
 - **HTTP/2** is not used between the browser and the container (it needs TLS); the Ingress or a CDN would add it.
@@ -136,17 +137,17 @@ So the "159 KB" Lighthouse reports for the shelf (it counts every script of the 
 
 `npm run verify` now guards both regressions: `scripts/check-budgets.mjs` limits the shelf to **5 files** and fails when one of them holds zod, the forms, OpenTelemetry, tracing, or the admin, account, checkout, orders or assistant code (from `bundle-analysis/chunk-modules.json`, which every build writes). On `main`'s build it fails twice (8 files; zod in the entry).
 
-**Measured here** (this container, the nginx image built from each build, a stand-in API with the seed's 14 products, Lighthouse 12.6.1 at a fixed 1.88x so the builds are compared at one slowdown, five runs, median; the container is shared and noisy, so the phases matter more than the absolute numbers):
+**Measured here** (this container; the nginx image built from each build, a stand-in API serving the seed's 14 products with no photos, Lighthouse 12.6.1 at a fixed 1.88x so the builds are compared at one slowdown, ten runs each in two rounds of five, median; the container is shared and noisy, so the phases matter more than the absolute numbers). `main` measured here at **2.87 s**, the same as CI (2.87 s), with the same LCP element (a product's description):
 
-| Shelf `/` | Scripts (as Lighthouse counts) | LCP median (runs) | Render delay (median) |
-|---|---|---|---|
-| `main` (`de40aaf`) | 159.5 KB in 10 requests | 2.61 s (2.66, 2.87, 2.60, 2.61, 2.60); again: 2.69 s (2.98, 2.69, 2.88, 2.61, 2.61) | 2160 ms |
-| 1 + 2: one app file, no zod | 148.7 KB in 5 | 2.44 s (2.69, 2.44, 2.46, 2.34, 2.44) | 1990 ms |
-| 1 + 2 + 3: the shelf's data from `index.html` | 148.7 KB in 5 | **2.28 s** (2.01, 2.33, 2.28, 2.32, 2.28) | 1830 ms |
+| Shelf `/` | Scripts (as Lighthouse counts) | LCP median of 10 (the runs) |
+|---|---|---|
+| `main` (`de40aaf`) | 159.5 KB in 10 requests | 2.87 s (2.58 to 3.02; 8 of 10 between 2.86 and 2.88) |
+| 1 + 2: one app file, no zod | 148.7 KB in 5 | 2.60 s (2.30 to 2.63) |
+| 1 + 2 + 3: the shelf's data from `index.html` | 148.7 KB in 5 | **2.29 s** (1.83 to 2.88: 7 runs 1.83 to 2.31, 3 runs 2.73 to 2.88) |
 
-The product page gains from parts 1 and 2 too (the same entry): `main` 2.65 s (2.63, 2.65, 2.89, 2.82, 2.63) → **2.30 s** (2.34, 2.30, 2.31, 2.29, 2.00). The stand-in's products have no photo, so its LCP here is text; on CI it is the photo.
+A cold product page (the stand-in has no photos, so its LCP here is the `<h1>`, not the photo as on CI) gains from parts 1 and 2 (the same entry): `main` 2.88 s (2.87 to 2.98) → **2.28 s** (2.14 to 2.56), five runs each.
 
-The shelf's render delay fell by about 330 ms, and its LCP now comes about 150 ms after its first paint. What is left is mostly the JavaScript itself (vendor, 96.4 KB: React, React DOM and the router) and React's first render.
+**What is left: the body font races the first paint (web KI-043).** With the data on its way early, the products are usually drawn in the very first paint (LCP = FCP + about 150 ms). In 3 runs of 10 they were drawn first in the fallback font and drawn again when IBM Plex Sans arrived a few milliseconds later; Chrome counts the redraw as the LCP, and Lighthouse's simulation then hangs it after the body fonts (LCP 2.73 to 2.88 s). The body face is not preloaded on purpose (Phase 21: a second preload competed with the JavaScript), so this needs a font decision, not a quick change; it decides whether a three-run median lands at about 2.3 s or about 2.8 s.
 
 **On CI** (the verdict; filled in after this PR's perf job): CI_PLACEHOLDER
 

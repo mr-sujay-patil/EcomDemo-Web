@@ -5,9 +5,9 @@
 - **Updated:** 2026-10-11
 - **Task:** Fix KI-042 (approved by the owner 2026-10-11: "KI-042 shelf LCP"): the shelf's LCP is 2.87 s on CI at the calibrated slowdown (budget 2.5 s, a warning); its JavaScript grew from 128 KB (Phase 21) to 159 KB. `docs/KNOWN_ISSUES.md` row KI-042 (Fix queue), `docs/performance.md`
 - **Branch:** `fix/ki-042-shelf-lcp` (cut from `main` at `de40aaf`, the merge of PR #49; KI-027 merged and merge-verified there: local verify 1083 tests, CI on `main` green)
-- **Step:** IMPLEMENTING
+- **Step:** PR_OPEN
 - **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` (unchanged by this fix)
-- **Waiting for user:** no
+- **Waiting for user:** YES: CI on the PR, then the owner's review
 
 ## Checklist
 - [x] Pre-flight: KI-027 merged (`de40aaf`) and merge-verified; branch cut; KI-042 In progress
@@ -15,13 +15,12 @@
 - [x] Fix 1 (`1dfdf57`): rolldown group on its `$initial` tag (one app file: the shelf loads 3 files, 128.3 KB, was 8 files, 135.1 KB); `zodConfig` imported by the two `schemas.ts`, not `main.tsx` (zod out of the entry). check-budgets: red on main's real build (8 files > 5; zod in the entry), unit red `d7f19f3` (4 of 10) → green; zod guard test red (2 of 4 without the move) → green
 - [x] Fix 2 (`781a80e`): the shelf's GET from index.html's inline script: red `90cf869` (3 of 9) → green; CSP hash updated (check-dist red on the old one)
 - [x] Tests: full `npm run verify` exit 0, 1092 tests (88 files; was 1083). e2e `a cold shelf (web KI-042)` against the nginx image + stand-in API: red on `main`'s image (not taken + CSP violation; 8 modules > 5), green 2 of 2 on the branch's
-- [ ] Tests: red then green for anything new; a bundle assertion that the moved code is not in the shelf's initial chunks
-- [ ] Full `npm ci && npm run verify`; local measurement against a stand-in API (no backend buildable here)
-- [ ] Docs: KI-042 status (by the evidence), `docs/performance.md`, decisions `[Fix KI-042]`
-- [ ] PR opened; CI numbers filled in afterwards
+- [x] Full `npm ci && npm run verify` exit 0 (1092 tests). Local Lighthouse (nginx image + stand-in API at `172.17.0.1:8081`, 1.88x, median of 10): shelf `main` 2.87 s (as CI) → 2.60 s (fix 1) → 2.29 s (fix 1+2); product page 2.88 → 2.28 s. 3 of 10 shelf runs still 2.73 to 2.88 s: body font swap → web KI-043 (Open, owner). An earlier set of local numbers was invalid (nginx could not resolve `host.docker.internal`: the API was 502) and was replaced
+- [x] Docs: KI-042 (fix in review; Fixed only on CI's evidence), KI-043 added, `docs/performance.md`, `docs/security.md` (hash), decisions `[Fix KI-042]` x7
+- [x] PR opened; [ ] CI numbers filled in afterwards
 
 ## Next action
-Local numbers in `docs/performance.md` and KI-042 (2.61 → 2.28 s etc.) are INVALID: the harness's nginx could not resolve `host.docker.internal`, so the API answered 502 in every run (found by the e2e run). Being remeasured with `API_UPSTREAM=http://172.17.0.1:8081` (scratchpad `ki042/m-valid.log`: main, fix 1+2, fix 1+2+3, two rounds each; product page main and branch). Replace the numbers, then CURRENT → PR_OPEN, open the PR.
+Wait for CI on the PR. Then fill CI's perf numbers (shelf and product LCP median and runs, slowdown, scripts KB) into the `CI_KI042_PLACEHOLDER` in `docs/KNOWN_ISSUES.md` (KI-042) and `CI_PLACEHOLDER` in `docs/performance.md`; set KI-042 to Fixed (PR #NN) only if the shelf's CI median is under 2.5 s, otherwise describe what improved and leave it Open with KI-043 as the remaining cause. Then STOP for the owner's review and `approved, merge it`. LCP stays a warning.
 
 ## ⚠️ Environment notes (this machine)
 - This session runs in a cloud container (not the owner's WSL machine): Node 24 at `/opt/node24/bin`; the backend team's working copy is `/home/user/ecomdemo` (read only, never checked out or changed); a read-only clone is at `/home/user/ecomdemo-backend-readonly` (`a85202f`, push URL `no-push`).
