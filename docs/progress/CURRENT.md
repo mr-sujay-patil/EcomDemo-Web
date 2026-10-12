@@ -5,13 +5,13 @@
 - **Updated:** 2026-10-11
 - **Task:** Fix KI-042 (approved by the owner 2026-10-11: "KI-042 shelf LCP"): the shelf's LCP is 2.87 s on CI at the calibrated slowdown (budget 2.5 s, a warning); its JavaScript grew from 128 KB (Phase 21) to 159 KB. `docs/KNOWN_ISSUES.md` row KI-042 (Fix queue), `docs/performance.md`
 - **Branch:** `fix/ki-042-shelf-lcp` (cut from `main` at `de40aaf`, the merge of PR #49; KI-027 merged and merge-verified there: local verify 1083 tests, CI on `main` green)
-- **Step:** BRANCHED
+- **Step:** IMPLEMENTING
 - **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` (unchanged by this fix)
 - **Waiting for user:** no
 
 ## Checklist
 - [x] Pre-flight: KI-027 merged (`de40aaf`) and merge-verified; branch cut; KI-042 In progress
-- [ ] Measure: what grew from 128 KB to 159 KB on the shelf's critical path, by module (bundle analysis, git history of the entry)
+- [x] Measure (each merge since Phase 21 built with `ANALYZE=1`, gzip -9 as served): shelf's initial files (entry + modulepreloads) P21 `97d9892` 127.0 KB in 5 files → P22 130.5 (+3.5: zod, pulled into the entry by `zodConfig`) → P23 147.0 (+16.5 tracing) → KI-033 131.6 (tracing a lazy 16.2 KB chunk fetched after the first paint, still in Lighthouse's page total) → **P24 134.8 KB in 8 files** (+3.2: guest cart in the entry; and CartRoute's lazy route split `useQuery` 5.1, `useSession` 1.4, `money` 0.1 out of the entry into 3 more preloaded files) → main 135.1 KB, 8 files. Lighthouse's 159 KB ≈ 135.1 + tracing 16.2 + headers
 - [ ] Fix: code not needed for the shelf's first paint out of its initial chunks (behaviour identical); optionally the shelf's data from the inline script (CSP hash updated)
 - [ ] Tests: red then green for anything new; a bundle assertion that the moved code is not in the shelf's initial chunks
 - [ ] Full `npm ci && npm run verify`; local measurement against a stand-in API (no backend buildable here)
@@ -19,7 +19,7 @@
 - [ ] PR opened; CI numbers filled in afterwards
 
 ## Next action
-Measure: `npm run perf:analyze` on `main`'s build and on Phase 21's (`git log` for the Phase 21 merge), list the shelf's initial chunks (entry + modulepreloads) and attribute the growth by module.
+Local baseline against a stand-in API (scratchpad `ki042/measure.sh`), then fix: (1) one initial app chunk (rolldown `$initial` group) instead of 4 small ones, (2) zod's config out of the entry (into the schemas modules), (3) the shelf's GET from index.html's inline script (CSP hash). Measure each.
 
 ## ⚠️ Environment notes (this machine)
 - This session runs in a cloud container (not the owner's WSL machine): Node 24 at `/opt/node24/bin`; the backend team's working copy is `/home/user/ecomdemo` (read only, never checked out or changed); a read-only clone is at `/home/user/ecomdemo-backend-readonly` (`a85202f`, push URL `no-push`).
