@@ -74,7 +74,10 @@ export function checkBudgets(files, indexHtml, chunkModules) {
       }
       for (const rule of notOnShelf) {
         const found = modules.find((id) => rule.test.test(id))
-        if (found) failures.push(`${path}, which the shelf loads first, holds ${rule.what} (${found}): it belongs in a lazy chunk`)
+        if (found)
+          failures.push(
+            `${path}, which the shelf loads first, holds ${rule.what} (${found}): it belongs in a lazy chunk`,
+          )
       }
     }
   }
@@ -107,7 +110,8 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const { files, indexHtml } = readDist('dist')
   const chunkModules = readChunkModules('bundle-analysis/chunk-modules.json')
   const { chunks, shelf, shelfBytes, failures } = checkBudgets(files, indexHtml, chunkModules)
-  if (!chunkModules) failures.push('bundle-analysis/chunk-modules.json is missing: run `npm run build` first (vite.config.ts writes it)')
+  if (!chunkModules)
+    failures.push('bundle-analysis/chunk-modules.json is missing: run `npm run build` first (vite.config.ts writes it)')
   const biggest = [...chunks].sort((a, b) => b.bytes - a.bytes)[0]
   console.log(
     `check-budgets: ${chunks.length} JavaScript chunks, the biggest ${biggest?.path} at ${((biggest?.bytes ?? 0) / 1024).toFixed(1)} KB gzipped (limit ${budgets.chunkKB}); ` +

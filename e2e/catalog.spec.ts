@@ -219,6 +219,7 @@ test.describe('a cold shelf (web KI-042)', () => {
     const modules = named.filter((path) => path.startsWith('/assets/'))
     expect(modules.length).toBeLessThanOrEqual(5)
     await expect.poll(() => page.evaluate(() => document.documentElement.dataset.tracing)).toBe('on')
-    for (const path of scripts.filter((path) => !/^\/assets\/tracing-[\w-]+\.js$/.test(path))) expect(named, path).toContain(path)
+    for (const path of scripts.filter((path) => !/^\/assets\/tracing-[\w-]+\.js$/.test(path)))
+      expect(named, path).toContain(path)
   })
 })

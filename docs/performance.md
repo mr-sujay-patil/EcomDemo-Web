@@ -72,7 +72,7 @@ The flows were written after the fixes, so they have no "before". One earlier re
 
 ## What is left
 
-- **LCP is still a warning, not a failure**: after the fix both pages are still over 2.5 s on CI (shelf 2.87 s, product page 2.63 s at the calibrated slowdown). The remaining gap is web KI-042.
+- **LCP is still a warning, not a failure**: after KI-027 both pages were still over 2.5 s on CI (shelf 2.87 s, product page 2.63 s at the calibrated slowdown), recorded as web KI-042; the KI-042 fix (below) cuts the shelf's start-up. LCP becomes an error only once CI shows both pages under 2.5 s with a margin.
 - **The shelf's LCP has about 4% headroom on a fast machine** (2.40 s against 2.5 s here, 2.25 s in another run) and none on CI (2.46 to 2.89 s). Another 10 KB of JavaScript would cost it further.
 - **No Brotli.** nginx's `alpine-slim` image has no Brotli module; Brotli would take roughly another 10% off the JavaScript.
 - **HTTP/2** is not used between the browser and the container (it needs TLS); the Ingress or a CDN would add it.
@@ -112,6 +112,43 @@ The chain is broken: the photo is asked for about 1.1 s sooner and has arrived l
 | Performance score (shelf / product) | 92 / 92 | 93 / 94 |
 
 **Both pages are still over 2.5 s on CI, so LCP stays a warning.** The product page gained 0.16 s, and the rest of it is render delay (928 ms), not the chain. The shelf did not move: with the calibrated slowdown CI simulates the same phone as the reference desktop, yet the shelf is 2.87 s there against the 2.25 to 2.40 s measured on that desktop **in Phase 21, on Phase 21's build** (128 KB of JavaScript; the shelf now loads 159 KB after Phases 22 to 25). So the remaining gap looks like the page, not the runner. It is recorded as **web KI-042**: the first check is `npm run perf` on the reference desktop with the current build.
+
+## Fix KI-042: the shelf starts from fewer files, without zod, with its data already on the way
+
+**What grew, measured.** Every merge since Phase 21 built again (`ANALYZE=1`, gzip -9 as nginx serves it), counting the files the shelf loads before it can start (the entry and what `index.html` preloads):
+
+| Build | The shelf's first files | Lazy, but still in Lighthouse's page total |
+|---|---|---|
+| Phase 21 (`97d9892`) | **127.0 KB in 5 files** | |
+| Phase 22 (`165402d`) | 130.5 KB, 5 files: **+3.5 KB, zod**, pulled into the entry by `import '@/app/zodConfig'` in `main.tsx` (a CSP setting, though the shelf has no form) | |
+| Phase 23 (`5e5e813`) | 147.0 KB: +16.5 KB, tracing in the entry | |
+| Fix KI-033 (`d57bc4b`) | 131.6 KB: tracing moved out | tracing 16.2 KB, after the first paint |
+| Phase 24 (`70d64f6`) | **134.8 KB in 8 files**: the guest cart in the entry (+about 3 KB), and the new lazy cart route made rolldown split three modules the entry shares with it (`useQuery`, `useSession`, `money`) into **three more files** | tracing 16.2 KB |
+| Phase 25 to KI-027 (`de40aaf`, `main`) | 135.1 KB in 8 files | tracing 16.2 KB |
+
+So the "159 KB" Lighthouse reports for the shelf (it counts every script of the load, headers included) is 135.1 KB the shelf waits for plus the tracing chunk that comes after the first paint (web KI-033). Of the growth on the shelf's path, the part that costs most on a slow link is not bytes but **files**: 8 instead of 5, and each one is another request (Phase 21 measured exactly such a 5 to 8 split as 0.15 s later).
+
+**The fix, in three parts** (decisions `[Fix KI-042]`):
+
+1. **One app file.** A rolldown chunk group on rolldown's own `$initial` tag (modules the entry imports statically) keeps all of them in one file after `vendor`: the shelf starts from **3 files, 128.3 KB** (runtime, vendor, app). No lazy page's code is pulled in; the lazy chunks import from the app file as before.
+2. **zod out of the entry.** `zodConfig` is imported first by the two `schemas.ts` files that build schemas, not by `main.tsx`; a unit test keeps every zod user importing it first.
+3. **The shelf's data from `index.html`.** The inline script that starts a cold product page's GET (KI-027) also starts the shelf's on `/`: `GET /api/products?page=0&size=100`, the request `fetchProducts` makes first, taken once by the API client. The shelf's LCP is a product's text, which needed that answer; it was asked for only after the JavaScript had arrived and run, and now travels beside it. The CSP hash is the new script's (`check-dist` failed on the old one).
+
+`npm run verify` now guards both regressions: `scripts/check-budgets.mjs` limits the shelf to **5 files** and fails when one of them holds zod, the forms, OpenTelemetry, tracing, or the admin, account, checkout, orders or assistant code (from `bundle-analysis/chunk-modules.json`, which every build writes). On `main`'s build it fails twice (8 files; zod in the entry).
+
+**Measured here** (this container, the nginx image built from each build, a stand-in API with the seed's 14 products, Lighthouse 12.6.1 at a fixed 1.88x so the builds are compared at one slowdown, five runs, median; the container is shared and noisy, so the phases matter more than the absolute numbers):
+
+| Shelf `/` | Scripts (as Lighthouse counts) | LCP median (runs) | Render delay (median) |
+|---|---|---|---|
+| `main` (`de40aaf`) | 159.5 KB in 10 requests | 2.61 s (2.66, 2.87, 2.60, 2.61, 2.60); again: 2.69 s (2.98, 2.69, 2.88, 2.61, 2.61) | 2160 ms |
+| 1 + 2: one app file, no zod | 148.7 KB in 5 | 2.44 s (2.69, 2.44, 2.46, 2.34, 2.44) | 1990 ms |
+| 1 + 2 + 3: the shelf's data from `index.html` | 148.7 KB in 5 | **2.28 s** (2.01, 2.33, 2.28, 2.32, 2.28) | 1830 ms |
+
+The product page gains from parts 1 and 2 too (the same entry): `main` 2.65 s (2.63, 2.65, 2.89, 2.82, 2.63) → **2.30 s** (2.34, 2.30, 2.31, 2.29, 2.00). The stand-in's products have no photo, so its LCP here is text; on CI it is the photo.
+
+The shelf's render delay fell by about 330 ms, and its LCP now comes about 150 ms after its first paint. What is left is mostly the JavaScript itself (vendor, 96.4 KB: React, React DOM and the router) and React's first render.
+
+**On CI** (the verdict; filled in after this PR's perf job): CI_PLACEHOLDER
 
 ## Running it
 

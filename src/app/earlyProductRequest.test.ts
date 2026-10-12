@@ -96,13 +96,17 @@ describe("index.html's early product request", () => {
     expect(init.headers).not.toHaveProperty('Authorization')
     expect(holder.__ecomdemoEarly?.path).toBe('/api/products?page=0&size=100')
     expect(holder.__ecomdemoEarly?.correlationId).toBe(init.headers['X-Correlation-Id'])
-    expect(await (await holder.__ecomdemoEarly?.response)?.json()).toEqual([{ id: 1, imageUrl: '/api/products/1/image' }])
+    expect(await (await holder.__ecomdemoEarly?.response)?.json()).toEqual([
+      { id: 1, imageUrl: '/api/products/1/image' },
+    ])
     // The shelf's largest paint is text, not a photo: nothing is preloaded for a list.
     expect(preloads()).toEqual([])
   })
 
   it('asks for the same page on the shelf with filters in the address (they are applied in the browser)', () => {
-    expect(runAt('/?category=AUDIO&sort=price', () => json([])).mock.calls[0]?.[0]).toBe('/api/products?page=0&size=100')
+    expect(runAt('/?category=AUDIO&sort=price', () => json([])).mock.calls[0]?.[0]).toBe(
+      '/api/products?page=0&size=100',
+    )
   })
 
   it("is the very request the app's shelf makes: the app reads the catalogue from it and asks the network nothing", async () => {
