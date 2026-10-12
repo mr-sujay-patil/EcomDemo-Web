@@ -104,9 +104,9 @@ describe("index.html's early product request", () => {
   })
 
   it('asks for the same page on the shelf with filters in the address (they are applied in the browser)', () => {
-    expect(runAt('/?category=AUDIO&sort=price', () => json([])).mock.calls[0]?.[0]).toBe(
-      '/api/products?page=0&size=100',
-    )
+    const fetch = runAt('/?category=AUDIO&sort=price', () => json([]))
+
+    expect(fetch).toHaveBeenCalledWith('/api/products?page=0&size=100', expect.anything())
   })
 
   it("is the very request the app's shelf makes: the app reads the catalogue from it and asks the network nothing", async () => {
