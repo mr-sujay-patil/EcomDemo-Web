@@ -13,14 +13,15 @@
 - [x] Pre-flight: KI-027 merged (`de40aaf`) and merge-verified; branch cut; KI-042 In progress
 - [x] Measure (each merge since Phase 21 built with `ANALYZE=1`, gzip -9 as served): shelf's initial files (entry + modulepreloads) P21 `97d9892` 127.0 KB in 5 files → P22 130.5 (+3.5: zod, pulled into the entry by `zodConfig`) → P23 147.0 (+16.5 tracing) → KI-033 131.6 (tracing a lazy 16.2 KB chunk fetched after the first paint, still in Lighthouse's page total) → **P24 134.8 KB in 8 files** (+3.2: guest cart in the entry; and CartRoute's lazy route split `useQuery` 5.1, `useSession` 1.4, `money` 0.1 out of the entry into 3 more preloaded files) → main 135.1 KB, 8 files. Lighthouse's 159 KB ≈ 135.1 + tracing 16.2 + headers
 - [x] Fix 1 (`1dfdf57`): rolldown group on its `$initial` tag (one app file: the shelf loads 3 files, 128.3 KB, was 8 files, 135.1 KB); `zodConfig` imported by the two `schemas.ts`, not `main.tsx` (zod out of the entry). check-budgets: red on main's real build (8 files > 5; zod in the entry), unit red `d7f19f3` (4 of 10) → green; zod guard test red (2 of 4 without the move) → green
-- [ ] Fix 2: the shelf's GET from index.html's inline script: red `90cf869` (3 of 9) → green (18 of 18 with earlyRequest tests); CSP hash to update; e2e `a cold shelf (web KI-042)` added (run only in CI)
+- [x] Fix 2 (`781a80e`): the shelf's GET from index.html's inline script: red `90cf869` (3 of 9) → green; CSP hash updated (check-dist red on the old one)
+- [x] Tests: full `npm run verify` exit 0, 1092 tests (88 files; was 1083). e2e `a cold shelf (web KI-042)` against the nginx image + stand-in API: red on `main`'s image (not taken + CSP violation; 8 modules > 5), green 2 of 2 on the branch's
 - [ ] Tests: red then green for anything new; a bundle assertion that the moved code is not in the shelf's initial chunks
 - [ ] Full `npm ci && npm run verify`; local measurement against a stand-in API (no backend buildable here)
 - [ ] Docs: KI-042 status (by the evidence), `docs/performance.md`, decisions `[Fix KI-042]`
 - [ ] PR opened; CI numbers filled in afterwards
 
 ## Next action
-Build, update the CSP hash in `nginx/security-headers.conf` (check-dist prints it), commit fix 2; measure it locally (scratchpad `ki042/measure.sh`, stand-in API on 8081, nginx image on 8070, Chromium 1194; slowdown 1.88 fixed for comparison). Local so far (5 runs, median shelf LCP): main 2.61 s (159.5 KB / 10 scripts as Lighthouse counts), fix 1 2.44 s (148.7 KB / 5).
+Local numbers in `docs/performance.md` and KI-042 (2.61 → 2.28 s etc.) are INVALID: the harness's nginx could not resolve `host.docker.internal`, so the API answered 502 in every run (found by the e2e run). Being remeasured with `API_UPSTREAM=http://172.17.0.1:8081` (scratchpad `ki042/m-valid.log`: main, fix 1+2, fix 1+2+3, two rounds each; product page main and branch). Replace the numbers, then CURRENT → PR_OPEN, open the PR.
 
 ## ⚠️ Environment notes (this machine)
 - This session runs in a cloud container (not the owner's WSL machine): Node 24 at `/opt/node24/bin`; the backend team's working copy is `/home/user/ecomdemo` (read only, never checked out or changed); a read-only clone is at `/home/user/ecomdemo-backend-readonly` (`a85202f`, push URL `no-push`).
