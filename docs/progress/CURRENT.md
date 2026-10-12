@@ -17,10 +17,10 @@
 - [x] Tests: full `npm run verify` exit 0, 1092 tests (88 files; was 1083). e2e `a cold shelf (web KI-042)` against the nginx image + stand-in API: red on `main`'s image (not taken + CSP violation; 8 modules > 5), green 2 of 2 on the branch's
 - [x] Full `npm ci && npm run verify` exit 0 (1092 tests). Local Lighthouse (nginx image + stand-in API at `172.17.0.1:8081`, 1.88x, median of 10): shelf `main` 2.87 s (as CI) → 2.60 s (fix 1) → 2.29 s (fix 1+2); product page 2.88 → 2.28 s. 3 of 10 shelf runs still 2.73 to 2.88 s: body font swap → web KI-043 (Open, owner). An earlier set of local numbers was invalid (nginx could not resolve `host.docker.internal`: the API was 502) and was replaced
 - [x] Docs: KI-042 (fix in review; Fixed only on CI's evidence), KI-043 added, `docs/performance.md`, `docs/security.md` (hash), decisions `[Fix KI-042]` x7
-- [x] PR opened (#50); [ ] CI numbers filled in afterwards
+- [x] PR opened (#50); CI green on `64c2722` (run 38208532791): shelf 2.64 s (2.33, 2.79, 2.64), product 2.45 s, 3.3x; filled in; KI-042 stays Open (improved), the rest is KI-043. One flaky e2e (cart.spec.ts:84, a backend 500, passed on retry; like KI-041)
 
 ## Next action
-Wait for CI on the PR. Then fill CI's perf numbers (shelf and product LCP median and runs, slowdown, scripts KB) into the `CI_KI042_PLACEHOLDER` in `docs/KNOWN_ISSUES.md` (KI-042) and `CI_PLACEHOLDER` in `docs/performance.md`; set KI-042 to Fixed (PR #50) only if the shelf's CI median is under 2.5 s, otherwise describe what improved and leave it Open with KI-043 as the remaining cause. Then STOP for the owner's review and `approved, merge it`. LCP stays a warning.
+STOP: the owner reviews PR #50 (`approved, merge it`). KI-042 stays Open after it (improved: shelf 2.87 → 2.64 s, product 2.63 → 2.45 s on CI); the owner decides KI-043 (body font). No tag for KI-042 after this merge (not fixed). LCP stays a warning.
 
 ## ⚠️ Environment notes (this machine)
 - This session runs in a cloud container (not the owner's WSL machine): Node 24 at `/opt/node24/bin`; the backend team's working copy is `/home/user/ecomdemo` (read only, never checked out or changed); a read-only clone is at `/home/user/ecomdemo-backend-readonly` (`a85202f`, push URL `no-push`).

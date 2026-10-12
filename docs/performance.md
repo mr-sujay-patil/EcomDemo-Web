@@ -72,7 +72,7 @@ The flows were written after the fixes, so they have no "before". One earlier re
 
 ## What is left
 
-- **LCP is still a warning, not a failure**: after KI-027 both pages were still over 2.5 s on CI (shelf 2.87 s, product page 2.63 s at the calibrated slowdown), recorded as web KI-042; the KI-042 fix (below) cuts the shelf's start-up. LCP becomes an error only once CI shows both pages under 2.5 s with a margin.
+- **LCP is still a warning, not a failure**: after KI-027 both pages were still over 2.5 s on CI (shelf 2.87 s, product page 2.63 s at the calibrated slowdown), recorded as web KI-042; the KI-042 fix (below) cut the shelf to 2.64 s and the product page to 2.45 s on CI; the shelf's remaining miss is mostly web KI-043. LCP becomes an error only once CI shows both pages under 2.5 s with a margin.
 - **The shelf's LCP can move to the body font's swap** (web KI-043): in 3 local runs of 10 after the KI-042 fix, a font decision for the owner.
 - **The shelf's LCP has about 4% headroom on a fast machine** (2.40 s against 2.5 s here, 2.25 s in another run) and none on CI (2.46 to 2.89 s). Another 10 KB of JavaScript would cost it further.
 - **No Brotli.** nginx's `alpine-slim` image has no Brotli module; Brotli would take roughly another 10% off the JavaScript.
@@ -149,7 +149,17 @@ A cold product page (the stand-in has no photos, so its LCP here is the `<h1>`, 
 
 **What is left: the body font races the first paint (web KI-043).** With the data on its way early, the products are usually drawn in the very first paint (LCP = FCP + about 150 ms). In 3 runs of 10 they were drawn first in the fallback font and drawn again when IBM Plex Sans arrived a few milliseconds later; Chrome counts the redraw as the LCP, and Lighthouse's simulation then hangs it after the body fonts (LCP 2.73 to 2.88 s). The body face is not preloaded on purpose (Phase 21: a second preload competed with the JavaScript), so this needs a font decision, not a quick change; it decides whether a three-run median lands at about 2.3 s or about 2.8 s.
 
-**On CI** (the verdict; filled in after this PR's perf job): CI_PLACEHOLDER
+**On CI** (the verdict: PR #50, run 38208532791, `64c2722`; the calibration measured a median index of 3631, so 3.3x; the runs simulated phones of 959 to 1312):
+
+| | Before (PR #49, 1.98x) | After (PR #50, 3.3x) |
+|---|---|---|
+| Shelf LCP, median (runs) | 2.87 s (2.87, 2.88, 2.87) | **2.64 s** (2.33, 2.79, 2.64) |
+| Its render delay (first run) | 2419 ms | 1882 ms |
+| Product page LCP, median | 2.63 s | **2.45 s** (under 2.5 s; the photo's load delay 666 ms, was 1082) |
+| JavaScript (as sent) | 159 KB | 148.6 KB |
+| Performance score (shelf / product) | 93 / 94 | 95 / 95 |
+
+**The shelf is still over 2.5 s, so KI-042 stays open and LCP stays a warning** (the product page passes it). Its three runs split as the local ones did: 2.33 s, then 2.64 and 2.79 s. That spread is web KI-043, the body font's swap, which is now the main thing between the shelf and the budget.
 
 ## Running it
 
