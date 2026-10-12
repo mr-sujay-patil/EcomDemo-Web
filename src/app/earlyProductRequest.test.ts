@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { EarlyRequest } from '@/api/earlyRequest'
+import { fetchProducts } from '@/features/catalog/products'
 // The file as it is in the repository (Vite's `?raw`): the same text the build copies into dist/index.html.
 import indexHtml from '../../index.html?raw'
 
@@ -36,7 +37,7 @@ afterEach(() => {
 describe("index.html's early product request", () => {
   it('is one inline script, and small (it is in every page)', () => {
     expect(inline).toHaveLength(1)
-    expect(inline[0]?.length).toBeLessThan(1500)
+    expect(inline[0]?.length).toBeLessThan(1800)
   })
 
   it('on /products/7, asks for /api/products/7 with the headers the app sends, and leaves it for the app', async () => {
@@ -84,10 +85,42 @@ describe("index.html's early product request", () => {
     expect(preloads()).toEqual([])
   })
 
+  it("on the shelf (/), asks for the catalogue's first page with the headers the app sends, and leaves it for the app (web KI-042)", async () => {
+    const fetch = runAt('/', () => json([{ id: 1, imageUrl: '/api/products/1/image' }]))
+
+    expect(fetch).toHaveBeenCalledTimes(1)
+    const [url, init] = fetch.mock.calls[0] as unknown as [string, { headers: Record<string, string> }]
+    expect(url).toBe('/api/products?page=0&size=100')
+    expect(init.headers.Accept).toBe('application/json')
+    expect(init.headers['X-Correlation-Id']).toMatch(/^[0-9a-f-]{36}$/)
+    expect(init.headers).not.toHaveProperty('Authorization')
+    expect(holder.__ecomdemoEarly?.path).toBe('/api/products?page=0&size=100')
+    expect(holder.__ecomdemoEarly?.correlationId).toBe(init.headers['X-Correlation-Id'])
+    expect(await (await holder.__ecomdemoEarly?.response)?.json()).toEqual([{ id: 1, imageUrl: '/api/products/1/image' }])
+    // The shelf's largest paint is text, not a photo: nothing is preloaded for a list.
+    expect(preloads()).toEqual([])
+  })
+
+  it('asks for the same page on the shelf with filters in the address (they are applied in the browser)', () => {
+    expect(runAt('/?category=AUDIO&sort=price', () => json([])).mock.calls[0]?.[0]).toBe('/api/products?page=0&size=100')
+  })
+
+  it("is the very request the app's shelf makes: the app reads the catalogue from it and asks the network nothing", async () => {
+    const fetch = runAt('/', () => json([{ id: 1, name: 'Kettle' }]))
+
+    const products = await fetchProducts()
+
+    expect(products).toEqual([{ id: 1, name: 'Kettle' }])
+    expect(fetch).toHaveBeenCalledTimes(1)
+    expect(holder.__ecomdemoEarly?.taken).toBe(true)
+  })
+
   it('asks nothing on any other page, nor for an id the product page itself refuses', () => {
     for (const path of [
-      '/',
       '/cart',
+      '/search',
+      '/products',
+      '/about',
       '/products/abc',
       '/products/0',
       '/products/01',
