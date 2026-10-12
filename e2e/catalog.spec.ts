@@ -165,3 +165,60 @@ test.describe('a cold product page (web KI-027)', () => {
     })
   })
 })
+
+test.describe('a cold shelf (web KI-042)', () => {
+  test("asks for the catalogue's first page once, the early request index.html made, under the production CSP", async ({
+    page,
+  }) => {
+    const policy = /add_header\s+Content-Security-Policy\s+"([^"]*)"/.exec(
+      readFileSync('nginx/security-headers.conf', 'utf8'),
+    )?.[1]
+    expect(policy, 'nginx/security-headers.conf has a Content-Security-Policy').toBeTruthy()
+    await page.route(
+      (url) => url.pathname === '/',
+      async (route) => {
+        const response = await route.fetch()
+        await route.fulfill({ response, headers: { ...response.headers(), 'content-security-policy': policy ?? '' } })
+      },
+    )
+    let firstPage = 0
+    page.on('request', (sent) => {
+      const url = new URL(sent.url())
+      if (url.pathname === '/api/products' && url.searchParams.get('page') === '0') firstPage += 1
+    })
+
+    await page.goto('/')
+
+    await expect(page.getByRole('heading', { level: 1, name: 'Everything for the desk' })).toBeVisible()
+    await expect(page.getByRole('article').first()).toBeVisible()
+    const taken = await page.evaluate(
+      () => (window as { __ecomdemoEarly?: { taken?: boolean } }).__ecomdemoEarly?.taken,
+    )
+    expect(taken).toBe(true)
+    expect(firstPage).toBe(1)
+  })
+
+  test('fetches only the scripts index.html names (at most five modules), and tracing after the first paint', async ({
+    page,
+  }) => {
+    const scripts: string[] = []
+    page.on('request', (sent) => {
+      if (sent.resourceType() === 'script') scripts.push(new URL(sent.url()).pathname)
+    })
+
+    await page.goto('/')
+    await expect(page.getByRole('article').first()).toBeVisible()
+
+    // What index.html asks for up front: theme-init.js, the entry, and the modules it preloads. The only other script on the shelf
+    // is tracing's chunk, after the first paint (web KI-033); forms and later pages load when they are used (check-budgets.mjs).
+    const named = await page.evaluate(() =>
+      [...document.querySelectorAll<HTMLScriptElement | HTMLLinkElement>('script[src], link[rel="modulepreload"]')].map(
+        (element) => new URL(element instanceof HTMLScriptElement ? element.src : element.href).pathname,
+      ),
+    )
+    const modules = named.filter((path) => path.startsWith('/assets/'))
+    expect(modules.length).toBeLessThanOrEqual(5)
+    await expect.poll(() => page.evaluate(() => document.documentElement.dataset.tracing)).toBe('on')
+    for (const path of scripts.filter((path) => !/^\/assets\/tracing-[\w-]+\.js$/.test(path))) expect(named, path).toContain(path)
+  })
+})

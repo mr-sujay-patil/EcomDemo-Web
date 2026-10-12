@@ -3,12 +3,13 @@ import { CORRELATION_HEADER } from './errors'
 /**
  * What index.html's inline script leaves on `window.__ecomdemoEarly` on a product page (web KI-027): the product's GET, started
  * while the app's JavaScript is still downloading, so the photo at the end of the chain (page, data, photo) starts about a
- * second sooner. Same URL and headers as the app's own call (Accept, X-Correlation-Id; no token: a product read is public and a
+ * second sooner. On the shelf (web KI-042) it is the catalogue's first page (`/api/products?page=0&size=100`, the request
+ * `fetchProducts` makes first), so the products can be drawn as soon as React has started. Same URL and headers as the app's own call (Accept, X-Correlation-Id; no token: a product read is public and a
  * fresh page has none). It has no `traceparent`, as the first call of any fresh page has none (tracing starts after the first
  * paint, web KI-033).
  */
 export type EarlyRequest = {
-  /** The path and query asked for, e.g. `/api/products/7`. */
+  /** The path and query asked for, e.g. `/api/products/7` or `/api/products?page=0&size=100`. */
   path: string
   /** The X-Correlation-Id it sent, or null when the browser had no `crypto.randomUUID` (then none was sent). */
   correlationId: string | null

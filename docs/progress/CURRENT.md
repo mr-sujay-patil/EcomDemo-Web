@@ -12,14 +12,15 @@
 ## Checklist
 - [x] Pre-flight: KI-027 merged (`de40aaf`) and merge-verified; branch cut; KI-042 In progress
 - [x] Measure (each merge since Phase 21 built with `ANALYZE=1`, gzip -9 as served): shelf's initial files (entry + modulepreloads) P21 `97d9892` 127.0 KB in 5 files → P22 130.5 (+3.5: zod, pulled into the entry by `zodConfig`) → P23 147.0 (+16.5 tracing) → KI-033 131.6 (tracing a lazy 16.2 KB chunk fetched after the first paint, still in Lighthouse's page total) → **P24 134.8 KB in 8 files** (+3.2: guest cart in the entry; and CartRoute's lazy route split `useQuery` 5.1, `useSession` 1.4, `money` 0.1 out of the entry into 3 more preloaded files) → main 135.1 KB, 8 files. Lighthouse's 159 KB ≈ 135.1 + tracing 16.2 + headers
-- [ ] Fix: code not needed for the shelf's first paint out of its initial chunks (behaviour identical); optionally the shelf's data from the inline script (CSP hash updated)
+- [x] Fix 1 (`1dfdf57`): rolldown group on its `$initial` tag (one app file: the shelf loads 3 files, 128.3 KB, was 8 files, 135.1 KB); `zodConfig` imported by the two `schemas.ts`, not `main.tsx` (zod out of the entry). check-budgets: red on main's real build (8 files > 5; zod in the entry), unit red `d7f19f3` (4 of 10) → green; zod guard test red (2 of 4 without the move) → green
+- [ ] Fix 2: the shelf's GET from index.html's inline script: red `90cf869` (3 of 9) → green (18 of 18 with earlyRequest tests); CSP hash to update; e2e `a cold shelf (web KI-042)` added (run only in CI)
 - [ ] Tests: red then green for anything new; a bundle assertion that the moved code is not in the shelf's initial chunks
 - [ ] Full `npm ci && npm run verify`; local measurement against a stand-in API (no backend buildable here)
 - [ ] Docs: KI-042 status (by the evidence), `docs/performance.md`, decisions `[Fix KI-042]`
 - [ ] PR opened; CI numbers filled in afterwards
 
 ## Next action
-Local baseline against a stand-in API (scratchpad `ki042/measure.sh`), then fix: (1) one initial app chunk (rolldown `$initial` group) instead of 4 small ones, (2) zod's config out of the entry (into the schemas modules), (3) the shelf's GET from index.html's inline script (CSP hash). Measure each.
+Build, update the CSP hash in `nginx/security-headers.conf` (check-dist prints it), commit fix 2; measure it locally (scratchpad `ki042/measure.sh`, stand-in API on 8081, nginx image on 8070, Chromium 1194; slowdown 1.88 fixed for comparison). Local so far (5 runs, median shelf LCP): main 2.61 s (159.5 KB / 10 scripts as Lighthouse counts), fix 1 2.44 s (148.7 KB / 5).
 
 ## ⚠️ Environment notes (this machine)
 - This session runs in a cloud container (not the owner's WSL machine): Node 24 at `/opt/node24/bin`; the backend team's working copy is `/home/user/ecomdemo` (read only, never checked out or changed); a read-only clone is at `/home/user/ecomdemo-backend-readonly` (`a85202f`, push URL `no-push`).
