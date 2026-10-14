@@ -1,5 +1,6 @@
 // What the production build may contain, checked on dist/ after `npm run build` (so in `npm run verify` and in CI):
 //   - every inline script in index.html allowed by its exact sha256 in the nginx Content-Security-Policy (checkInlineScripts);
+//   - the fonts the shelf draws first preloaded from files the build emitted, allowed by font-src (checkFontPreloads, web KI-043);
 //   - no secret-shaped text (keys, tokens, passwords) and no source maps or .env files;
 //   - no backend address: the app talks to `/api` on its own origin and nothing else. Any absolute URL has to be one of the
 //     few namespaces and documentation links that libraries carry in their code (the allowlist below, each with its reason).
@@ -106,6 +107,60 @@ export function checkInlineScripts(indexHtml, securityHeadersConf) {
   ]
 }
 
+/**
+ * The faces index.html must preload (web KI-043): every face the shelf draws in its first view. A font that is not preloaded is
+ * asked for only once React has rendered the text that uses it; Lighthouse's simulation counts every request that ended before the
+ * largest paint, so such a font was simulated after the whole JavaScript chain and moved the shelf's LCP by 0.3 to 0.6 s.
+ * Preloaded, it is asked for by the HTML at once and downloads beside the JavaScript. docs/performance.md, decisions [Fix KI-043].
+ */
+export const shelfFirstViewFaces = ['Newsreader-SemiBold', 'IBMPlexSans-Regular', 'IBMPlexSans-SemiBold']
+
+/**
+ * Font preloads in the built index.html: each points at a file the build emitted (Vite rewrites the source path to the hashed
+ * name; a stale or unrewritten path would be a 404 and a second download), carries `type="font/woff2"` and `crossorigin` (fonts
+ * are fetched in CORS mode, so a preload without it is not reused), appears once, and the CSP's font-src allows this origin. Every
+ * face in `requiredFaces` (a file name before its hash) is preloaded. Returns the problems found.
+ */
+export function checkFontPreloads(indexHtml, distPaths, securityHeadersConf, requiredFaces) {
+  const failures = []
+  const policy = securityHeadersConf.match(/add_header\s+Content-Security-Policy\s+"([^"]*)"/)?.[1] ?? ''
+  const directives = policy.split(';').map((directive) => directive.trim().split(/\s+/))
+  const fontSrc =
+    directives.find(([name]) => name === 'font-src') ?? directives.find(([name]) => name === 'default-src')
+  if (!fontSrc?.includes("'self'"))
+    failures.push(
+      "nginx/security-headers.conf: font-src must allow 'self', or every preloaded and @font-face font is blocked",
+    )
+
+  const files = new Set(distPaths)
+  const preloads = [...indexHtml.matchAll(/<link\b[^>]*>/g)]
+    .map(([tag]) => tag)
+    .filter((tag) => /\brel="preload"/.test(tag) && /\bas="font"/.test(tag))
+  const seen = new Set()
+  for (const tag of preloads) {
+    const href = tag.match(/\bhref="([^"]*)"/)?.[1] ?? ''
+    if (seen.has(href)) failures.push(`index.html: ${href} is preloaded more than once`)
+    seen.add(href)
+    if (!href.startsWith('/assets/') || !files.has(href.slice(1)))
+      failures.push(
+        `index.html: the font preload ${href} is not a file in the build (dist/assets); the browser would fetch a 404 and the face again`,
+      )
+    if (!/\bcrossorigin\b/.test(tag))
+      failures.push(
+        `index.html: the font preload ${href} needs crossorigin (fonts are fetched in CORS mode; without it the preload is not reused)`,
+      )
+    if (!/\btype="font\/woff2"/.test(tag)) failures.push(`index.html: the font preload ${href} needs type="font/woff2"`)
+  }
+  const preloadedNames = [...seen].map((href) => href.replace(/^.*\//, ''))
+  for (const face of requiredFaces) {
+    if (!preloadedNames.some((name) => name.startsWith(`${face}-`)))
+      failures.push(
+        `index.html: ${face} is not preloaded; the shelf draws it in its first view, and a font found only after React has rendered lands on the LCP (web KI-043)`,
+      )
+  }
+  return failures
+}
+
 function readDist(root) {
   const files = new Map()
   const walk = (dir) => {
@@ -124,9 +179,15 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
   const failures = [
     ...checkDist(files).failures,
     ...checkInlineScripts(readFileSync('dist/index.html', 'utf8'), readFileSync('nginx/security-headers.conf', 'utf8')),
+    ...checkFontPreloads(
+      readFileSync('dist/index.html', 'utf8'),
+      [...files.keys()],
+      readFileSync('nginx/security-headers.conf', 'utf8'),
+      shelfFirstViewFaces,
+    ),
   ]
   console.log(
-    `check-dist: ${files.size} files scanned for secrets, source maps and backend addresses; inline scripts checked against the CSP.`,
+    `check-dist: ${files.size} files scanned for secrets, source maps and backend addresses; inline scripts checked against the CSP; font preloads checked.`,
   )
   if (failures.length > 0) {
     for (const failure of failures) console.error(`check-dist: ${failure}`)
