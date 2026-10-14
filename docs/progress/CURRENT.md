@@ -3,25 +3,24 @@
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
 - **Updated:** 2026-10-11
-- **Task:** Fix KI-027 (approved by the owner 2026-10-11: "calibrate the CPU slowdown for the runner, and for the product page fetch its data from a small inline script in index.html"): LCP misses the 2.5 s budget in CI (PR #48's perf run: shelf 2.89 s, product page 2.79 s, benchmark index about 2345). `docs/KNOWN_ISSUES.md` row KI-027 (Fix queue), `docs/performance.md` "What is left"
-- **Branch:** `fix/ki-027-lcp-budget` (cut from `main` at `d486b76`, the merge of PR #48; KI-039 and KI-040 merged and merge-verified there: local verify 1054 tests, CI on `main` green)
-- **Step:** PR_OPEN (PR #49)
+- **Task:** Fix KI-042 (approved by the owner 2026-10-11: "KI-042 shelf LCP"): the shelf's LCP is 2.87 s on CI at the calibrated slowdown (budget 2.5 s, a warning); its JavaScript grew from 128 KB (Phase 21) to 159 KB. `docs/KNOWN_ISSUES.md` row KI-042 (Fix queue), `docs/performance.md`
+- **Branch:** `fix/ki-042-shelf-lcp` (cut from `main` at `de40aaf`, the merge of PR #49; KI-027 merged and merge-verified there: local verify 1083 tests, CI on `main` green)
+- **Step:** PR_OPEN (PR #50)
 - **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` (unchanged by this fix)
-- **Waiting for user:** YES: CI on PR #49, then the owner's review and `approved, merge it`
+- **Waiting for user:** YES: CI on the PR, then the owner's review
 
 ## Checklist
-- [x] Pre-flight: KI-039/040 merged (`d486b76`) and merge-verified; branch cut; KI-027 moved to the Fix queue, In progress
-- [x] Calibration: red (`962b6c9`, 7 of 9 failed on a constant-4x stub), green (`fae37c7`, 9 of 9): `scripts/perf-calibrate.mjs` (Lighthouse 12.6.1's own `computeBenchmarkIndex`, median of 5, slowdown = index / 1100) → `PERF_CPU_SLOWDOWN` → `lighthouserc.cjs`; `perf-report.mjs` prints the phone each run simulated. Here: index 2305 → 2.1x
-- [x] Product page: red (`9c40776`, 11 of 15 failed), green (`0c7b455`): inline script in `index.html` (same GET, Accept + X-Correlation-Id, photo preloaded), taken once by the API client (`src/api/earlyRequest.ts`). CSP: red (`5ca2e29`, 4 of 5), green (`2b363d1`): sha256 in `nginx/security-headers.conf`, checked by `scripts/check-dist.mjs`; CI image check accepts 'self' + hashes only
-- [x] E2E (`8d153a0`): one product request under the production CSP (early request taken), one photo request with no route set (Playwright disables the cache while any route is set). Here against a stand-in API: red with `main`'s index.html (2 failed), green 6 of 6 (repeat 3)
-- [x] Docs: `docs/performance.md` (Fix KI-027 section, local stand-in numbers: photo load delay 2183 → 741 ms), `docs/security.md`, decisions `[Fix KI-027]` x8, KI-027 Fixed (PR #49; CI numbers after the perf job)
-- [x] Full `npm ci && npm run verify` exit 0 (1083 tests, 88 files; was 1054); `createRetryingFetch` now requires its sender (the client always passes one; the unused default broke 100% coverage). e2e, perf only in CI (no backend buildable here)
-- [x] PR opened (#49)
-- [x] CI run 1 (`a31c92d`) green but LCP barely moved (shelf 2.88 s, product 2.77 s): the calibration read a warm Chrome (phones 920 to 955) and the early request waited for `theme-init.js` (load delay 1810 ms). Fixed: script first in `<head>` (`5cd8c52`), fresh-Chrome benchmark (`80e7ed3`); reproduced and checked against the nginx image here
-- [x] CI run 2 (`80e7ed3`, run 38158715384) green: 1.98x; shelf 2.87 s, product 2.63 s (load delay 1082 ms); both still over 2.5 s → KI-042 (Open, owner). guest-cart flake with a backend 500 → KI-041 (Needs check). Numbers in KI-027 and `docs/performance.md`
+- [x] Pre-flight: KI-027 merged (`de40aaf`) and merge-verified; branch cut; KI-042 In progress
+- [x] Measure (each merge since Phase 21 built with `ANALYZE=1`, gzip -9 as served): shelf's initial files (entry + modulepreloads) P21 `97d9892` 127.0 KB in 5 files → P22 130.5 (+3.5: zod, pulled into the entry by `zodConfig`) → P23 147.0 (+16.5 tracing) → KI-033 131.6 (tracing a lazy 16.2 KB chunk fetched after the first paint, still in Lighthouse's page total) → **P24 134.8 KB in 8 files** (+3.2: guest cart in the entry; and CartRoute's lazy route split `useQuery` 5.1, `useSession` 1.4, `money` 0.1 out of the entry into 3 more preloaded files) → main 135.1 KB, 8 files. Lighthouse's 159 KB ≈ 135.1 + tracing 16.2 + headers
+- [x] Fix 1 (`1dfdf57`): rolldown group on its `$initial` tag (one app file: the shelf loads 3 files, 128.3 KB, was 8 files, 135.1 KB); `zodConfig` imported by the two `schemas.ts`, not `main.tsx` (zod out of the entry). check-budgets: red on main's real build (8 files > 5; zod in the entry), unit red `d7f19f3` (4 of 10) → green; zod guard test red (2 of 4 without the move) → green
+- [x] Fix 2 (`781a80e`): the shelf's GET from index.html's inline script: red `90cf869` (3 of 9) → green; CSP hash updated (check-dist red on the old one)
+- [x] Tests: full `npm run verify` exit 0, 1092 tests (88 files; was 1083). e2e `a cold shelf (web KI-042)` against the nginx image + stand-in API: red on `main`'s image (not taken + CSP violation; 8 modules > 5), green 2 of 2 on the branch's
+- [x] Full `npm ci && npm run verify` exit 0 (1092 tests). Local Lighthouse (nginx image + stand-in API at `172.17.0.1:8081`, 1.88x, median of 10): shelf `main` 2.87 s (as CI) → 2.60 s (fix 1) → 2.29 s (fix 1+2); product page 2.88 → 2.28 s. 3 of 10 shelf runs still 2.73 to 2.88 s: body font swap → web KI-043 (Open, owner). An earlier set of local numbers was invalid (nginx could not resolve `host.docker.internal`: the API was 502) and was replaced
+- [x] Docs: KI-042 (fix in review; Fixed only on CI's evidence), KI-043 added, `docs/performance.md`, `docs/security.md` (hash), decisions `[Fix KI-042]` x7
+- [x] PR opened (#50); CI green on `64c2722` (run 38208532791): shelf 2.64 s (2.33, 2.79, 2.64), product 2.45 s, 3.3x; filled in; KI-042 stays Open (improved), the rest is KI-043. One flaky e2e (cart.spec.ts:84, a backend 500, passed on retry; like KI-041)
 
 ## Next action
-Wait for CI on the docs commit, then STOP for the owner's review and `approved, merge it`. LCP stays a warning (both pages over 2.5 s; KI-042 needs the owner: first `npm run perf` on the reference desktop with the current build). After the merge: local `npm ci && npm run verify` on `main`, CI on `main` green, then give the owner the tag `ki-027-fixed` as a command.
+STOP: the owner reviews PR #50 (`approved, merge it`). KI-042 stays Open after it (improved: shelf 2.87 → 2.64 s, product 2.63 → 2.45 s on CI); the owner decides KI-043 (body font). No tag for KI-042 after this merge (not fixed). LCP stays a warning.
 
 ## ⚠️ Environment notes (this machine)
 - This session runs in a cloud container (not the owner's WSL machine): Node 24 at `/opt/node24/bin`; the backend team's working copy is `/home/user/ecomdemo` (read only, never checked out or changed); a read-only clone is at `/home/user/ecomdemo-backend-readonly` (`a85202f`, push URL `no-push`).
@@ -33,3 +32,4 @@ Wait for CI on the docs commit, then STOP for the owner's review and `approved, 
 - Not on `origin` either (checked 2026-10-11 with `git ls-remote --tags`): `phase-25-complete` (`57fecf0`) and `ki-038-fixed` (`dbd1ba0`): the owner runs `git tag phase-25-complete 57fecf0 && git tag ki-038-fixed dbd1ba0 && git push origin phase-25-complete ki-038-fixed`.
 - Tag `ki-032-fixed` (`f86e750`): the owner runs `git tag ki-032-fixed f86e750 && git push origin ki-032-fixed` (check with `git ls-remote --tags origin` first).
 - Tags `ki-039-fixed` and `ki-040-fixed` (`d486b76`, PR #48): the owner runs `git tag ki-039-fixed d486b76 && git tag ki-040-fixed d486b76 && git push origin ki-039-fixed ki-040-fixed`.
+- Tag `ki-027-fixed` (`de40aaf`, PR #49): the owner runs `git tag ki-027-fixed de40aaf && git push origin ki-027-fixed`.

@@ -4,12 +4,13 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="light dark" />
-    <!-- A product page loaded cold asks for its data here, before the app's JavaScript has downloaded, and preloads the photo the answer names: the photo is the page's largest paint and was the end of a chain (page, script, data, photo). The app takes this request instead of asking again (src/api/earlyRequest.ts). Inline and first in <head>, so it starts with the page: after a parser-blocking script (theme-init.js) it would wait for that file, which shares the slow link with all the JavaScript and CSS (measured: the request then started after them); the Content-Security-Policy allows exactly this text by its sha256 hash (nginx/security-headers.conf, checked by scripts/check-dist.mjs). Web KI-027, docs/performance.md. -->
+    <!-- The shelf (/) and a product page loaded cold ask for their data here, before the app's JavaScript has downloaded (the shelf: the catalogue's first page, the same GET as src/features/catalog/products.ts, web KI-042); a product page also preloads the photo the answer names: the photo is the page's largest paint and was the end of a chain (page, script, data, photo). The app takes this request instead of asking again (src/api/earlyRequest.ts). Inline and first in <head>, so it starts with the page: after a parser-blocking script (theme-init.js) it would wait for that file, which shares the slow link with all the JavaScript and CSS (measured: the request then started after them); the Content-Security-Policy allows exactly this text by its sha256 hash (nginx/security-headers.conf, checked by scripts/check-dist.mjs). Web KI-027, docs/performance.md. -->
     <script>
       ;(function () {
+        var shelf = location.pathname === '/'
         var id = /^\/products\/([1-9]\d{0,15})\/?$/.exec(location.pathname)
-        if (!id || !window.fetch) return
-        var path = '/api/products/' + id[1]
+        if ((!shelf && !id) || !window.fetch) return
+        var path = shelf ? '/api/products?page=0&size=100' : '/api/products/' + id[1]
         var correlationId = window.crypto && crypto.randomUUID ? crypto.randomUUID() : null
         var headers = { Accept: 'application/json' }
         if (correlationId) headers['X-Correlation-Id'] = correlationId
@@ -17,7 +18,7 @@
         window.__ecomdemoEarly = { path: path, correlationId: correlationId, response: response }
         response
           .then(function (answer) {
-            return answer.ok ? answer.clone().json() : null
+            return answer.ok && !shelf ? answer.clone().json() : null
           })
           .then(function (product) {
             var photo = product && product.imageUrl

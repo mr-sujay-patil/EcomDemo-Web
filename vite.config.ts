@@ -1,8 +1,31 @@
 /// <reference types="vitest/config" />
+import { mkdirSync, writeFileSync } from 'node:fs'
+import { relative } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import react from '@vitejs/plugin-react'
 import { visualizer } from 'rollup-plugin-visualizer'
-import { defineConfig, loadEnv, type ProxyOptions } from 'vite'
+import { defineConfig, loadEnv, type Plugin, type ProxyOptions } from 'vite'
+
+/**
+ * Writes bundle-analysis/chunk-modules.json on every build: each JavaScript file in dist/ and the modules in it (paths relative to
+ * the project). scripts/check-budgets.mjs reads it to fail a build whose first files on the shelf hold code that only a later page
+ * needs (web KI-042). Outside dist/, so nothing of it is served.
+ */
+function chunkModulesReport(): Plugin {
+  return {
+    name: 'ecomdemo:chunk-modules',
+    apply: 'build',
+    generateBundle(_options, bundle) {
+      const report: Record<string, string[]> = {}
+      for (const output of Object.values(bundle)) {
+        if (output.type === 'chunk')
+          report[output.fileName] = output.moduleIds.map((id) => relative(process.cwd(), id).replaceAll('\\', '/'))
+      }
+      mkdirSync('bundle-analysis', { recursive: true })
+      writeFileSync('bundle-analysis/chunk-modules.json', `${JSON.stringify(report, null, 1)}\n`)
+    },
+  }
+}
 
 // https://vite.dev/config/
 export default defineConfig(({ mode }) => {
@@ -23,6 +46,7 @@ export default defineConfig(({ mode }) => {
   return {
     plugins: [
       react(),
+      chunkModulesReport(),
       // `ANALYZE=1 npm run build` writes the bundle's treemap and its raw numbers to bundle-analysis/ (git-ignored, a CI artifact).
       // A dev dependency only: nothing of it reaches the app.
       ...(env.ANALYZE
@@ -44,6 +68,11 @@ export default defineConfig(({ mode }) => {
           advancedChunks: {
             groups: [
               { name: 'vendor', test: /node_modules[\\/](react|react-dom|scheduler|react-router|@remix-run)[\\/]/ },
+              // Everything else the shelf needs before it can start, in one file. Left to itself, rolldown splits each module the
+              // entry shares with a lazy route into a file of its own (Phase 24's cart route made it 8 files, up from 5), and on a slow
+              // link each file is another request before the first paint (web KI-042). `$initial` is rolldown's own tag for "statically
+              // imported from the entry", so a lazy page's code is never pulled in by this rule.
+              { name: 'app', tags: ['$initial'] },
             ],
           },
         },

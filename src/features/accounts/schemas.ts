@@ -1,3 +1,6 @@
+// First: zod's CSP-safe setting (src/app/zodConfig.ts) is applied before any schema here is built or used. Imported by the
+// modules that use zod, not by main.tsx, so zod stays out of the shelf's first files (web KI-042).
+import '@/app/zodConfig'
 import { z } from 'zod'
 
 // The rules the backend enforces on accounts (integration guide, sections 3, 6 and 7; backend
