@@ -73,7 +73,7 @@ test.describe('product images', () => {
 })
 
 test.describe('fonts', () => {
-  test('are served by this app as font/woff2, and the preloaded face is fetched', async ({ page, baseURL }) => {
+  test('are served by this app as font/woff2, and each preloaded face is fetched once', async ({ page, baseURL }) => {
     const fonts: { url: string; type: string | undefined }[] = []
     page.on('response', (response) => {
       if (response.url().endsWith('.woff2'))
