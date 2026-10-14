@@ -5,9 +5,9 @@
 - **Updated:** 2026-10-14
 - **Task:** Fix KI-043 (approved by the owner 2026-10-14: "KI-043 font swap"): the shelf's LCP element (a product description) is sometimes drawn in the fallback font and again in IBM Plex Sans; Chrome counts the redraw as the LCP (2.73 to 2.88 s in 3 local runs of 10; CI median 2.64 s, runs 2.33, 2.79, 2.64; budget 2.5 s). `docs/KNOWN_ISSUES.md` row KI-043 (Fix queue), `docs/performance.md`
 - **Branch:** `fix/ki-043-body-font-swap` (cut from `main` at `f3e42bf`, the merge of PR #50; KI-042 merged and merge-verified there: local verify 1092 tests, CI on `main` green). KI-042 stays **Open** (improved by PR #50, not fixed; no tag)
-- **Step:** TESTING
+- **Step:** PR_OPEN (PR #51)
 - **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` (unchanged by this fix)
-- **Waiting for user:** no
+- **Waiting for user:** YES: CI on the PR (its perf numbers to fill in), then the owner's review
 
 ## Checklist
 - [x] Pre-flight: KI-042 merged (`f3e42bf`) and merge-verified; branch cut; KI-043 In progress
@@ -16,10 +16,11 @@
 - [x] Red `033d815` (check-dist `checkFontPreloads`: 5 unit tests red without it; `check:dist` red on main's index.html) → fix `2d0c42b` (index.html preload; e2e design.spec "fonts": the two faces, each fetched once)
 - [x] Tests: `npm ci && npm run verify` exit 0, **1097 tests** (88 files; was 1092). e2e against the nginx image + stand-in: design.spec "fonts" red on `main`'s image, green on the fix's; fonts.spec (KI-028 guard) and container.spec font headers green; visual.spec fails identically on `main` and the fix (32 of 32, same pixel counts: the stand-in's data, not the fix; CI runs the real baselines). Lighthouse on the fix's build: shelf 2.14 s (1.96 to 2.20) vs `main` 2.09 s (1.84 to 2.66); product 2.47 vs 2.40 s (noise)
 - [x] Docs: KI-043 (fix in review, CI placeholders), KI-042 pointer, `docs/performance.md` KI-043 section, decisions `[Fix KI-043]` x3, `design-system/README.md` (loading rule)
-- [ ] PR opened; CI numbers filled in (Fixed only if CI shows the shelf under 2.5 s)
+- [x] PR opened (#51, https://github.com/mr-sujay-patil/EcomDemo-Web/pull/51)
+- [ ] CI numbers filled in (PR description "Results in CI", `docs/performance.md` "On CI", KI-043 row): KI-043 and KI-042 Fixed only if CI shows the shelf's median under 2.5 s
 
 ## Next action
-Finish testing: read `npm run verify`'s result (scratchpad `ki043/verify.log`), measure `ki043/distFix` (the fix's build) with `measure.sh` (PAGES=/,/products/1, 1.88x, 10 runs) and run e2e design.spec "fonts" against it; then open the PR (`Fix KI-043: ...`), replace `PR_NUMBER` in docs/KNOWN_ISSUES.md, set the step to PR_OPEN, commit, push, STOP.
+STOP: PR #51 is open. When CI has run: read its perf job (shelf and product page LCP medians and runs, slowdown), fill in the placeholders (PR description "Results in CI", `docs/performance.md` "On CI", KI-043 row in `docs/KNOWN_ISSUES.md`), and set KI-043 and KI-042 to Fixed (PR #51) only if the shelf's median is under 2.5 s; otherwise keep them Open and say what improved. If the product page went over 2.5 s, say so (local runs had it within the noise). Then wait for `approved, merge it`. After the merge: merge verification, then tags `ki-043-fixed` (and `ki-042-fixed`) only if Fixed (tag pushes are 403 here: give the owner the commands).
 
 ## ⚠️ Environment notes (this machine)
 - This session runs in a cloud container (not the owner's WSL machine): Node 24 at `/opt/node24/bin`; the backend team's working copy is `/home/user/ecomdemo` (read only, never checked out or changed); a read-only clone is at `/home/user/ecomdemo-backend-readonly` (`a85202f`, push URL `no-push`).
