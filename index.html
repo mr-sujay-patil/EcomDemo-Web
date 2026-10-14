@@ -34,8 +34,9 @@
       })()
     </script>
     <title>EcomDemo</title>
-    <!-- One face is preloaded: the headings (the h1 is what the shelf paints last). The body text and the rest load when a page uses them: a second preload competes with the JavaScript for the same slow link and made the product page's LCP worse (docs/performance.md). -->
+    <!-- Two faces are preloaded: the headings (Newsreader 600) and the body text (IBM Plex Sans 400: the shelf's product descriptions, its largest paint). A face that is not preloaded is asked for only once React has drawn text in it, and Lighthouse's simulation counts a font that arrives before the largest paint at its slow-link time, after all the JavaScript (web KI-043). The other five faces load when a page uses them: preloading more took the slow link from the JavaScript and the product photo (docs/performance.md). Vite rewrites each href to the hashed file it emits; npm run verify (scripts/check-dist.mjs) checks that. -->
     <link rel="preload" href="/src/styles/fonts/Newsreader-SemiBold.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="/src/styles/fonts/IBMPlexSans-Regular.woff2" as="font" type="font/woff2" crossorigin />
     <!-- Applies a saved Light or Dark choice before the first paint (public/theme-init.js). A file, not inline code: the Content-Security-Policy allows an inline script only by its hash, and this one has no reason to need that exception. -->
     <script src="/theme-init.js"></script>
   </head>

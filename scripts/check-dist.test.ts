@@ -109,7 +109,7 @@ describe('check-dist: font preloads (web KI-043)', () => {
         'IBMPlexSans-Regular',
       ]),
     ).toEqual([
-      'index.html: IBMPlexSans-Regular is not preloaded; the shelf draws it in its first view, and a font found only after React has rendered lands on the LCP (web KI-043)',
+      'index.html: IBMPlexSans-Regular is not preloaded; the largest paint on the shelf uses it, and a font found only after React has rendered lands on the LCP (web KI-043)',
     ])
   })
 

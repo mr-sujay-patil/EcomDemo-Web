@@ -108,12 +108,13 @@ export function checkInlineScripts(indexHtml, securityHeadersConf) {
 }
 
 /**
- * The faces index.html must preload (web KI-043): every face the shelf draws in its first view. A font that is not preloaded is
- * asked for only once React has rendered the text that uses it; Lighthouse's simulation counts every request that ended before the
- * largest paint, so such a font was simulated after the whole JavaScript chain and moved the shelf's LCP by 0.3 to 0.6 s.
- * Preloaded, it is asked for by the HTML at once and downloads beside the JavaScript. docs/performance.md, decisions [Fix KI-043].
+ * The faces index.html must preload (web KI-043): the headings' and the body text's, the face of the shelf's largest paint (a
+ * product description). A font that is not preloaded is asked for only once React has rendered the text that uses it; Lighthouse's
+ * simulation counts every request that ended before the largest paint, so such a font was simulated after the whole JavaScript
+ * chain and moved the shelf's LCP by 0.3 to 0.6 s in some runs. Preloaded, it is asked for by the HTML at once and downloads beside
+ * the JavaScript. More preloads were measured slower (docs/performance.md, decisions [Fix KI-043]).
  */
-export const shelfFirstViewFaces = ['Newsreader-SemiBold', 'IBMPlexSans-Regular', 'IBMPlexSans-SemiBold']
+export const shelfFirstViewFaces = ['Newsreader-SemiBold', 'IBMPlexSans-Regular']
 
 /**
  * Font preloads in the built index.html: each points at a file the build emitted (Vite rewrites the source path to the hashed
@@ -155,7 +156,7 @@ export function checkFontPreloads(indexHtml, distPaths, securityHeadersConf, req
   for (const face of requiredFaces) {
     if (!preloadedNames.some((name) => name.startsWith(`${face}-`)))
       failures.push(
-        `index.html: ${face} is not preloaded; the shelf draws it in its first view, and a font found only after React has rendered lands on the LCP (web KI-043)`,
+        `index.html: ${face} is not preloaded; the largest paint on the shelf uses it, and a font found only after React has rendered lands on the LCP (web KI-043)`,
       )
   }
   return failures
