@@ -64,7 +64,7 @@ The flows were written after the fixes, so they have no "before". One earlier re
 
 ## What was tried and was not worth it (or made it worse)
 
-- **No font preloads at all:** the first paint got later (1.95 s to 2.25 s at the time) and the product LCP did not move. One preload (the heading) is the best measured.
+- **No font preloads at all:** the first paint got later (1.95 s to 2.25 s at the time) and the product LCP did not move. One preload (the heading) was the best measured then; since web KI-043 the body face (Plex Sans 400) is preloaded too, and more than those two is still slower (see KI-043 below).
 - **Two separate vendor chunks (react, router):** met the 100 KB limit but made the first paint 0.15 s later than one `vendor` chunk (six files to fetch instead of five).
 - **Search and content pages as lazy routes:** the shelf's modules to preload went from 5 to 8 files and the first paint got 0.15 s later. Reverted. The shelf and the product page stay in the entry on purpose: they are what a visitor lands on, and a lazy landing page adds a round trip.
 - **Subsetting the fonts:** already done (Latin with the rupee sign merged in, per the design system). Nothing left to take out. The shelf loads six faces, 119.9 KB as sent; **that is essentially the floor**, about 0.1 KB under the budget. Adding a font face breaks it, which is what the budget is for. Dropping a weight is a design decision, not a performance one.
@@ -73,7 +73,7 @@ The flows were written after the fixes, so they have no "before". One earlier re
 ## What is left
 
 - **LCP is still a warning, not a failure**: after KI-027 both pages were still over 2.5 s on CI (shelf 2.87 s, product page 2.63 s at the calibrated slowdown), recorded as web KI-042; the KI-042 fix (below) cut the shelf to 2.64 s and the product page to 2.45 s on CI; the shelf's remaining miss is mostly web KI-043. LCP becomes an error only once CI shows both pages under 2.5 s with a margin.
-- **The shelf's LCP can move to the body font's swap** (web KI-043): in 3 local runs of 10 after the KI-042 fix, a font decision for the owner.
+- **The shelf's LCP could move to a late font** (web KI-043): fixed by preloading the body face (below); CI decides whether the shelf is now under 2.5 s.
 - **The shelf's LCP has about 4% headroom on a fast machine** (2.40 s against 2.5 s here, 2.25 s in another run) and none on CI (2.46 to 2.89 s). Another 10 KB of JavaScript would cost it further.
 - **No Brotli.** nginx's `alpine-slim` image has no Brotli module; Brotli would take roughly another 10% off the JavaScript.
 - **HTTP/2** is not used between the browser and the container (it needs TLS); the Ingress or a CDN would add it.
@@ -160,6 +160,27 @@ A cold product page (the stand-in has no photos, so its LCP here is the `<h1>`, 
 | Performance score (shelf / product) | 93 / 94 | 95 / 95 |
 
 **The shelf is still over 2.5 s, so KI-042 stays open and LCP stays a warning** (the product page passes it). Its three runs split as the local ones did: 2.33 s, then 2.64 and 2.79 s. That spread is web KI-043, the body font's swap, which is now the main thing between the shelf and the budget.
+
+### Web KI-043: the shelf's fonts and Lighthouse's simulation
+
+**How the fonts loaded** (`main` at `f3e42bf`): seven faces in `src/styles/tokens.css`, all `font-display: swap`, latin subsets with the rupee sign (14 to 26 KB each), hashed by Vite into `/assets/` and served by nginx for a year (`immutable`, no ETag, no security headers); the CSP's `font-src 'self'`. `index.html` preloaded one face, Newsreader 600 (the headings; Vite rewrites the `/src/styles/fonts/...` href to the hashed file). The shelf draws six faces; the other five were asked for only when React had drawn text in them.
+
+**What was really happening** (KI-043 guessed a fallback-then-Plex double paint; measured, it is not that). Lighthouse does not slow the page down: it loads it at full speed once, then *simulates* the slow phone ("Lantern"). For LCP the simulation takes **every request that ended before the observed LCP** and replays them on the slow link; the LCP is when the last of them would end. The fonts that are not preloaded start only after the JavaScript has run and React has drawn, and on the fast observed load they take a few milliseconds, so whether they end just before or just after the products' paint is chance. When they end before it, the simulation puts their download after the whole JavaScript chain: IBM Plex Sans (2.3 s), and in the bad runs also Plex Mono and Newsreader 500 (2.6 to 2.9 s). A real phone would have drawn the description in the fallback face and swapped; a browser test showed that a late Plex Sans makes the fallback paint the LCP (it is the larger one; the swap draws a smaller box, which is not a new LCP entry). So `font-display: optional` and a metric-matched fallback (`size-adjust`) would change nothing Lighthouse counts: they act on what is drawn, not on when the font request ends.
+
+**The fix: preload IBM Plex Sans 400**, the face of the shelf's largest paint (a product description), beside the heading face. The HTML asks for it at once, so it downloads beside the JavaScript instead of after it, in the simulation as on a phone. The CSP needs nothing new (`font-src 'self'`, same origin); `check-dist` checks that each font preload points at a file the build emitted, has `type="font/woff2"` and `crossorigin` (fonts are fetched in CORS mode; without it the preload is a second download), and that the two faces are preloaded. No font bytes are added: the shelf loaded this face anyway (the font budget is unchanged).
+
+**Measured here** (the nginx image of each build; a stand-in API with the seed's 14 products and the pinned backend's own eight SVG photos; Lighthouse 12.6.1 at a fixed 1.88x; ten runs per row, median and range; the container is shared, so its benchmark index wandered between about 1150 and 2100 during these runs, and the rows of one session are what compare):
+
+| Preloaded faces | Shelf `/` LCP | Product page LCP (its photo) |
+|---|---|---|
+| Newsreader 600 (`main`) | 2.16 s (1.85 to 2.76; 3 runs at 2.36 or more) | 2.50 s (2.32 to 2.71) |
+| + Plex Sans 400 (**the fix**) | **2.16 s (2.13 to 2.20)** | **2.41 s** (2.25 to 2.73) |
+| + Plex Sans 400 and 600 | 2.15 s (2.11 to 2.61) | 2.56 s (2.26 to 2.70) |
+| all six shelf faces (a separate session, a 78 KB test photo) | 2.60 s (2.56 to 2.89; `main` 2.16 there) | 3.25 s (`main` 2.91 there) |
+
+The fix's own build (`2d0c42b`, measured after the table, then `main` again in the same session): shelf **2.14 s (1.96 to 2.20)** against `main`'s 2.09 s (1.84 to 2.66; 4 runs at 2.31 s or more); product page 2.47 s (2.32 to 2.74) against 2.40 s (2.15 to 2.52). In an earlier session without photos the fix measured 2.21 s (2.13 to 2.78) against `main`'s 2.33 s (1.85 to 2.77). Over all the sessions, a run of `main` landed at 2.5 s or more 8 times in 40; the fix, 2 in 30 (both in the first session), and in the last two sessions no run of the fix passed 2.20 s. The median barely moves; **what the fix removes is the tail**, and the tail is what made CI's three-run median land either side of 2.5 s. On the product page the effect is within the noise (−0.09 s in one session, +0.07 s in the other); its photo is the LCP there, and CI's 2.45 s has little margin, so CI's run is what settles it. Preloading every face was clearly worse (about 120 KB on the slow link before the JavaScript): that is the Phase 21 finding, and it still holds for more than one body face.
+
+**On CI** (the verdict): _CI numbers to fill in from this PR's perf run (run id, slowdown, shelf median and runs, product page median)._
 
 ## Running it
 

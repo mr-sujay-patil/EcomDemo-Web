@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { checkDist, checkInlineScripts } from './check-dist.mjs'
+import { checkDist, checkFontPreloads, checkInlineScripts } from './check-dist.mjs'
 
 const text = (content: string) => new TextEncoder().encode(content)
 const check = (entries: Record<string, string>) =>
@@ -79,5 +79,75 @@ describe('check-dist: inline scripts and the Content-Security-Policy (web KI-027
     expect(checkInlineScripts(page, '# nothing here')).toEqual([
       'nginx/security-headers.conf: no Content-Security-Policy with a script-src was found',
     ])
+  })
+})
+
+describe('check-dist: font preloads (web KI-043)', () => {
+  const policy = (fontSrc: string) =>
+    `add_header Content-Security-Policy "default-src 'self'; script-src 'self'; font-src ${fontSrc}; style-src 'self'" always;`
+  const link = (href: string, extra = 'as="font" type="font/woff2" crossorigin') =>
+    `<link rel="preload" href="${href}" ${extra} />`
+  const built = [
+    'assets/IBMPlexSans-Regular-AAAA1111.woff2',
+    'assets/Newsreader-SemiBold-BBBB2222.woff2',
+    'assets/app.js',
+  ]
+  const page = (...links: string[]) => `<head>${links.join('')}</head>`
+  const both = page(
+    link('/assets/Newsreader-SemiBold-BBBB2222.woff2'),
+    link('/assets/IBMPlexSans-Regular-AAAA1111.woff2'),
+  )
+
+  it('passes when every required face is preloaded from a file in the build, allowed by font-src', () => {
+    expect(checkFontPreloads(both, built, policy("'self'"), ['Newsreader-SemiBold', 'IBMPlexSans-Regular'])).toEqual([])
+  })
+
+  it('fails when a required face is not preloaded (the shelf before the fix)', () => {
+    expect(
+      checkFontPreloads(page(link('/assets/Newsreader-SemiBold-BBBB2222.woff2')), built, policy("'self'"), [
+        'Newsreader-SemiBold',
+        'IBMPlexSans-Regular',
+      ]),
+    ).toEqual([
+      'index.html: IBMPlexSans-Regular is not preloaded; the largest paint on the shelf uses it, and a font found only after React has rendered lands on the LCP (web KI-043)',
+    ])
+  })
+
+  it('fails a preload of a file the build does not have (a stale hash, or a source path Vite did not rewrite)', () => {
+    expect(
+      checkFontPreloads(page(link('/src/styles/fonts/IBMPlexSans-Regular.woff2')), built, policy("'self'"), []),
+    ).toEqual([
+      'index.html: the font preload /src/styles/fonts/IBMPlexSans-Regular.woff2 is not a file in the build (dist/assets); the browser would fetch a 404 and the face again',
+    ])
+  })
+
+  it('fails a preload without crossorigin or the font type (the browser would not reuse it, and fetch the face twice)', () => {
+    const failures = checkFontPreloads(
+      page(
+        link('/assets/IBMPlexSans-Regular-AAAA1111.woff2', 'as="font" type="font/woff2"'),
+        link('/assets/Newsreader-SemiBold-BBBB2222.woff2', 'as="font" crossorigin'),
+      ),
+      built,
+      policy("'self'"),
+      [],
+    )
+    expect(failures).toEqual([
+      'index.html: the font preload /assets/IBMPlexSans-Regular-AAAA1111.woff2 needs crossorigin (fonts are fetched in CORS mode; without it the preload is not reused)',
+      'index.html: the font preload /assets/Newsreader-SemiBold-BBBB2222.woff2 needs type="font/woff2"',
+    ])
+  })
+
+  it("fails when the policy's font-src does not allow this origin, and a face preloaded twice", () => {
+    expect(checkFontPreloads(both, built, policy("'none'"), [])).toEqual([
+      "nginx/security-headers.conf: font-src must allow 'self', or every preloaded and @font-face font is blocked",
+    ])
+    expect(
+      checkFontPreloads(
+        page(link('/assets/IBMPlexSans-Regular-AAAA1111.woff2'), link('/assets/IBMPlexSans-Regular-AAAA1111.woff2')),
+        built,
+        policy("'self'"),
+        [],
+      ),
+    ).toEqual(['index.html: /assets/IBMPlexSans-Regular-AAAA1111.woff2 is preloaded more than once'])
   })
 })

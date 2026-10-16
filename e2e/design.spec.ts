@@ -73,7 +73,7 @@ test.describe('product images', () => {
 })
 
 test.describe('fonts', () => {
-  test('are served by this app as font/woff2, and the preloaded face is fetched', async ({ page, baseURL }) => {
+  test('are served by this app as font/woff2, and each preloaded face is fetched once', async ({ page, baseURL }) => {
     const fonts: { url: string; type: string | undefined }[] = []
     page.on('response', (response) => {
       if (response.url().endsWith('.woff2'))
@@ -89,8 +89,16 @@ test.describe('fonts', () => {
       expect(new URL(font.url).origin, 'self-hosted: no Google Fonts, no CDN').toBe(new URL(baseURL ?? '').origin)
       expect(font.type).toBe('font/woff2')
     }
-    // One face is preloaded (the headings): a second one slowed the product page's LCP (docs/performance.md).
-    await expect(page.locator('link[rel="preload"][as="font"]')).toHaveCount(1)
+    // Two faces are preloaded: the headings and the body text (web KI-043, docs/performance.md); each is fetched once, so
+    // the preload is the request the page uses (a preload the page cannot reuse, without crossorigin, is a second download).
+    const preloaded = await page
+      .locator('link[rel="preload"][as="font"]')
+      .evaluateAll((links) => links.map((link) => (link as HTMLLinkElement).href))
+    expect(preloaded.map((href) => href.replace(/^.*\/|-[A-Za-z0-9_-]{8}\.woff2$/g, '')).sort()).toEqual([
+      'IBMPlexSans-Regular',
+      'Newsreader-SemiBold',
+    ])
+    for (const href of preloaded) expect(fonts.filter((font) => font.url === href)).toHaveLength(1)
   })
 })
 

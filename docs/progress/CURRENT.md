@@ -2,25 +2,25 @@
 
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
-- **Updated:** 2026-10-11
-- **Task:** Fix KI-042 (approved by the owner 2026-10-11: "KI-042 shelf LCP"): the shelf's LCP is 2.87 s on CI at the calibrated slowdown (budget 2.5 s, a warning); its JavaScript grew from 128 KB (Phase 21) to 159 KB. `docs/KNOWN_ISSUES.md` row KI-042 (Fix queue), `docs/performance.md`
-- **Branch:** `fix/ki-042-shelf-lcp` (cut from `main` at `de40aaf`, the merge of PR #49; KI-027 merged and merge-verified there: local verify 1083 tests, CI on `main` green)
-- **Step:** PR_OPEN (PR #50)
+- **Updated:** 2026-10-14
+- **Task:** Fix KI-043 (approved by the owner 2026-10-14: "KI-043 font swap"): the shelf's LCP element (a product description) is sometimes drawn in the fallback font and again in IBM Plex Sans; Chrome counts the redraw as the LCP (2.73 to 2.88 s in 3 local runs of 10; CI median 2.64 s, runs 2.33, 2.79, 2.64; budget 2.5 s). `docs/KNOWN_ISSUES.md` row KI-043 (Fix queue), `docs/performance.md`
+- **Branch:** `fix/ki-043-body-font-swap` (cut from `main` at `f3e42bf`, the merge of PR #50; KI-042 merged and merge-verified there: local verify 1092 tests, CI on `main` green). KI-042 stays **Open** (improved by PR #50, not fixed; no tag)
+- **Step:** PR_OPEN (PR #51)
 - **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` (unchanged by this fix)
-- **Waiting for user:** YES: CI on the PR, then the owner's review
+- **Waiting for user:** YES: CI on the PR (its perf numbers to fill in), then the owner's review
 
 ## Checklist
-- [x] Pre-flight: KI-027 merged (`de40aaf`) and merge-verified; branch cut; KI-042 In progress
-- [x] Measure (each merge since Phase 21 built with `ANALYZE=1`, gzip -9 as served): shelf's initial files (entry + modulepreloads) P21 `97d9892` 127.0 KB in 5 files → P22 130.5 (+3.5: zod, pulled into the entry by `zodConfig`) → P23 147.0 (+16.5 tracing) → KI-033 131.6 (tracing a lazy 16.2 KB chunk fetched after the first paint, still in Lighthouse's page total) → **P24 134.8 KB in 8 files** (+3.2: guest cart in the entry; and CartRoute's lazy route split `useQuery` 5.1, `useSession` 1.4, `money` 0.1 out of the entry into 3 more preloaded files) → main 135.1 KB, 8 files. Lighthouse's 159 KB ≈ 135.1 + tracing 16.2 + headers
-- [x] Fix 1 (`1dfdf57`): rolldown group on its `$initial` tag (one app file: the shelf loads 3 files, 128.3 KB, was 8 files, 135.1 KB); `zodConfig` imported by the two `schemas.ts`, not `main.tsx` (zod out of the entry). check-budgets: red on main's real build (8 files > 5; zod in the entry), unit red `d7f19f3` (4 of 10) → green; zod guard test red (2 of 4 without the move) → green
-- [x] Fix 2 (`781a80e`): the shelf's GET from index.html's inline script: red `90cf869` (3 of 9) → green; CSP hash updated (check-dist red on the old one)
-- [x] Tests: full `npm run verify` exit 0, 1092 tests (88 files; was 1083). e2e `a cold shelf (web KI-042)` against the nginx image + stand-in API: red on `main`'s image (not taken + CSP violation; 8 modules > 5), green 2 of 2 on the branch's
-- [x] Full `npm ci && npm run verify` exit 0 (1092 tests). Local Lighthouse (nginx image + stand-in API at `172.17.0.1:8081`, 1.88x, median of 10): shelf `main` 2.87 s (as CI) → 2.60 s (fix 1) → 2.29 s (fix 1+2); product page 2.88 → 2.28 s. 3 of 10 shelf runs still 2.73 to 2.88 s: body font swap → web KI-043 (Open, owner). An earlier set of local numbers was invalid (nginx could not resolve `host.docker.internal`: the API was 502) and was replaced
-- [x] Docs: KI-042 (fix in review; Fixed only on CI's evidence), KI-043 added, `docs/performance.md`, `docs/security.md` (hash), decisions `[Fix KI-042]` x7
-- [x] PR opened (#50); CI green on `64c2722` (run 38208532791): shelf 2.64 s (2.33, 2.79, 2.64), product 2.45 s, 3.3x; filled in; KI-042 stays Open (improved), the rest is KI-043. One flaky e2e (cart.spec.ts:84, a backend 500, passed on retry; like KI-041)
+- [x] Pre-flight: KI-042 merged (`f3e42bf`) and merge-verified; branch cut; KI-043 In progress
+- [x] Measure: 7 faces, all `swap`, hashed into `/assets/` (immutable); only Newsreader 600 preloaded; CSP `font-src 'self'`. Cause (not the guessed double paint): Lighthouse's simulation replays every request that ended before the observed LCP; faces asked for after React's render land there by chance and are simulated after the JS chain. Tools: scratchpad `ki043/`
+- [x] Choose: 10 runs each (stand-in with the seed's SVG photos, 1.88x): shelf `main` 2.16 s (1.85 to 2.76), +Plex Sans 400 2.16 s (2.13 to 2.20), +400 and 600 2.15 s (2.11 to 2.61); product page 2.50 / 2.41 / 2.56 s; all six faces 2.60 s shelf, 3.25 s product (worse). Chosen: preload Plex Sans 400 only
+- [x] Red `033d815` (check-dist `checkFontPreloads`: 5 unit tests red without it; `check:dist` red on main's index.html) → fix `2d0c42b` (index.html preload; e2e design.spec "fonts": the two faces, each fetched once)
+- [x] Tests: `npm ci && npm run verify` exit 0, **1097 tests** (88 files; was 1092). e2e against the nginx image + stand-in: design.spec "fonts" red on `main`'s image, green on the fix's; fonts.spec (KI-028 guard) and container.spec font headers green; visual.spec fails identically on `main` and the fix (32 of 32, same pixel counts: the stand-in's data, not the fix; CI runs the real baselines). Lighthouse on the fix's build: shelf 2.14 s (1.96 to 2.20) vs `main` 2.09 s (1.84 to 2.66); product 2.47 vs 2.40 s (noise)
+- [x] Docs: KI-043 (fix in review, CI placeholders), KI-042 pointer, `docs/performance.md` KI-043 section, decisions `[Fix KI-043]` x3, `design-system/README.md` (loading rule)
+- [x] PR opened (#51, https://github.com/mr-sujay-patil/EcomDemo-Web/pull/51)
+- [ ] CI numbers filled in (PR description "Results in CI", `docs/performance.md` "On CI", KI-043 row): KI-043 and KI-042 Fixed only if CI shows the shelf's median under 2.5 s
 
 ## Next action
-STOP: the owner reviews PR #50 (`approved, merge it`). KI-042 stays Open after it (improved: shelf 2.87 → 2.64 s, product 2.63 → 2.45 s on CI); the owner decides KI-043 (body font). No tag for KI-042 after this merge (not fixed). LCP stays a warning.
+STOP: PR #51 is open. When CI has run: read its perf job (shelf and product page LCP medians and runs, slowdown), fill in the placeholders (PR description "Results in CI", `docs/performance.md` "On CI", KI-043 row in `docs/KNOWN_ISSUES.md`), and set KI-043 and KI-042 to Fixed (PR #51) only if the shelf's median is under 2.5 s; otherwise keep them Open and say what improved. If the product page went over 2.5 s, say so (local runs had it within the noise). Then wait for `approved, merge it`. After the merge: merge verification, then tags `ki-043-fixed` (and `ki-042-fixed`) only if Fixed (tag pushes are 403 here: give the owner the commands).
 
 ## ⚠️ Environment notes (this machine)
 - This session runs in a cloud container (not the owner's WSL machine): Node 24 at `/opt/node24/bin`; the backend team's working copy is `/home/user/ecomdemo` (read only, never checked out or changed); a read-only clone is at `/home/user/ecomdemo-backend-readonly` (`a85202f`, push URL `no-push`).
