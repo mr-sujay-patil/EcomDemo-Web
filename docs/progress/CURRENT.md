@@ -2,28 +2,25 @@
 
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
-- **Updated:** 2026-10-14
-- **Task:** Fix KI-043 (approved by the owner 2026-10-14: "KI-043 font swap"): the shelf's LCP element (a product description) is sometimes drawn in the fallback font and again in IBM Plex Sans; Chrome counts the redraw as the LCP (2.73 to 2.88 s in 3 local runs of 10; CI median 2.64 s, runs 2.33, 2.79, 2.64; budget 2.5 s). `docs/KNOWN_ISSUES.md` row KI-043 (Fix queue), `docs/performance.md`
-- **Branch:** `fix/ki-043-body-font-swap` (cut from `main` at `f3e42bf`, the merge of PR #50; KI-042 merged and merge-verified there: local verify 1092 tests, CI on `main` green). KI-042 stays **Open** (improved by PR #50, not fixed; no tag)
-- **Step:** PR_OPEN (PR #51)
-- **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` (unchanged by this fix)
-- **Waiting for user:** YES: CI on the PR (its perf numbers to fill in), then the owner's review
+- **Updated:** 2026-10-21
+- **Task:** Follow-up to fix KI-043 (PR #51, merged 2026-10-16 as `411548d` before its CI numbers were written in). Merge verification on `main` (`bd74ad3`): local `npm ci && npm run verify` exit 0, **1097 tests** (88 files); CI on `main` green (run 38829472884). But PR #51's CI perf run (38627692879) measured the shelf at **2.72 s** (2.72, 2.57, 2.74; 1.85x), over 2.5 s: KI-043 and KI-042 stay **Open**, no `ki-043-fixed` tag. The owner said 2026-10-21 to go with the recommended approach: record the verdict in a follow-up PR from the same branch (execution protocol, section 5)
+- **Branch:** `fix/ki-043-body-font-swap` (fast-forwarded to `main` at `bd74ad3`)
+- **Step:** IMPLEMENTING (docs only)
+- **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` (unchanged)
+- **Waiting for user:** no
 
 ## Checklist
-- [x] Pre-flight: KI-042 merged (`f3e42bf`) and merge-verified; branch cut; KI-043 In progress
-- [x] Measure: 7 faces, all `swap`, hashed into `/assets/` (immutable); only Newsreader 600 preloaded; CSP `font-src 'self'`. Cause (not the guessed double paint): Lighthouse's simulation replays every request that ended before the observed LCP; faces asked for after React's render land there by chance and are simulated after the JS chain. Tools: scratchpad `ki043/`
-- [x] Choose: 10 runs each (stand-in with the seed's SVG photos, 1.88x): shelf `main` 2.16 s (1.85 to 2.76), +Plex Sans 400 2.16 s (2.13 to 2.20), +400 and 600 2.15 s (2.11 to 2.61); product page 2.50 / 2.41 / 2.56 s; all six faces 2.60 s shelf, 3.25 s product (worse). Chosen: preload Plex Sans 400 only
-- [x] Red `033d815` (check-dist `checkFontPreloads`: 5 unit tests red without it; `check:dist` red on main's index.html) → fix `2d0c42b` (index.html preload; e2e design.spec "fonts": the two faces, each fetched once)
-- [x] Tests: `npm ci && npm run verify` exit 0, **1097 tests** (88 files; was 1092). e2e against the nginx image + stand-in: design.spec "fonts" red on `main`'s image, green on the fix's; fonts.spec (KI-028 guard) and container.spec font headers green; visual.spec fails identically on `main` and the fix (32 of 32, same pixel counts: the stand-in's data, not the fix; CI runs the real baselines). Lighthouse on the fix's build: shelf 2.14 s (1.96 to 2.20) vs `main` 2.09 s (1.84 to 2.66); product 2.47 vs 2.40 s (noise)
-- [x] Docs: KI-043 (fix in review, CI placeholders), KI-042 pointer, `docs/performance.md` KI-043 section, decisions `[Fix KI-043]` x3, `design-system/README.md` (loading rule)
-- [x] PR opened (#51, https://github.com/mr-sujay-patil/EcomDemo-Web/pull/51)
-- [ ] CI numbers filled in (PR description "Results in CI", `docs/performance.md` "On CI", KI-043 row): KI-043 and KI-042 Fixed only if CI shows the shelf's median under 2.5 s
+- [x] Merge verification of PR #51: branch tip `72eb256` in `main`; local verify on `main` green; CI on `main` green
+- [x] Read PR #51's CI perf numbers (job 116071601400): shelf 2.72 s, FCP 2.03 s, render delay 2268 ms; product page 2.44 s; Performance 94 / 96; slowdown 1.85x (index 2033), phones 1106 to 1262
+- [x] Docs: `docs/performance.md` "On CI" and "What is left"; KI-043 and KI-042 rows (Open); decisions `[Fix KI-043]` (verdict recorded, preload kept)
+- [ ] Push, PR to `main` (docs only; perf skipped locally: no code change); CI green; add its own perf numbers as a second sample
+- [ ] STOP for review; after the merge: merge verification only (no tag: nothing is Fixed)
 
 ## Next action
-STOP: PR #51 is open. When CI has run: read its perf job (shelf and product page LCP medians and runs, slowdown), fill in the placeholders (PR description "Results in CI", `docs/performance.md` "On CI", KI-043 row in `docs/KNOWN_ISSUES.md`), and set KI-043 and KI-042 to Fixed (PR #51) only if the shelf's median is under 2.5 s; otherwise keep them Open and say what improved. If the product page went over 2.5 s, say so (local runs had it within the noise). Then wait for `approved, merge it`. After the merge: merge verification, then tags `ki-043-fixed` (and `ki-042-fixed`) only if Fixed (tag pushes are 403 here: give the owner the commands).
+Push `fix/ki-043-body-font-swap`, open the PR "Fix KI-043 (follow-up): record CI's verdict, KI-043 and KI-042 stay open", wait for its CI, add its perf job's shelf and product numbers to the PR description as a second sample of the same code, then STOP for `approved, merge it`. Proposed next step for KI-042/043 (owner to decide): download that run's `performance` artifact and read the shelf's Lighthouse trace to see why the products are not in CI's first paint.
 
 ## ⚠️ Environment notes (this machine)
-- This session runs in a cloud container (not the owner's WSL machine): Node 24 at `/opt/node24/bin`; the backend team's working copy is `/home/user/ecomdemo` (read only, never checked out or changed); a read-only clone is at `/home/user/ecomdemo-backend-readonly` (`a85202f`, push URL `no-push`).
+- Cloud containers differ per session (not the owner's WSL machine). On 2026-10-21: no Node 24 installed (Node 24.21.0 downloaded from nodejs.org into a scratch folder), no Docker, no `ecomdemo-backend-readonly` clone; the backend repository was checked out separately for the backend team's own task.
 - Tag pushes are refused here with 403: tags are given to the owner as commands.
 - Backend images cannot be built here (Docker build containers have no network), so the stack cannot start in this container.
 

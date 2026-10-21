@@ -73,7 +73,7 @@ The flows were written after the fixes, so they have no "before". One earlier re
 ## What is left
 
 - **LCP is still a warning, not a failure**: after KI-027 both pages were still over 2.5 s on CI (shelf 2.87 s, product page 2.63 s at the calibrated slowdown), recorded as web KI-042; the KI-042 fix (below) cut the shelf to 2.64 s and the product page to 2.45 s on CI; the shelf's remaining miss is mostly web KI-043. LCP becomes an error only once CI shows both pages under 2.5 s with a margin.
-- **The shelf's LCP could move to a late font** (web KI-043): fixed by preloading the body face (below); CI decides whether the shelf is now under 2.5 s.
+- **The shelf's LCP could move to a late font** (web KI-043): preloading the body face (below) removed the slow tail here, but CI still measured the shelf at 2.72 s (PR #51), so KI-043 stays open with KI-042.
 - **The shelf's LCP has about 4% headroom on a fast machine** (2.40 s against 2.5 s here, 2.25 s in another run) and none on CI (2.46 to 2.89 s). Another 10 KB of JavaScript would cost it further.
 - **No Brotli.** nginx's `alpine-slim` image has no Brotli module; Brotli would take roughly another 10% off the JavaScript.
 - **HTTP/2** is not used between the browser and the container (it needs TLS); the Ingress or a CDN would add it.
@@ -180,7 +180,17 @@ A cold product page (the stand-in has no photos, so its LCP here is the `<h1>`, 
 
 The fix's own build (`2d0c42b`, measured after the table, then `main` again in the same session): shelf **2.14 s (1.96 to 2.20)** against `main`'s 2.09 s (1.84 to 2.66; 4 runs at 2.31 s or more); product page 2.47 s (2.32 to 2.74) against 2.40 s (2.15 to 2.52). In an earlier session without photos the fix measured 2.21 s (2.13 to 2.78) against `main`'s 2.33 s (1.85 to 2.77). Over all the sessions, a run of `main` landed at 2.5 s or more 8 times in 40; the fix, 2 in 30 (both in the first session), and in the last two sessions no run of the fix passed 2.20 s. The median barely moves; **what the fix removes is the tail**, and the tail is what made CI's three-run median land either side of 2.5 s. On the product page the effect is within the noise (−0.09 s in one session, +0.07 s in the other); its photo is the LCP there, and CI's 2.45 s has little margin, so CI's run is what settles it. Preloading every face was clearly worse (about 120 KB on the slow link before the JavaScript): that is the Phase 21 finding, and it still holds for more than one body face.
 
-**On CI** (the verdict): _CI numbers to fill in from this PR's perf run (run id, slowdown, shelf median and runs, product page median)._
+**On CI** (the verdict: PR #51, run 38627692879, job 116071601400, `72eb256`; the calibration measured a median index of 2033, so 1.85x; the runs simulated phones of 1106 to 1262):
+
+| | Before (PR #50, 3.3x) | After (PR #51, 1.85x) |
+|---|---|---|
+| Shelf LCP, median (runs) | 2.64 s (2.33, 2.79, 2.64) | **2.72 s** (2.72, 2.57, 2.74) |
+| Its FCP / render delay (first run) | n/a / 1882 ms | 2.03 s / 2268 ms |
+| Product page LCP, median | 2.45 s | 2.44 s (photo load delay 601 ms) |
+| JavaScript / fonts (as sent) | 148.6 KB / 119.9 KB | 148.6 KB / 119.9 KB |
+| Performance score (shelf / product) | 95 / 95 | 94 / 96 |
+
+**Not fixed on CI: the shelf is still over 2.5 s**, and none of its three runs was under it, so KI-043 and KI-042 stay open and LCP stays a warning (PR #51 was merged with the preload; no measurable harm here or on CI). The local finding does not carry over: here the fix took the slow tail away and left the median at about 2.15 s; on CI the median moved from 2.64 to 2.72 s (within the runner's spread), and the LCP came about 0.7 s after the first paint (FCP 2.03 s), not the 150 ms seen here when the products are in the first paint. So on CI the products were not drawn in the first paint, and a late font is not what decides the shelf's LCP there. Finding out what does needs the run's Lighthouse reports (the `performance` artifact), not more local runs.
 
 ## Running it
 
