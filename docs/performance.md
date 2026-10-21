@@ -190,7 +190,9 @@ The fix's own build (`2d0c42b`, measured after the table, then `main` again in t
 | JavaScript / fonts (as sent) | 148.6 KB / 119.9 KB | 148.6 KB / 119.9 KB |
 | Performance score (shelf / product) | 95 / 95 | 94 / 96 |
 
-**Not fixed on CI: the shelf is still over 2.5 s**, and none of its three runs was under it, so KI-043 and KI-042 stay open and LCP stays a warning (PR #51 was merged with the preload; no measurable harm here or on CI). The local finding does not carry over: here the fix took the slow tail away and left the median at about 2.15 s; on CI the median moved from 2.64 to 2.72 s (within the runner's spread), and the LCP came about 0.7 s after the first paint (FCP 2.03 s), not the 150 ms seen here when the products are in the first paint. So on CI the products were not drawn in the first paint, and a late font is not what decides the shelf's LCP there. Finding out what does needs the run's Lighthouse reports (the `performance` artifact), not more local runs.
+A second sample of the same code (PR #54, run 39628291294, `b16360c`, docs only; 1.66x, phones 1058 to 1214): shelf **2.65 s** (2.65, 2.72, 2.56), FCP 1.99 s, render delay 2199 ms; product page 2.47 s; Performance 95 / 96.
+
+**Not fixed on CI: the shelf is still over 2.5 s**, and none of its six runs over the two samples was under it, so KI-043 and KI-042 stay open and LCP stays a warning (PR #51 was merged with the preload; no measurable harm here or on CI). The local finding does not carry over: here the fix took the slow tail away and left the median at about 2.15 s; on CI the median moved from 2.64 to 2.72 s (within the runner's spread), and the LCP came about 0.7 s after the first paint (FCP 2.03 s), not the 150 ms seen here when the products are in the first paint. So on CI the products were not drawn in the first paint, and a late font is not what decides the shelf's LCP there. Finding out what does needs the run's Lighthouse reports (the `performance` artifact), not more local runs.
 
 ## Running it
 
