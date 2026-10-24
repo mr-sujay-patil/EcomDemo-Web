@@ -2,12 +2,12 @@
 
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
-- **Updated:** 2026-10-21
+- **Updated:** 2026-10-24
 - **Task:** Fix KI-042 + KI-043 together (one cause: the shelf's LCP on CI, 2.72 s and 2.65 s in PRs #51 and #54, budget 2.5 s); approved by the owner 2026-10-21 ("Fix KI-042+043 together"). `docs/KNOWN_ISSUES.md` rows KI-042, KI-043; `docs/performance.md`
 - **Branch:** `fix/ki-042-043-shelf-lcp` (cut from `main` at `ddd09c3`, the merge of PR #54; merge-verified: local verify 1097 tests, CI on `main` green)
-- **Step:** PR_OPEN (draft PR #55): the fix is proven; CI is red on two new advisories this PR did not cause (KI-044, KI-045)
+- **Step:** PR_OPEN (draft PR #55): the fix is proven; `main` (with fix KI-044/045, PR #57, merged as `1324441`) merged in
 - **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` (unchanged)
-- **Waiting for user:** YES: approve a fix for KI-044 + KI-045 (a second open PR, High), which PR #55 then waits for
+- **Waiting for user:** no (CI on the merged head first)
 
 ## Checklist
 - [x] Pre-flight: PR #54 merged and verified; branch cut; KI-042 and KI-043 In progress
@@ -17,10 +17,11 @@
 - [x] Docs: performance.md section Fix KI-042 and KI-043, KNOWN_ISSUES (Fix in review), decisions x3, design-system/README.md loading rule
 - [x] `npm ci && npm run verify` exit 0, **1111 tests** (90 files); shelf 3 files 128.4 KB
 - [x] CI (run 40067163272, `9d3a759`): e2e green (visual specs included); perf: shelf **2.25 s**, LCP assertion passes; fonts before the observed LCP 2 (45.2 KB); product page 2.40 s; KI-042/043 Fixed (PR #55); performance.md "On CI" filled in
-- [ ] CI's `image` (web KI-044: nginx 1.30.5 CVEs) and `verify` (web KI-045: npm audit, dev tooling) red, not caused by this PR: recorded, commented on the PR, a fix PR needs the owner's approval
+- [x] CI's `image` (web KI-044) and `verify` (web KI-045) were red, not caused by this PR: fixed by PR #57 (approved 2026-10-24, merged as `1324441`); `main` merged into this branch (conflicts in KNOWN_ISSUES, decisions and this file, docs only)
+- [ ] `npm ci && npm run verify` on the merged tree; CI green on the merged head (all three jobs); #55 out of draft with the review report
 
 ## Next action
-STOP: ask the owner to approve `fix/ki-044-045-<slug>` (base image `nginx:1.30.6-alpine-slim@sha256:d9322bba63c6cfc63dc9e86522fd4f95fd4d9020a02b5bced282bbf38b8c3960`; the three dev-tool advisories). After that fix merges: merge `main` into this branch, CI green, take PR #55 out of draft with the review report.
+Wait for CI on the merged head (`image`, `verify`, `e2e` with perf: the shelf must stay under 2.5 s). Then take PR #55 out of draft, update its description with the final results, and STOP for `approved, merge it`. After the merge: merge-verify, tags `ki-042-fixed` and `ki-043-fixed` (for the owner).
 
 ## ⚠️ Environment notes (this machine)
 - Cloud containers differ per session (not the owner's WSL machine). On 2026-10-21: no Node 24 installed (Node 24.21.0 downloaded from nodejs.org into a scratch folder), no Docker, no `ecomdemo-backend-readonly` clone; the backend repository was checked out separately for the backend team's own task.
