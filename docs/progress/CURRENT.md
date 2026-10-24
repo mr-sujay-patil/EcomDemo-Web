@@ -5,20 +5,21 @@
 - **Updated:** 2026-10-24
 - **Task:** Fix KI-044 + KI-045 together (one cause: new HIGH advisories make CI red on every PR; approved by the owner 2026-10-24, "One fix PR for both", as a High interruption while draft PR #55, fix KI-042/043, waits). KI-044: `nginx` 1.30.5-r1 in the serving image (3 CVEs, fixed in 1.30.6). KI-045: `npm run audit:deps`, three dev-tooling advisories (body-parser, undici, zod 3 under Lighthouse CI)
 - **Branch:** `fix/ki-044-045-ci-advisories` (cut from `main` at `ddd09c3`). PR #55 (`fix/ki-042-043-shelf-lcp`) stays open as a draft: proven on CI (shelf 2.25 s), red only on these two
-- **Step:** IMPLEMENTING
+- **Step:** TESTING
 - **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` (unchanged)
 - **Waiting for user:** no
 
 ## Checklist
 - [x] KI-044 and KI-045 In progress
 - [x] Reproduce: `npm run audit:deps` red locally (the three advisories); CI's `image` job red on `nginx` 1.30.5-r1 (PR #55 run 40067163272; no Docker here, so the image scan only runs in CI)
-- [ ] KI-044: `FROM nginx:1.30.6-alpine-slim@sha256:d9322bba63c6cfc63dc9e86522fd4f95fd4d9020a02b5bced282bbf38b8c3960`
-- [ ] KI-045: body-parser 1.20.9 and undici 8.12.x (jsdom 30.1.3) in the lockfile; zod 3 under chromium-bidi: no fixed version reachable (`@lhci/cli` 0.15.1 is the latest, pins lighthouse 12.6.1) -> an `audit-allowlist.json` entry with its reason and an expiry
-- [ ] `npm ci && npm run verify`, `npm run audit:deps` green; docs; PR; CI green (`image`, `verify`, `e2e`)
+- [x] KI-044: `FROM nginx:1.30.6-alpine-slim@sha256:d9322bba…3960` (the `pcre2` line kept)
+- [x] KI-045: body-parser 1.20.9, undici 8.12.3 (jsdom 30.1.3; also its dom-selector 9.2.4 -> 10.0.5); zod 3 accepted in `audit-allowlist.json` until 2026-12-31
+- [x] `npm ci && npm run verify` exit 0, 1097 tests; `npm run audit:deps` exit 0; docs (KNOWN_ISSUES Fixed, decisions x2)
+- [ ] Push, PR, CI green (`image` proves KI-044; `verify` KI-045; `e2e` the new nginx serving)
 - [ ] After the merge: merge-verify, tags `ki-044-fixed`, `ki-045-fixed` (for the owner); then `main` into PR #55, CI green, #55 out of draft
 
 ## Next action
-Bump the nginx base image in `Dockerfile`; update the lockfile for body-parser and jsdom/undici; add the zod allowlist entry; `npm run audit:deps` and `npm run verify`.
+Open the PR `Fix KI-044, KI-045: …`, add its number in one more commit, wait for CI (all three jobs), then STOP for the owner. After the merge: merge-verify, then `main` into PR #55's branch.
 
 ## ⚠️ Environment notes (this machine)
 - Cloud containers differ per session (not the owner's WSL machine). On 2026-10-21: no Node 24 installed (Node 24.21.0 downloaded from nodejs.org into a scratch folder), no Docker, no `ecomdemo-backend-readonly` clone; the backend repository was checked out separately for the backend team's own task.
