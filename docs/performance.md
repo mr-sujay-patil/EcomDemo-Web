@@ -73,7 +73,7 @@ The flows were written after the fixes, so they have no "before". One earlier re
 ## What is left
 
 - **LCP is still a warning, not a failure**: after KI-027 both pages were still over 2.5 s on CI (shelf 2.87 s, product page 2.63 s at the calibrated slowdown), recorded as web KI-042; the KI-042 fix (below) cut the shelf to 2.64 s and the product page to 2.45 s on CI; the shelf's remaining miss is mostly web KI-043. LCP becomes an error only once CI shows both pages under 2.5 s with a margin.
-- **The shelf's LCP could move to a late font** (web KI-043): preloading the body face (below) removed the slow tail here, but CI still measured the shelf at 2.72 s (PR #51), so KI-043 stays open with KI-042.
+- **The shelf's LCP** (web KI-042, KI-043): fixed by PR #55, which loads the five faces the first view does not need after its first paint (below); CI 2.25 s.
 - **The shelf's LCP has about 4% headroom on a fast machine** (2.40 s against 2.5 s here, 2.25 s in another run) and none on CI (2.46 to 2.89 s). Another 10 KB of JavaScript would cost it further.
 - **No Brotli.** nginx's `alpine-slim` image has no Brotli module; Brotli would take roughly another 10% off the JavaScript.
 - **HTTP/2** is not used between the browser and the container (it needs TLS); the Ingress or a CDN would add it.
@@ -226,7 +226,19 @@ declare only the preloaded faces; `npm run check:dist` failed on `main`'s build 
 (entry CSS 19.84 → 19.06 kB, `fonts-deferred-*.css` 0.77 kB). `loadDeferredFonts.test.ts` (5): nothing before the first paint, the
 stylesheet after it, a failure never breaks the page.
 
-**On CI** (the verdict): _to fill in from this PR's perf run._
+**On CI** (the verdict: PR #55, run 40067163272, job 120792730306, `9d3a759`; the calibration measured a median index of 2048, so
+1.86x; the runs simulated phones of 1143 to 1206):
+
+| | Before (PR #55's measuring run, 3.15x) | After (the fix, 1.86x) |
+|---|---|---|
+| Shelf LCP, median | 2.55 s (2.55, 2.70, 2.55) | **2.25 s** (under 2.5 s: the LCP assertion passes, no warning) |
+| Shelf FCP / render delay (first run) | about 2.0 s / 2101 ms | 1.85 s / 1538 ms |
+| Fonts ended before the observed LCP | 6 (119.9 KB) | **2 (45.2 KB)**: the preloaded pair |
+| Product page LCP, median | under 2.5 s | 2.40 s (fonts before LCP: 4, 83.0 KB → 2, 45.2 KB) |
+| Performance (shelf / product) | | 97 / 97 |
+
+**KI-042 and KI-043 are fixed**, and LCP no longer warns on either page. The total font bytes are unchanged (119.9 KB on the shelf):
+the same faces load, after the products are drawn.
 
 ## Running it
 
