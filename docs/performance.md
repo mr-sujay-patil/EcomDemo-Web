@@ -194,6 +194,40 @@ A second sample of the same code (PR #54, run 39628291294, `b16360c`, docs only;
 
 **Not fixed on CI: the shelf is still over 2.5 s**, and none of its six runs over the two samples was under it, so KI-043 and KI-042 stay open and LCP stays a warning (PR #51 was merged with the preload; no measurable harm here or on CI). The local finding does not carry over: here the fix took the slow tail away and left the median at about 2.15 s; on CI the median moved from 2.64 to 2.72 s (within the runner's spread), and the LCP came about 0.7 s after the first paint (FCP 2.03 s), not the 150 ms seen here when the products are in the first paint. So on CI the products were not drawn in the first paint, and a late font is not what decides the shelf's LCP there. Finding out what does needs the run's Lighthouse reports (the `performance` artifact), not more local runs.
 
+## Fix KI-042 and KI-043: the faces the first view does not need load after its first paint
+
+**Measured on CI first** (this container has no Docker and CI runs only on pull requests, so the fix's PR was a draft until this
+was read). `scripts/perf-report.mjs` now prints, for each page's first run, what its simulated LCP is built from
+(`scripts/perf-lcp-inputs.mjs`): the observed FCP and LCP, the requests that ended before the observed LCP by type, the data and
+photo requests among them, and the DOM size. Draft PR #55 (run 39647266492, `528ab3f`, 3.15x; shelf 2.55 s: 2.55, 2.70, 2.55):
+
+| | Shelf `/` | Product page |
+|---|---|---|
+| Observed FCP, LCP | 291 ms, 336 ms (+45 ms) | 167 ms, 200 ms (+33 ms) |
+| Requests ended before the observed LCP | 14 of 20: scripts 4 (131.6 KB), **fonts 6 (119.9 KB)**, CSS, document, the early request, the catalogue | 14 of 14: scripts 5 (148.7 KB), **fonts 4 (83.0 KB)**, CSS, document, the product and its photo |
+| DOM | 240 elements | 67 elements |
+
+**What it means.** The observed load is fast and the products are in the first paint (KI-043's double paint is not what CI sees). Lighthouse's simulated LCP keeps every request that
+ended before the observed LCP except low-priority images (`LargestContentfulPaint.getOptimisticGraph` in its trace engine), and
+fonts are high priority. Over loopback every face the shelf draws in ends a few ms before the products' paint, so all six, 120 KB,
+are replayed on the slow 4G link ahead of LCP: about the 0.6 s between the simulated FCP (about 2.0 s) and LCP. Locally a face
+sometimes lost the race by chance, which is the spread KI-043 recorded. Only IBM Plex Sans 400 is needed for the largest paint.
+
+**The fix** (the owner chose it among four, 2026-10-21: defer five faces; fewer faces, a different throttling method and accepting the
+miss were the others). `src/styles/tokens.css` declares only the two preloaded faces (Newsreader 600, IBM Plex Sans 400). The other
+five (Newsreader 500 and 600 italic, Plex Sans 600, Plex Mono 400 and 500) are in `src/styles/fonts-deferred.css`, which
+`src/app/loadDeferredFonts.ts` imports after the first paint, on the same schedule as tracing (two animation frames, then idle
+time: `src/app/afterFirstPaint.ts`). Vite emits it as a CSS chunk of its own that only the entry's JavaScript names (not linked or
+preloaded by index.html). `<html data-fonts="all">` says it is in; the e2e `settleFonts` waits for it before a picture. **The
+price:** medium and italic headings, semibold text and the mono figures show in their fallback for a moment, then swap.
+
+**Proof.** `check-dist` (`checkFirstViewFontFaces`, 4 unit tests, red first): a stylesheet linked from the built index.html may
+declare only the preloaded faces; `npm run check:dist` failed on `main`'s build with the five faces named, and passes with the fix
+(entry CSS 19.84 → 19.06 kB, `fonts-deferred-*.css` 0.77 kB). `loadDeferredFonts.test.ts` (5): nothing before the first paint, the
+stylesheet after it, a failure never breaks the page.
+
+**On CI** (the verdict): _to fill in from this PR's perf run._
+
 ## Running it
 
 ```bash

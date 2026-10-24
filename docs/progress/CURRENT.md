@@ -5,19 +5,20 @@
 - **Updated:** 2026-10-21
 - **Task:** Fix KI-042 + KI-043 together (one cause: the shelf's LCP on CI, 2.72 s and 2.65 s in PRs #51 and #54, budget 2.5 s); approved by the owner 2026-10-21 ("Fix KI-042+043 together"). `docs/KNOWN_ISSUES.md` rows KI-042, KI-043; `docs/performance.md`
 - **Branch:** `fix/ki-042-043-shelf-lcp` (cut from `main` at `ddd09c3`, the merge of PR #54; merge-verified: local verify 1097 tests, CI on `main` green)
-- **Step:** IMPLEMENTING: cause measured; STOPPED for the owner's choice of fix
+- **Step:** TESTING
 - **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` (unchanged)
-- **Waiting for user:** YES: which fix (the options under Next action)
+- **Waiting for user:** no (the owner chose option 1, defer five faces, 2026-10-24)
 
 ## Checklist
 - [x] Pre-flight: PR #54 merged and verified; branch cut; KI-042 and KI-043 In progress
 - [x] Measure on CI: `scripts/perf-lcp-inputs.mjs` (5 unit tests) prints what each first run's simulated LCP is built from; draft PR #55 (CI only runs on PRs), run 39647266492 at `528ab3f`, all green
 - [x] Cause (CI run 39647266492, shelf 2.55 s median: 2.55, 2.70, 2.55; product page under 2.5 s): the OBSERVED load is fast and the products are in the first paint (FCP 291 ms, LCP 336 ms, +45 ms; DOM 240 elements; the e2e-changed-catalogue hypothesis is out). 14 of 20 requests ended before the observed LCP, among them **all six font faces (119.9 KB)**: Lantern's LCP graph keeps every request that ended before the observed LCP except low-priority images (`LargestContentfulPaint.getOptimisticGraph`, trace_engine), so on CI, where the fonts always win the race over loopback, all 120 KB are replayed on the slow 4G link before LCP: about the 0.6 s between the simulated FCP (about 2.0 s) and LCP. Locally some faces lost the race by chance (KI-043's spread). Only IBM Plex Sans 400 is needed for the largest paint (a product description)
-- [ ] Red test, then the fix
-- [ ] Tests (`npm ci && npm run verify`), docs, PR ready for review; KI-042/043 Fixed only if CI shows the shelf under 2.5 s
+- [x] Red first (`check-dist` `checkFirstViewFontFaces`, 4 tests; `npm run check:dist` red on `main`'s build, five faces named), then the fix: `src/styles/fonts-deferred.css` (5 faces), `tokens.css` keeps 2, `src/app/loadDeferredFonts.ts` (+5 tests) on `src/app/afterFirstPaint.ts` (shared with tracing), `main.tsx`; e2e `settleFonts` waits for `<html data-fonts>`; check-dist green on the fix's build (deferred CSS a chunk of its own, not in index.html)
+- [x] Docs: performance.md section Fix KI-042 and KI-043, KNOWN_ISSUES (Fix in review), decisions x3, design-system/README.md loading rule
+- [ ] `npm ci && npm run verify`; push; CI's perf run: the shelf's median under 2.5 s and no font among the requests before the observed LCP except the two preloaded; then the PR out of draft; KI-042/043 Fixed only if under 2.5 s
 
 ## Next action
-STOP: the owner chooses the fix (asked 2026-10-21). Options: (1) defer the faces the shelf's largest paint and headings do not need (Plex Sans 600, Plex Mono 400/500, Newsreader 500 and 600 italic) to a stylesheet added after the first render, so they start after the LCP; (2) fewer faces on the shelf's first view (a design change); (3) measure the shelf with throttling applied in the browser (`devtools`, as the flows are) instead of simulated; (4) accept: LCP stays a warning and KI-042/043 become an accepted limit. Then implement on this branch, red test first.
+When `npm run verify` passes, commit the fix and docs, push, and read PR #55's perf run: "Before the observed LCP" must list fonts 2 (the preloaded) on the shelf, and the shelf's median must be under 2.5 s. Fill in performance.md "On CI", set KI-042/043 Fixed (PR #55) only if under 2.5 s, take the PR out of draft with the review report, and STOP.
 
 ## ⚠️ Environment notes (this machine)
 - Cloud containers differ per session (not the owner's WSL machine). On 2026-10-21: no Node 24 installed (Node 24.21.0 downloaded from nodejs.org into a scratch folder), no Docker, no `ecomdemo-backend-readonly` clone; the backend repository was checked out separately for the backend team's own task.
