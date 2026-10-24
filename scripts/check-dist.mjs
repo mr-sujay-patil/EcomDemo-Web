@@ -1,6 +1,7 @@
 // What the production build may contain, checked on dist/ after `npm run build` (so in `npm run verify` and in CI):
 //   - every inline script in index.html allowed by its exact sha256 in the nginx Content-Security-Policy (checkInlineScripts);
 //   - the fonts the shelf draws first preloaded from files the build emitted, allowed by font-src (checkFontPreloads, web KI-043);
+//   - the first stylesheet declaring no other face: the rest load after the first paint (checkFirstViewFontFaces, web KI-042);
 //   - no secret-shaped text (keys, tokens, passwords) and no source maps or .env files;
 //   - no backend address: the app talks to `/api` on its own origin and nothing else. Any absolute URL has to be one of the
 //     few namespaces and documentation links that libraries carry in their code (the allowlist below, each with its reason).
@@ -162,6 +163,35 @@ export function checkFontPreloads(indexHtml, distPaths, securityHeadersConf, req
   return failures
 }
 
+/**
+ * The faces the first view's stylesheets declare: those linked from the built index.html (the entry's CSS). Lighthouse's
+ * simulated LCP replays every request that ended before the observed LCP, and a face declared there is requested as soon as
+ * React draws text in it, so on a fast load all of them end before the products' paint and count on the slow link (web KI-042:
+ * all six shelf faces, 120 KB, on CI). Only the preloaded faces belong in it; the others are in src/styles/fonts-deferred.css,
+ * loaded after the first paint (src/app/loadDeferredFonts.ts). `files` maps dist paths to their content. Returns the problems.
+ */
+export function checkFirstViewFontFaces(indexHtml, files, allowedFaces) {
+  const stylesheets = [...indexHtml.matchAll(/<link\b[^>]*>/g)]
+    .map(([tag]) => tag)
+    .filter((tag) => /\brel="stylesheet"/.test(tag))
+    .map((tag) => tag.match(/\bhref="\/([^"]*)"/)?.[1])
+    .filter((path) => path && files.has(path))
+  if (stylesheets.length === 0)
+    return ["index.html: links no stylesheet from dist/assets; the first view's font faces cannot be checked"]
+  const failures = []
+  for (const path of stylesheets) {
+    const css = files.get(path).toString()
+    for (const [, url] of css.matchAll(/@font-face\s*\{[^}]*?url\(\s*["']?([^"')]+)/g)) {
+      const name = url.replace(/^.*\//, '').replace(/-[^-]+\.woff2$/, '')
+      if (!allowedFaces.includes(name))
+        failures.push(
+          `${path}: declares ${name}, which is not preloaded; a face in the first stylesheet ends before the LCP on a fast load and is counted in the simulated LCP (web KI-042). Declare it in src/styles/fonts-deferred.css, loaded after the first paint`,
+        )
+    }
+  }
+  return failures
+}
+
 function readDist(root) {
   const files = new Map()
   const walk = (dir) => {
@@ -186,9 +216,10 @@ if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
       readFileSync('nginx/security-headers.conf', 'utf8'),
       shelfFirstViewFaces,
     ),
+    ...checkFirstViewFontFaces(readFileSync('dist/index.html', 'utf8'), files, shelfFirstViewFaces),
   ]
   console.log(
-    `check-dist: ${files.size} files scanned for secrets, source maps and backend addresses; inline scripts checked against the CSP; font preloads checked.`,
+    `check-dist: ${files.size} files scanned for secrets, source maps and backend addresses; inline scripts checked against the CSP; font preloads and the first view's faces checked.`,
   )
   if (failures.length > 0) {
     for (const failure of failures) console.error(`check-dist: ${failure}`)

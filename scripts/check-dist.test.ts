@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { checkDist, checkFontPreloads, checkInlineScripts } from './check-dist.mjs'
+import { checkDist, checkFirstViewFontFaces, checkFontPreloads, checkInlineScripts } from './check-dist.mjs'
 
 const text = (content: string) => new TextEncoder().encode(content)
 const check = (entries: Record<string, string>) =>
@@ -149,5 +149,49 @@ describe('check-dist: font preloads (web KI-043)', () => {
         [],
       ),
     ).toEqual(['index.html: /assets/IBMPlexSans-Regular-AAAA1111.woff2 is preloaded more than once'])
+  })
+})
+
+// Lighthouse's simulated LCP replays every request that ended before the observed LCP (web KI-042, KI-043). A face declared in the
+// first stylesheet is requested as soon as React draws text in it, so on a fast load (CI) all of them end before the products'
+// paint and are counted on the slow link. Only the preloaded faces belong there; the rest load after the first paint.
+describe('check-dist: the faces the first stylesheet declares', () => {
+  const face = (file: string) => `@font-face{font-family:X;src:url(/assets/${file}) format("woff2")}`
+  const stylesheet = (href: string) => `<link rel="stylesheet" crossorigin href="${href}">`
+  const indexHtml = `<head>${stylesheet('/assets/index-CCCC3333.css')}</head>`
+  const allowed = ['Newsreader-SemiBold', 'IBMPlexSans-Regular']
+
+  it('passes when the first stylesheet declares only the preloaded faces', () => {
+    const files = new Map([
+      ['assets/index-CCCC3333.css', `${face('Newsreader-SemiBold-BBBB2222.woff2')}${face('IBMPlexSans-Regular-AAAA1111.woff2')}body{}`],
+    ])
+    expect(checkFirstViewFontFaces(indexHtml, files, allowed)).toEqual([])
+  })
+
+  it('fails each other face it declares (the shelf before the fix: seven faces in index.css)', () => {
+    const files = new Map([
+      [
+        'assets/index-CCCC3333.css',
+        `${face('IBMPlexSans-Regular-AAAA1111.woff2')}${face('IBMPlexMono-Regular-DDDD4444.woff2')}${face('Newsreader-Medium-EEEE5555.woff2')}`,
+      ],
+    ])
+    expect(checkFirstViewFontFaces(indexHtml, files, allowed)).toEqual([
+      'assets/index-CCCC3333.css: declares IBMPlexMono-Regular, which is not preloaded; a face in the first stylesheet ends before the LCP on a fast load and is counted in the simulated LCP (web KI-042). Declare it in src/styles/fonts-deferred.css, loaded after the first paint',
+      'assets/index-CCCC3333.css: declares Newsreader-Medium, which is not preloaded; a face in the first stylesheet ends before the LCP on a fast load and is counted in the simulated LCP (web KI-042). Declare it in src/styles/fonts-deferred.css, loaded after the first paint',
+    ])
+  })
+
+  it('ignores stylesheets the page loads later (a lazy route, the deferred faces)', () => {
+    const files = new Map([
+      ['assets/index-CCCC3333.css', 'body{}'],
+      ['assets/fonts-deferred-FFFF6666.css', face('IBMPlexMono-Regular-DDDD4444.woff2')],
+    ])
+    expect(checkFirstViewFontFaces(indexHtml, files, allowed)).toEqual([])
+  })
+
+  it('fails when index.html links no stylesheet from the build, so the check cannot see the first view', () => {
+    expect(checkFirstViewFontFaces('<head></head>', new Map(), allowed)).toEqual([
+      'index.html: links no stylesheet from dist/assets; the first view\'s font faces cannot be checked',
+    ])
   })
 })
