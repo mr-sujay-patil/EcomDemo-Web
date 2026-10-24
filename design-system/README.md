@@ -58,7 +58,7 @@ Every text pairing meets 4.5:1 in both themes (the lowest is muted text on `surf
 - **IBM Plex Sans** (400, 600): descriptions, labels, forms, buttons.
 - **IBM Plex Mono** (400, 500): every price and total, SKUs and category labels, order IDs, dates on notes. It makes the numbers look printed, and they line up.
 
-Loading: every face is `font-display: swap` and served from this app. `index.html` preloads two: Newsreader 600 (headings) and IBM Plex Sans 400 (body text, the shelf's largest paint); the rest load when a page uses them. Preload another face only with a measurement: each one shares the slow link with the JavaScript (`docs/performance.md`, web KI-043).
+Loading: every face is `font-display: swap` and served from this app. `index.html` preloads two: Newsreader 600 (headings) and IBM Plex Sans 400 (body text, the shelf's largest paint); only those two are declared in `src/styles/tokens.css`. The other five are in `src/styles/fonts-deferred.css`, loaded after the first paint (web KI-042): until then their text shows in the fallback, then swaps. A new face goes in `fonts-deferred.css`; `npm run verify` fails a build whose first stylesheet declares a face that is not preloaded. Preload another face only with a measurement: each one shares the slow link with the JavaScript (`docs/performance.md`, web KI-043).
 
 Scale: `display` 44/48 · `heading` 28/34 · `title` 20/26 · `note` 17/26 italic · `body` 15/23 · `label` 14/20 · `caption` 13/18 · `price` 17/22 mono · `overline` 12/16 mono uppercase · `id` 13/18 mono. All seven font files include the ₹ sign.
 

@@ -2,6 +2,7 @@
 // `node scripts/perf-report.mjs [label]`: the label goes in the file name, so a before and an after can sit side by side.
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { driftFromTarget, TARGET_BENCHMARK_INDEX } from './perf-calibrate.mjs'
+import { describeLcpInputs, lcpInputs } from './perf-lcp-inputs.mjs'
 
 const dir = '.lighthouseci'
 const label = process.argv[2] ?? 'run'
@@ -77,6 +78,12 @@ for (const [path, group] of pages) {
   )
 }
 lines.push(...why)
+// What each first run's simulated LCP was built from: the requests that ended before the observed LCP (web KI-042, KI-043).
+lines.push(
+  '',
+  'Before the observed LCP (first run of each page; the simulation replays these requests on the slow link):',
+)
+for (const [path, group] of pages) lines.push(describeLcpInputs(path, lcpInputs(group[0])))
 lines.push(
   '',
   `CPU calibration: slowdown ${slowdowns.join(' / ')}x; the phone each run simulated (its benchmark index / the slowdown, target ` +

@@ -3,24 +3,26 @@
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
 - **Updated:** 2026-10-24
-- **Task:** Fix KI-044 + KI-045 together (one cause: new HIGH advisories make CI red on every PR; approved by the owner 2026-10-24, "One fix PR for both", as a High interruption while draft PR #55, fix KI-042/043, waits). KI-044: `nginx` 1.30.5-r1 in the serving image (3 CVEs, fixed in 1.30.6). KI-045: `npm run audit:deps`, three dev-tooling advisories (body-parser, undici, zod 3 under Lighthouse CI)
-- **Branch:** `fix/ki-044-045-ci-advisories` (cut from `main` at `ddd09c3`). PR #55 (`fix/ki-042-043-shelf-lcp`) stays open as a draft: proven on CI (shelf 2.25 s), red only on these two
-- **Step:** PR_OPEN (PR #57)
+- **Task:** Fix KI-042 + KI-043 together (one cause: the shelf's LCP on CI, 2.72 s and 2.65 s in PRs #51 and #54, budget 2.5 s); approved by the owner 2026-10-21 ("Fix KI-042+043 together"). `docs/KNOWN_ISSUES.md` rows KI-042, KI-043; `docs/performance.md`
+- **Branch:** `fix/ki-042-043-shelf-lcp` (cut from `main` at `ddd09c3`, the merge of PR #54; merge-verified: local verify 1097 tests, CI on `main` green)
+- **Step:** PR_OPEN (draft PR #55): the fix is proven; `main` (with fix KI-044/045, PR #57, merged as `1324441`) merged in
 - **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` (unchanged)
-- **Waiting for user:** YES: CI on PR #57, then review / `approved, merge it`
+- **Waiting for user:** YES: review of PR #55 / `approved, merge it`
 
 ## Checklist
-- [x] KI-044 and KI-045 In progress
-- [x] Reproduce: `npm run audit:deps` red locally (the three advisories); CI's `image` job red on `nginx` 1.30.5-r1 (PR #55 run 40067163272; no Docker here, so the image scan only runs in CI)
-- [x] KI-044: `FROM nginx:1.30.6-alpine-slim@sha256:d9322bba…3960` (the `pcre2` line kept)
-- [x] KI-045: body-parser 1.20.9, undici 8.12.3 (jsdom 30.1.3; also its dom-selector 9.2.4 -> 10.0.5); zod 3 accepted in `audit-allowlist.json` until 2026-12-31
-- [x] `npm ci && npm run verify` exit 0, 1097 tests; `npm run audit:deps` exit 0; docs (KNOWN_ISSUES Fixed, decisions x2)
-- [x] Push, PR #57 (https://github.com/mr-sujay-patil/EcomDemo-Web/pull/57)
-- [ ] CI green on PR #57 (`image` proves KI-044; `verify` KI-045; `e2e` the new nginx serving)
-- [ ] After the merge: merge-verify, tags `ki-044-fixed`, `ki-045-fixed` (for the owner); then `main` into PR #55, CI green, #55 out of draft
+- [x] Pre-flight: PR #54 merged and verified; branch cut; KI-042 and KI-043 In progress
+- [x] Measure on CI: `scripts/perf-lcp-inputs.mjs` (5 unit tests) prints what each first run's simulated LCP is built from; draft PR #55 (CI only runs on PRs), run 39647266492 at `528ab3f`, all green
+- [x] Cause (CI run 39647266492, shelf 2.55 s median: 2.55, 2.70, 2.55; product page under 2.5 s): the OBSERVED load is fast and the products are in the first paint (FCP 291 ms, LCP 336 ms, +45 ms; DOM 240 elements; the e2e-changed-catalogue hypothesis is out). 14 of 20 requests ended before the observed LCP, among them **all six font faces (119.9 KB)**: Lantern's LCP graph keeps every request that ended before the observed LCP except low-priority images (`LargestContentfulPaint.getOptimisticGraph`, trace_engine), so on CI, where the fonts always win the race over loopback, all 120 KB are replayed on the slow 4G link before LCP: about the 0.6 s between the simulated FCP (about 2.0 s) and LCP. Locally some faces lost the race by chance (KI-043's spread). Only IBM Plex Sans 400 is needed for the largest paint (a product description)
+- [x] Red first (`check-dist` `checkFirstViewFontFaces`, 4 tests; `npm run check:dist` red on `main`'s build, five faces named), then the fix: `src/styles/fonts-deferred.css` (5 faces), `tokens.css` keeps 2, `src/app/loadDeferredFonts.ts` (+5 tests) on `src/app/afterFirstPaint.ts` (shared with tracing), `main.tsx`; e2e `settleFonts` waits for `<html data-fonts>`; check-dist green on the fix's build (deferred CSS a chunk of its own, not in index.html)
+- [x] Docs: performance.md section Fix KI-042 and KI-043, KNOWN_ISSUES (Fix in review), decisions x3, design-system/README.md loading rule
+- [x] `npm ci && npm run verify` exit 0, **1111 tests** (90 files); shelf 3 files 128.4 KB
+- [x] CI (run 40067163272, `9d3a759`): e2e green (visual specs included); perf: shelf **2.25 s**, LCP assertion passes; fonts before the observed LCP 2 (45.2 KB); product page 2.40 s; KI-042/043 Fixed (PR #55); performance.md "On CI" filled in
+- [x] CI's `image` (web KI-044) and `verify` (web KI-045) were red, not caused by this PR: fixed by PR #57 (approved 2026-10-24, merged as `1324441`); `main` merged into this branch (conflicts in KNOWN_ISSUES, decisions and this file, docs only)
+- [x] `npm ci && npm run verify` on the merged tree: exit 0, 1111 tests; audit exit 0. CI on the merged head (run 40126398260, `1c61e23`): `image`, `verify`, `e2e` green; perf: shelf 2.25 s, product page 2.26 s, fonts before LCP 2 on both
+- [x] PR #55 out of draft, description updated with the review report
 
 ## Next action
-Wait for CI on PR #57 (all three jobs); fix it on this branch if red; add the results to the PR description; STOP for `approved, merge it`. After the merge: merge-verify (local verify on `main`, CI on `main` green), the owner tags `ki-044-fixed` and `ki-045-fixed`; then merge `main` into `fix/ki-042-043-shelf-lcp` (PR #55: resolve the KNOWN_ISSUES rows and CURRENT.md), CI green, #55 out of draft.
+STOP: PR #55 awaits `approved, merge it` (CI green on this docs commit first). After the merge: merge-verify (local verify on `main`, CI on `main` green); the owner tags `ki-042-fixed` and `ki-043-fixed` (403 here).
 
 ## ⚠️ Environment notes (this machine)
 - Cloud containers differ per session (not the owner's WSL machine). On 2026-10-21: no Node 24 installed (Node 24.21.0 downloaded from nodejs.org into a scratch folder), no Docker, no `ecomdemo-backend-readonly` clone; the backend repository was checked out separately for the backend team's own task.
