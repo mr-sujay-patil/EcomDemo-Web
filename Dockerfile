@@ -15,7 +15,7 @@ RUN npm run build
 RUN find dist -type f \( -name '*.js' -o -name '*.css' -o -name '*.html' -o -name '*.svg' -o -name '*.json' -o -name '*.txt' \) -exec gzip -9 -k {} \;
 
 # --- Stage 2: serve. The official nginx, stable line, alpine-slim variant (21 MB; the full alpine image is 94 MB). ---
-FROM nginx:1.30.5-alpine-slim@sha256:32463212baf0e7d91aded2e9b843a4f2b9e017804b8c9d5bae7b51dcef64389c
+FROM nginx:1.30.6-alpine-slim@sha256:d9322bba63c6cfc63dc9e86522fd4f95fd4d9020a02b5bced282bbf38b8c3960
 # Trivy (CI, `image` job) failed the build on pcre2 10.48-r0 (CVE-2026-103111, HIGH, fixed in 10.49-r0): the newest nginx base image
 # still ships it. Upgrade that one package; remove this line when the base image does (the scan then passes without it).
 RUN apk upgrade --no-cache pcre2

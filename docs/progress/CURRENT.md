@@ -2,22 +2,25 @@
 
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
-- **Updated:** 2026-10-21
-- **Task:** Follow-up to fix KI-043 (PR #51, merged 2026-10-16 as `411548d` before its CI numbers were written in). Merge verification on `main` (`bd74ad3`): local `npm ci && npm run verify` exit 0, **1097 tests** (88 files); CI on `main` green (run 38829472884). But PR #51's CI perf run (38627692879) measured the shelf at **2.72 s** (2.72, 2.57, 2.74; 1.85x), over 2.5 s: KI-043 and KI-042 stay **Open**, no `ki-043-fixed` tag. The owner said 2026-10-21 to go with the recommended approach: record the verdict in a follow-up PR from the same branch (execution protocol, section 5)
-- **Branch:** `fix/ki-043-body-font-swap` (fast-forwarded to `main` at `bd74ad3`)
-- **Step:** PR_OPEN (PR #54)
+- **Updated:** 2026-10-24
+- **Task:** Fix KI-044 + KI-045 together (one cause: new HIGH advisories make CI red on every PR; approved by the owner 2026-10-24, "One fix PR for both", as a High interruption while draft PR #55, fix KI-042/043, waits). KI-044: `nginx` 1.30.5-r1 in the serving image (3 CVEs, fixed in 1.30.6). KI-045: `npm run audit:deps`, three dev-tooling advisories (body-parser, undici, zod 3 under Lighthouse CI)
+- **Branch:** `fix/ki-044-045-ci-advisories` (cut from `main` at `ddd09c3`). PR #55 (`fix/ki-042-043-shelf-lcp`) stays open as a draft: proven on CI (shelf 2.25 s), red only on these two
+- **Step:** PR_OPEN (PR #57)
 - **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` (unchanged)
-- **Waiting for user:** YES: review of PR #54 / `approved, merge it`
+- **Waiting for user:** YES: CI on PR #57, then review / `approved, merge it`
 
 ## Checklist
-- [x] Merge verification of PR #51: branch tip `72eb256` in `main`; local verify on `main` green; CI on `main` green
-- [x] Read PR #51's CI perf numbers (job 116071601400): shelf 2.72 s, FCP 2.03 s, render delay 2268 ms; product page 2.44 s; Performance 94 / 96; slowdown 1.85x (index 2033), phones 1106 to 1262
-- [x] Docs: `docs/performance.md` "On CI" and "What is left"; KI-043 and KI-042 rows (Open); decisions `[Fix KI-043]` (verdict recorded, preload kept)
-- [x] Push, PR #54 (https://github.com/mr-sujay-patil/EcomDemo-Web/pull/54); CI green (run 39628291294); its perf run recorded as a second sample: shelf 2.65 s (2.65, 2.72, 2.56) at 1.66x, product page 2.47 s
-- [ ] STOP for review; after the merge: merge verification only (no tag: nothing is Fixed)
+- [x] KI-044 and KI-045 In progress
+- [x] Reproduce: `npm run audit:deps` red locally (the three advisories); CI's `image` job red on `nginx` 1.30.5-r1 (PR #55 run 40067163272; no Docker here, so the image scan only runs in CI)
+- [x] KI-044: `FROM nginx:1.30.6-alpine-slim@sha256:d9322bba…3960` (the `pcre2` line kept)
+- [x] KI-045: body-parser 1.20.9, undici 8.12.3 (jsdom 30.1.3; also its dom-selector 9.2.4 -> 10.0.5); zod 3 accepted in `audit-allowlist.json` until 2026-12-31
+- [x] `npm ci && npm run verify` exit 0, 1097 tests; `npm run audit:deps` exit 0; docs (KNOWN_ISSUES Fixed, decisions x2)
+- [x] Push, PR #57 (https://github.com/mr-sujay-patil/EcomDemo-Web/pull/57)
+- [ ] CI green on PR #57 (`image` proves KI-044; `verify` KI-045; `e2e` the new nginx serving)
+- [ ] After the merge: merge-verify, tags `ki-044-fixed`, `ki-045-fixed` (for the owner); then `main` into PR #55, CI green, #55 out of draft
 
 ## Next action
-STOP: PR #54 awaits the owner's review (`approved, merge it`). After the merge: merge verification (local `npm ci && npm run verify` on `main`, CI on `main` green); no tag (nothing is Fixed). Proposed next step for KI-042/043 (owner to decide): download a CI run's `performance` artifact and read the shelf's Lighthouse trace to see why the products are not in CI's first paint.
+Wait for CI on PR #57 (all three jobs); fix it on this branch if red; add the results to the PR description; STOP for `approved, merge it`. After the merge: merge-verify (local verify on `main`, CI on `main` green), the owner tags `ki-044-fixed` and `ki-045-fixed`; then merge `main` into `fix/ki-042-043-shelf-lcp` (PR #55: resolve the KNOWN_ISSUES rows and CURRENT.md), CI green, #55 out of draft.
 
 ## ⚠️ Environment notes (this machine)
 - Cloud containers differ per session (not the owner's WSL machine). On 2026-10-21: no Node 24 installed (Node 24.21.0 downloaded from nodejs.org into a scratch folder), no Docker, no `ecomdemo-backend-readonly` clone; the backend repository was checked out separately for the backend team's own task.
