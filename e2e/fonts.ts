@@ -53,6 +53,8 @@ export async function selectFaces(
 /**
  * Waits until the page's fonts are in and every native select draws its text with them. Call it right before a picture.
  *
+ * 0. `<html data-fonts>`: the deferred faces' stylesheet is in (or failed). It is added after the first paint
+ *    (src/app/loadDeferredFonts.ts, web KI-042), so until then `document.fonts.ready` can resolve with five faces not even asked for.
  * 1. `document.fonts.ready`: no face is still loading.
  * 2. Each select is laid out again from scratch (out of the layout and back), so its copied label takes the faces as they
  *    are now, whatever order the page and the font files arrived in. Nothing else on the page is touched, and a select
@@ -61,6 +63,7 @@ export async function selectFaces(
  *    (@font-face) means the select fell back, and the picture would not be the code's: this fails, naming the face.
  */
 export async function settleFonts(page: Page) {
+  await page.waitForFunction(() => document.documentElement.dataset.fonts !== undefined)
   await page.evaluate(() => document.fonts.ready)
   await page.evaluate(async () => {
     for (const select of document.querySelectorAll('select')) {

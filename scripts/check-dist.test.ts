@@ -163,7 +163,10 @@ describe('check-dist: the faces the first stylesheet declares', () => {
 
   it('passes when the first stylesheet declares only the preloaded faces', () => {
     const files = new Map([
-      ['assets/index-CCCC3333.css', `${face('Newsreader-SemiBold-BBBB2222.woff2')}${face('IBMPlexSans-Regular-AAAA1111.woff2')}body{}`],
+      [
+        'assets/index-CCCC3333.css',
+        `${face('Newsreader-SemiBold-BBBB2222.woff2')}${face('IBMPlexSans-Regular-AAAA1111.woff2')}body{}`,
+      ],
     ])
     expect(checkFirstViewFontFaces(indexHtml, files, allowed)).toEqual([])
   })
@@ -191,7 +194,7 @@ describe('check-dist: the faces the first stylesheet declares', () => {
 
   it('fails when index.html links no stylesheet from the build, so the check cannot see the first view', () => {
     expect(checkFirstViewFontFaces('<head></head>', new Map(), allowed)).toEqual([
-      'index.html: links no stylesheet from dist/assets; the first view\'s font faces cannot be checked',
+      "index.html: links no stylesheet from dist/assets; the first view's font faces cannot be checked",
     ])
   })
 })

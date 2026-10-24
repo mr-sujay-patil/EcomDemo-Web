@@ -1,0 +1,41 @@
+/* The faces the first view can draw in a fallback for a moment: medium and italic headings, semibold body text and the mono
+   figures. Declared here, not in tokens.css, and loaded after the first paint (src/app/loadDeferredFonts.ts): a face in the first
+   stylesheet is requested as soon as React draws text in it, so on a fast load it ends before the largest paint and Lighthouse's
+   simulation counts its download against LCP (web KI-042: six faces, 120 KB, on CI). Each is font-display: swap, so text shows in
+   the fallback and changes face when its file arrives. scripts/check-dist.mjs fails a build whose first stylesheet declares one. */
+
+@font-face {
+  font-family: 'Newsreader';
+  src: url('./fonts/Newsreader-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Newsreader';
+  src: url('./fonts/Newsreader-SemiBoldItalic.woff2') format('woff2');
+  font-weight: 600;
+  font-style: italic;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  src: url('./fonts/IBMPlexSans-SemiBold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('./fonts/IBMPlexMono-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  src: url('./fonts/IBMPlexMono-Medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}

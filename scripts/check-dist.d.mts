@@ -8,4 +8,8 @@ export function checkFontPreloads(
   securityHeadersConf: string,
   requiredFaces: string[],
 ): string[]
-export function checkFirstViewFontFaces(indexHtml: string, files: Map<string, Uint8Array | string>, allowedFaces: string[]): string[]
+export function checkFirstViewFontFaces(
+  indexHtml: string,
+  files: Map<string, Uint8Array | string>,
+  allowedFaces: string[],
+): string[]
