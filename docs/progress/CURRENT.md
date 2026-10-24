@@ -7,7 +7,7 @@
 - **Branch:** `fix/ki-042-043-shelf-lcp` (cut from `main` at `ddd09c3`, the merge of PR #54; merge-verified: local verify 1097 tests, CI on `main` green)
 - **Step:** PR_OPEN (draft PR #55): the fix is proven; `main` (with fix KI-044/045, PR #57, merged as `1324441`) merged in
 - **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` (unchanged)
-- **Waiting for user:** no (CI on the merged head first)
+- **Waiting for user:** YES: review of PR #55 / `approved, merge it`
 
 ## Checklist
 - [x] Pre-flight: PR #54 merged and verified; branch cut; KI-042 and KI-043 In progress
@@ -18,10 +18,11 @@
 - [x] `npm ci && npm run verify` exit 0, **1111 tests** (90 files); shelf 3 files 128.4 KB
 - [x] CI (run 40067163272, `9d3a759`): e2e green (visual specs included); perf: shelf **2.25 s**, LCP assertion passes; fonts before the observed LCP 2 (45.2 KB); product page 2.40 s; KI-042/043 Fixed (PR #55); performance.md "On CI" filled in
 - [x] CI's `image` (web KI-044) and `verify` (web KI-045) were red, not caused by this PR: fixed by PR #57 (approved 2026-10-24, merged as `1324441`); `main` merged into this branch (conflicts in KNOWN_ISSUES, decisions and this file, docs only)
-- [ ] `npm ci && npm run verify` on the merged tree; CI green on the merged head (all three jobs); #55 out of draft with the review report
+- [x] `npm ci && npm run verify` on the merged tree: exit 0, 1111 tests; audit exit 0. CI on the merged head (run 40126398260, `1c61e23`): `image`, `verify`, `e2e` green; perf: shelf 2.25 s, product page 2.26 s, fonts before LCP 2 on both
+- [x] PR #55 out of draft, description updated with the review report
 
 ## Next action
-Wait for CI on the merged head (`image`, `verify`, `e2e` with perf: the shelf must stay under 2.5 s). Then take PR #55 out of draft, update its description with the final results, and STOP for `approved, merge it`. After the merge: merge-verify, tags `ki-042-fixed` and `ki-043-fixed` (for the owner).
+STOP: PR #55 awaits `approved, merge it` (CI green on this docs commit first). After the merge: merge-verify (local verify on `main`, CI on `main` green); the owner tags `ki-042-fixed` and `ki-043-fixed` (403 here).
 
 ## ⚠️ Environment notes (this machine)
 - Cloud containers differ per session (not the owner's WSL machine). On 2026-10-21: no Node 24 installed (Node 24.21.0 downloaded from nodejs.org into a scratch folder), no Docker, no `ecomdemo-backend-readonly` clone; the backend repository was checked out separately for the backend team's own task.

@@ -237,6 +237,8 @@ stylesheet after it, a failure never breaks the page.
 | Product page LCP, median | under 2.5 s | 2.40 s (fonts before LCP: 4, 83.0 KB → 2, 45.2 KB) |
 | Performance (shelf / product) | | 97 / 97 |
 
+A second sample, after `main` (fix KI-044/045: nginx 1.30.6) was merged in (run 40126398260, `1c61e23`, 2.24x): shelf **2.25 s**, product page **2.26 s**, Performance 97 / 97; on both pages only the two preloaded fonts (45.2 KB) end before the observed LCP.
+
 **KI-042 and KI-043 are fixed**, and LCP no longer warns on either page. The total font bytes are unchanged (119.9 KB on the shelf):
 the same faces load, after the products are drawn.
 
