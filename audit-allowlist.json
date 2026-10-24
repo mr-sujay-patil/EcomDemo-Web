@@ -12,6 +12,12 @@
       "package": "extract-zip",
       "reason": "Same package and same reasoning as GHSA-jmr9-qjv8-65gv: no fix published, never unzips anything here, dev dependency only.",
       "expires": "2026-12-31"
+    },
+    {
+      "id": "GHSA-mrhx-c7xc-m3w5",
+      "package": "zod",
+      "reason": "Only zod 3.25.76 is affected (range <4.6.6), reached through @lhci/cli -> lighthouse 12.6.1 -> puppeteer-core -> chromium-bidi, which requires zod ^3.24.1; every 3.x is in the range and @lhci/cli 0.15.1, the latest, pins that lighthouse, so no fixed version can be used (forcing zod 4 under chromium-bidi would change the API it was written for). chromium-bidi validates WebDriver BiDi messages, and the performance check drives Chrome over CDP, not BiDi; it is a dev dependency, never in the shipped build. The app's own zod is 4.6.6, outside the range (web KI-045).",
+      "expires": "2026-12-31"
     }
   ]
 }
