@@ -1,12 +1,8 @@
 /* EcomDemo design tokens, compiled from tokens.json (design-system/). The type scale (--fs-*, --lh-*) is the t-* classes as variables, so components never write a px font size. */
 
-@font-face {
-  font-family: 'Newsreader';
-  src: url('./fonts/Newsreader-Medium.woff2') format('woff2');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
+/* The two faces the first view needs before anything else: the headings and the body text (the shelf's largest paint), both preloaded
+   by index.html. The other five are in fonts-deferred.css, loaded after the first paint (src/app/loadDeferredFonts.ts, web KI-042). */
+
 @font-face {
   font-family: 'Newsreader';
   src: url('./fonts/Newsreader-SemiBold.woff2') format('woff2');
@@ -15,37 +11,9 @@
   font-display: swap;
 }
 @font-face {
-  font-family: 'Newsreader';
-  src: url('./fonts/Newsreader-SemiBoldItalic.woff2') format('woff2');
-  font-weight: 600;
-  font-style: italic;
-  font-display: swap;
-}
-@font-face {
   font-family: 'IBM Plex Sans';
   src: url('./fonts/IBMPlexSans-Regular.woff2') format('woff2');
   font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'IBM Plex Sans';
-  src: url('./fonts/IBMPlexSans-SemiBold.woff2') format('woff2');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'IBM Plex Mono';
-  src: url('./fonts/IBMPlexMono-Regular.woff2') format('woff2');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-@font-face {
-  font-family: 'IBM Plex Mono';
-  src: url('./fonts/IBMPlexMono-Medium.woff2') format('woff2');
-  font-weight: 500;
   font-style: normal;
   font-display: swap;
 }
