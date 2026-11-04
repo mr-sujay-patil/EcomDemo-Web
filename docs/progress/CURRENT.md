@@ -5,25 +5,25 @@
 - **Updated:** 2026-11-04
 - **Task:** Chore: move the backend pin from `a85202f` to backend `main` `f68f00b` (backend PR #108); asked by the owner 2026-11-04 ("Continue on web app, refer actual ecomdemo repo", then "Move pin to backend main")
 - **Branch:** `chore/pin-backend-f68f00b` (cut from `main` at `8ca46be`, the merge of PR #55)
-- **Step:** IN_PROGRESS: pre-flight done; backend delta read
-- **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` (moving to `f68f00bd`)
+- **Step:** IN_PROGRESS: pin moved (`33b4434`); stack starting at the new pin
+- **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` (moving to `f68f00bb1934d91b4acaa401e37b44291d20614b` on this branch)
 - **Waiting for user:** no
 
 ## Checklist
 - [x] Pre-flight: PR #55 (fix KI-042 + KI-043) merged as `8ca46be` and merge-verified: local `npm ci && npm run verify` on `main` exit 0, **1111 tests** (90 files); CI on `main` green (run of 2026-10-31). Tags `ki-042-fixed`, `ki-043-fixed` (`8ca46be`) are the owner's (403 here)
 - [x] Backend delta `a85202f..f68f00b` (10 PRs: KI-069, 070, 071, Phase 37, KI-074/075, lz4 1.12.0, KI-077, 078, 080, KI-076/079): no controller, DTO, route, OpenAPI, compose, Alloy or application config change; `src/main` only the catalog cache (KI-074/075); the Dockerfile adds `apk upgrade` (KI-077); k8s manifests change (Phase 37 Redis ACL users, KI-076 certificate reload)
-- [ ] Pin moved in `ci.yml`, `backend-images.yml`, README, development-environment.md, decisions; the read-only clone checked out at the new commit
+- [x] Pin moved in `ci.yml`, `backend-images.yml`, README, development-environment.md, decisions (`33b4434`); `../ecomdemo-backend-readonly` checked out at `f68f00b`
 - [ ] `npm run api:check` against the new backend's live OpenAPI documents: no drift
 - [ ] Backend stack up at the new pin (`bash scripts/backend-stack.sh up`); full `npm run e2e` and `npm run perf` green against it
 - [ ] `npm ci && npm run verify` exit 0; PR open; CI green; STOP for review
 
 ## Next action
-Move the pin in the files above, check out `f68f00b` in `../ecomdemo-backend-readonly`, build its images (host Maven: Docker builds have no network here), start the stack, run `api:check`, e2e and perf.
+With the stack up (`NO_REBUILD=1 bash scripts/backend-stack.sh up`; images built from host jars, see the environment note), `eval "$(bash scripts/backend-stack.sh env)"`, then `npm run api:check`, `npm run e2e`, `npm run perf`.
 
 ## ⚠️ Environment notes (this machine)
 - Cloud containers differ per session (not the owner's WSL machine). On 2026-10-21: no Node 24 installed (Node 24.21.0 downloaded from nodejs.org into a scratch folder), no Docker, no `ecomdemo-backend-readonly` clone; the backend repository was checked out separately for the backend team's own task.
 - Tag pushes are refused here with 403: tags are given to the owner as commands.
-- Backend images cannot be built here (Docker build containers have no network), so the stack cannot start in this container.
+- Backend images cannot be built with `docker build` here (its containers have no network for Maven). Workaround used 2026-11-04: `./mvnw -B package -DskipTests` on the host in a scratch copy of the clone, each jar's layers extracted and copied into `eclipse-temurin:21-jre-alpine` under the compose image names (no `apk upgrade`, which needs network), then `NO_REBUILD=1`. Touch the extracted files first: BuildKit keeps a context file whose size and mtime match its last transfer, and reproducible jars share one timestamp (the catalogue image got the payment service's same-length manifest).
 
 ## ⚠️ Carried, not fixed (oldest first)
 - Tag `ki-020-fixed` is not pushed: the owner runs `git tag ki-020-fixed 1f584e6 && git push origin ki-020-fixed`.
