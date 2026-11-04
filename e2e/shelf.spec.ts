@@ -129,6 +129,13 @@ test.describe('pages', () => {
       imageUrl: null,
     }))
     await page.route(productListUrl, (route) => route.fulfill({ json: thirty }))
+    // A card prefetches its product on hover, so the stubs' reads are stubbed too: the live backend has no product 500,
+    // and its 404 failed the console guard whenever the pointer came to rest on a card (web KI-046).
+    await page.route(/\/api\/products\/(\d+)$/, (route) => {
+      const id = Number(/\/api\/products\/(\d+)$/.exec(new URL(route.request().url()).pathname)?.[1])
+      const stub = thirty.find((product) => product.id === id)
+      return stub ? route.fulfill({ json: stub }) : route.fallback()
+    })
   })
 
   test('next page shows the rest, the URL says so, and a reload stays on it', async ({ page }) => {
@@ -148,6 +155,21 @@ test.describe('pages', () => {
 
     await page.getByRole('link', { name: 'Previous page' }).click()
     await expect(page.getByText('Showing 1–24 of 30 products')).toBeVisible()
+  })
+
+  test('a stubbed card hovered before it is opened is prefetched from the stub, not the live backend (KI-046)', async ({
+    page,
+  }) => {
+    // The shelf prefetches a product on hover. With only the list stubbed, that read went to the live backend, which has
+    // no product 500 and answered 404: the console guard failed whichever test left the pointer on a card.
+    await page.goto('/')
+    const link = page.getByRole('article').first().getByRole('heading', { level: 2 }).getByRole('link')
+    await expect(link).toHaveText('Stub 01')
+
+    const prefetch = page.waitForResponse((response) => new URL(response.url()).pathname === '/api/products/500')
+    await link.hover()
+
+    expect((await prefetch).status()).toBe(200)
   })
 })
 
