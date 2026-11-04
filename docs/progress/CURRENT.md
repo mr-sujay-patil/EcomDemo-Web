@@ -5,18 +5,19 @@
 - **Updated:** 2026-11-04
 - **Task:** Fix KI-047 (`e2e/cart.spec.ts:35` keeps the server's total from a `page.on('response')` listener that reads every `/api/cart` body; a body the browser already dropped rejects in the listener and fails the test). The owner: "continue on the next task"
 - **Branch:** `fix/ki-047-cart-total-from-api` (cut from `main` at `3afbfbc`, the merge of PR #63)
-- **Step:** BRANCHED
+- **Step:** TESTING
 - **Backend pinned at:** commit `fd278e7b9b74cfc5b7e9542197598d9f9686201c` (unchanged)
 - **Waiting for user:** no
 
 ## Checklist
 - [x] Pre-flight: KI-046 (PR #62) merged as `fcfcd36`, CI on `main` green; chore PR #63 merged as `3afbfbc`: local `npm ci && npm run verify` on `main` exit 0, 1111 tests (Node 24.21.0 from nodejs.org in the scratchpad); CI on `main` green
-- [ ] Reproduce: not deterministic here (needs the browser to drop a body; no Docker daemon in this container, so no stack): said so in the PR, CI's e2e decides
-- [ ] Fix: the spec logs in once through the API and each poll compares the summary with `GET /api/cart`'s `totalAmount` (the server's state, read by the test itself); no page listener reads bodies
-- [ ] typecheck, lint, Prettier on the spec; docs (KNOWN_ISSUES, decisions); PR; CI green; STOP
+- [x] Reproduce: not deterministic here (needs the browser to drop a body; no Docker daemon in this container, so no stack): said in the PR, CI's e2e decides
+- [x] Fix: `serverTotal(request, username)` logs in once and returns a reader of `GET /api/cart`'s `totalAmount`; the 4 polls use it; no page listener reads bodies
+- [x] `tsc -b` (covers `tsconfig.e2e.json`), eslint and Prettier on the spec: clean; docs (KNOWN_ISSUES, decisions `[KI-047]`)
+- [ ] PR; CI green (e2e decides); STOP
 
 ## Next action
-Rewrite `serverTotal` in `e2e/cart.spec.ts`.
+Open the PR; watch CI; STOP for `approved, merge it`.
 
 ## ⚠️ Environment notes (this machine)
 - Cloud containers differ per session (not the owner's WSL machine). On 2026-10-21: no Node 24 installed (Node 24.21.0 downloaded from nodejs.org into a scratch folder), no Docker, no `ecomdemo-backend-readonly` clone; the backend repository was checked out separately for the backend team's own task.

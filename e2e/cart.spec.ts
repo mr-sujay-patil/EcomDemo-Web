@@ -21,14 +21,23 @@ async function signIn(page: Page, username: string) {
   await page.getByRole('button', { name: 'Sign in' }).click()
 }
 
-/** The `totalAmount` of the last cart answer the page received, as the summary must show it. */
-function lastTotal(page: Page) {
-  let total = 0
-  page.on('response', async (response) => {
-    if (!response.url().includes('/api/cart') || !response.ok()) return
-    total = ((await response.json()) as { totalAmount: number }).totalAmount
-  })
-  return () => money.format(total)
+/**
+ * The cart's `totalAmount` as the server has it now, formatted as the summary must show it.
+ *
+ * Read by the test through the API (KI-047), not from the page's own responses: a `page.on('response')` listener
+ * that called `response.json()` failed the test whenever the browser had already dropped the body ("No data found
+ * for resource with given identifier"). One login, then one `GET /api/cart` per poll: polling logins could meet the
+ * login throttle.
+ */
+async function serverTotal(request: APIRequestContext, username: string) {
+  const login = await request.post('/api/auth/login', { data: { username, password } })
+  expect(login.status()).toBe(200)
+  const { accessToken } = (await login.json()) as { accessToken: string }
+  return async () => {
+    const cart = await request.get('/api/cart', { headers: { Authorization: `Bearer ${accessToken}` } })
+    expect(cart.status()).toBe(200)
+    return money.format(((await cart.json()) as { totalAmount: number }).totalAmount)
+  }
 }
 
 test.describe('the cart', () => {
@@ -37,8 +46,8 @@ test.describe('the cart', () => {
     request,
   }) => {
     const username = await createAccount(request)
-    const serverTotal = lastTotal(page)
-    // Read when polled, not when written: the answer may still be on its way.
+    // The server's total, read when polled: after each click the summary must come to show it.
+    const total = await serverTotal(request, username)
     await page.goto('/sign-in')
     await signIn(page, username)
     await expect(page.getByRole('button', { name: 'Account: E2E' })).toBeVisible()
@@ -56,13 +65,13 @@ test.describe('the cart', () => {
     await expect(lines).toHaveCount(2)
     await expect(page.getByText('price when added')).toHaveCount(2)
     const summary = page.getByRole('region', { name: 'Order summary' })
-    await expect.poll(async () => (await summary.textContent())?.includes(serverTotal())).toBe(true)
+    await expect.poll(async () => (await summary.textContent())?.includes(await total())).toBe(true)
 
     // A quantity change: the stepper moves, then the totals are the server's new ones.
     await lines.first().getByRole('button', { name: 'Increase' }).click()
     await expect(lines.first().getByRole('status')).toHaveText('2')
     await expect(page.getByRole('banner').getByRole('link', { name: 'Cart, 3 items' })).toBeVisible()
-    await expect.poll(async () => (await summary.textContent())?.includes(serverTotal())).toBe(true)
+    await expect.poll(async () => (await summary.textContent())?.includes(await total())).toBe(true)
 
     // Remove, then undo.
     const firstName = (await lines.first().locator('.ed-cartline-name').textContent()) ?? ''
@@ -72,12 +81,12 @@ test.describe('the cart', () => {
       .click()
     await expect(page.getByText(`${firstName} removed.`)).toBeVisible()
     await expect(lines).toHaveCount(1)
-    await expect.poll(async () => (await summary.textContent())?.includes(serverTotal())).toBe(true)
+    await expect.poll(async () => (await summary.textContent())?.includes(await total())).toBe(true)
 
     await page.getByRole('button', { name: 'Undo' }).click()
     await expect(lines).toHaveCount(2)
     await expect(lines.filter({ hasText: firstName })).toContainText('2')
-    await expect.poll(async () => (await summary.textContent())?.includes(serverTotal())).toBe(true)
+    await expect.poll(async () => (await summary.textContent())?.includes(await total())).toBe(true)
   })
 
   // Phase 24 replaced "a signed-out add goes to sign-in" with the guest cart (e2e/guest-cart.spec.ts has the whole flow).
