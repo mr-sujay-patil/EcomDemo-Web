@@ -129,6 +129,13 @@ test.describe('pages', () => {
       imageUrl: null,
     }))
     await page.route(productListUrl, (route) => route.fulfill({ json: thirty }))
+    // A card prefetches its product on hover, so the stubs' reads are stubbed too: the live backend has no product 500,
+    // and its 404 failed the console guard whenever the pointer came to rest on a card (web KI-046).
+    await page.route(/\/api\/products\/(\d+)$/, (route) => {
+      const id = Number(/\/api\/products\/(\d+)$/.exec(new URL(route.request().url()).pathname)?.[1])
+      const stub = thirty.find((product) => product.id === id)
+      return stub ? route.fulfill({ json: stub }) : route.fallback()
+    })
   })
 
   test('next page shows the rest, the URL says so, and a reload stays on it', async ({ page }) => {
