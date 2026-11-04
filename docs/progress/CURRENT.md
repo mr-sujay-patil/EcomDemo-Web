@@ -5,7 +5,7 @@
 - **Updated:** 2026-11-04
 - **Task:** Chore: move the backend pin from `a85202f` to backend `main` `f68f00b` (backend PR #108); asked by the owner 2026-11-04 ("Continue on web app, refer actual ecomdemo repo", then "Move pin to backend main")
 - **Branch:** `chore/pin-backend-f68f00b` (cut from `main` at `8ca46be`, the merge of PR #55)
-- **Step:** IN_PROGRESS: pin moved (`33b4434`); stack starting at the new pin
+- **Step:** IN_PROGRESS: tested against the stack at the new pin; full verify running, then the PR
 - **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` (moving to `f68f00bb1934d91b4acaa401e37b44291d20614b` on this branch)
 - **Waiting for user:** no
 
@@ -13,16 +13,19 @@
 - [x] Pre-flight: PR #55 (fix KI-042 + KI-043) merged as `8ca46be` and merge-verified: local `npm ci && npm run verify` on `main` exit 0, **1111 tests** (90 files); CI on `main` green (run of 2026-10-31). Tags `ki-042-fixed`, `ki-043-fixed` (`8ca46be`) are the owner's (403 here)
 - [x] Backend delta `a85202f..f68f00b` (10 PRs: KI-069, 070, 071, Phase 37, KI-074/075, lz4 1.12.0, KI-077, 078, 080, KI-076/079): no controller, DTO, route, OpenAPI, compose, Alloy or application config change; `src/main` only the catalog cache (KI-074/075); the Dockerfile adds `apk upgrade` (KI-077); k8s manifests change (Phase 37 Redis ACL users, KI-076 certificate reload)
 - [x] Pin moved in `ci.yml`, `backend-images.yml`, README, development-environment.md, decisions (`33b4434`); `../ecomdemo-backend-readonly` checked out at `f68f00b`
-- [ ] `npm run api:check` against the new backend's live OpenAPI documents: no drift
-- [ ] Backend stack up at the new pin (`bash scripts/backend-stack.sh up`); full `npm run e2e` and `npm run perf` green against it
+- [x] `npm run api:check` against the stack at `f68f00b` (`http://localhost:28080`, all eight services on images built from that commit): "matches all 5 snapshots"
+- [x] Full `npm run e2e` against the stack at `f68f00b`: **1011 passed**, 34 failed, 1 skipped (9.4 min). None is caused by the pin: 32 are `visual.spec.ts` pixel comparisons (1-2 % of pixels, sign-in included, which shows no backend data: this container's Chromium 141, not the build 1248 that Playwright 1.64 pins and CI runs); `catalog.spec.ts:150` misses one `response` event for the photo (both URLs answer 200 from the gateway; fails 2 of 3 alone, same browser cause); `shelf.spec.ts:134` is new **KI-046** (a stubbed shelf's hover prefetch asks the live backend for a stub id, 404; traced). CI's e2e, with the pinned browser, is the deciding run
+- [x] `npm run perf`: **not runnable here** (the web image's `apk upgrade pcre2` needs network in `docker build`); CI runs perf on every PR
 - [ ] `npm ci && npm run verify` exit 0; PR open; CI green; STOP for review
 
 ## Next action
-With the stack up (`NO_REBUILD=1 bash scripts/backend-stack.sh up`; images built from host jars, see the environment note), `eval "$(bash scripts/backend-stack.sh env)"`, then `npm run api:check`, `npm run e2e`, `npm run perf`.
+When `npm ci && npm run verify` exits 0: push, open the PR (perf and e2e from CI decide), wait for CI green, STOP for review.
 
 ## ⚠️ Environment notes (this machine)
 - Cloud containers differ per session (not the owner's WSL machine). On 2026-10-21: no Node 24 installed (Node 24.21.0 downloaded from nodejs.org into a scratch folder), no Docker, no `ecomdemo-backend-readonly` clone; the backend repository was checked out separately for the backend team's own task.
 - Tag pushes are refused here with 403: tags are given to the owner as commands.
+- Playwright 1.64 wants Chromium build 1248; this container has 1194 (Chromium 141) in `/opt/pw-browsers`. Used 2026-11-04 without `playwright install`: `PLAYWRIGHT_BROWSERS_PATH` set to a scratch folder whose `chromium_headless_shell-1248/chrome-headless-shell-linux64/` and `chromium-1248/chrome-linux64/` link each file of the 1194 folders (plus `chrome-headless-shell` -> `headless_shell`). Visual specs then differ by 1-2 % of pixels: judge them on CI.
+- The web image cannot be built here either (`apk upgrade pcre2` in `Dockerfile` needs network), so `npm run perf` and `e2e:docker` run only on CI.
 - Backend images cannot be built with `docker build` here (its containers have no network for Maven). Workaround used 2026-11-04: `./mvnw -B package -DskipTests` on the host in a scratch copy of the clone, each jar's layers extracted and copied into `eclipse-temurin:21-jre-alpine` under the compose image names (no `apk upgrade`, which needs network), then `NO_REBUILD=1`. Touch the extracted files first: BuildKit keeps a context file whose size and mtime match its last transfer, and reproducible jars share one timestamp (the catalogue image got the payment service's same-length manifest).
 
 ## ⚠️ Carried, not fixed (oldest first)
