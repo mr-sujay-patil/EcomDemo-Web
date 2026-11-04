@@ -5,9 +5,9 @@
 - **Updated:** 2026-11-04
 - **Task:** Chore: move the backend pin from `a85202f` to backend `main` `f68f00b` (backend PR #108); asked by the owner 2026-11-04 ("Continue on web app, refer actual ecomdemo repo", then "Move pin to backend main")
 - **Branch:** `chore/pin-backend-f68f00b` (cut from `main` at `8ca46be`, the merge of PR #55)
-- **Step:** PR_OPEN (PR #61): CI red on one test, backend KI-041 (not this PR's)
+- **Step:** PR_OPEN (PR #61): waiting for backend PR #111 (backend KI-081, the fix for KI-041)
 - **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` (moving to `f68f00bb1934d91b4acaa401e37b44291d20614b` on this branch)
-- **Waiting for user:** YES: how to handle backend KI-041 (a backend fix through the owner, a web-side mitigation as its own fix, or merge with the known red)
+- **Waiting for user:** YES: review and merge of backend PR #111; then this PR moves its pin to that merge
 
 ## Checklist
 - [x] Pre-flight: PR #55 (fix KI-042 + KI-043) merged as `8ca46be` and merge-verified: local `npm ci && npm run verify` on `main` exit 0, **1111 tests** (90 files); CI on `main` green (run of 2026-10-31). Tags `ki-042-fixed`, `ki-043-fixed` (`8ca46be`) are the owner's (403 here)
@@ -19,10 +19,11 @@
 - [x] `npm ci && npm run verify` exit 0, **1111 tests** (90 files); PR #61 open
 - [x] CI on PR #61 (run 41784488793, `6081c31`): `verify`, `image` green; `e2e` ran at `BACKEND_TAG: f68f00bb…` (no repository variable overrides it): **1044 passed**, 1 skipped, **1 failed**: `guest-cart.spec.ts:30`, 3 of 3 attempts, a `500` during the replay. The visual specs, `catalog.spec.ts:150` and KI-046's spec all passed there (the local failures were this container's browser)
 - [x] Cause found and reproduced: KI-041 is the backend's first-cart race (`currentCart()` find-or-create against `uq_cart_user`); `scratchpad` script, 4 of 10 fresh accounts got a `500` from 4 concurrent `GET /api/cart`; KI-041 moved to the backend-gaps table
-- [ ] Owner decides on KI-041; then CI green; STOP for review
+- [x] Owner chose "Fix it in the backend" (2026-11-04): backend KI-081, PR #111 (a cart call runs once more when it lost the race; full backend verify 941 tests green). CI on this PR at `4be4720` was green (the race did not hit that run)
+- [ ] After backend PR #111 merges: pin moved to its merge commit, KI-041 row points at backend KI-081, CI green; STOP for review
 
 ## Next action
-STOP: the owner decides how KI-041 is handled (it is the backend's: `CartService.currentCart()` races on `uq_cart_user`). Nothing else on PR #61 is red.
+Wait for backend PR #111 to merge. Then on this branch: pin `BACKEND_TAG` and the docs to that merge commit (same files as `33b4434`), KI-041's row to "backend KI-081, Fixed (PR #111)", push, CI green, STOP for review.
 
 ## ⚠️ Environment notes (this machine)
 - Cloud containers differ per session (not the owner's WSL machine). On 2026-10-21: no Node 24 installed (Node 24.21.0 downloaded from nodejs.org into a scratch folder), no Docker, no `ecomdemo-backend-readonly` clone; the backend repository was checked out separately for the backend team's own task.
