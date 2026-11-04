@@ -2,27 +2,23 @@
 
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
-- **Updated:** 2026-10-24
-- **Task:** Fix KI-042 + KI-043 together (one cause: the shelf's LCP on CI, 2.72 s and 2.65 s in PRs #51 and #54, budget 2.5 s); approved by the owner 2026-10-21 ("Fix KI-042+043 together"). `docs/KNOWN_ISSUES.md` rows KI-042, KI-043; `docs/performance.md`
-- **Branch:** `fix/ki-042-043-shelf-lcp` (cut from `main` at `ddd09c3`, the merge of PR #54; merge-verified: local verify 1097 tests, CI on `main` green)
-- **Step:** PR_OPEN (draft PR #55): the fix is proven; `main` (with fix KI-044/045, PR #57, merged as `1324441`) merged in
-- **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` (unchanged)
-- **Waiting for user:** YES: review of PR #55 / `approved, merge it`
+- **Updated:** 2026-11-04
+- **Task:** Chore: move the backend pin from `a85202f` to backend `main` `f68f00b` (backend PR #108); asked by the owner 2026-11-04 ("Continue on web app, refer actual ecomdemo repo", then "Move pin to backend main")
+- **Branch:** `chore/pin-backend-f68f00b` (cut from `main` at `8ca46be`, the merge of PR #55)
+- **Step:** IN_PROGRESS: pre-flight done; backend delta read
+- **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` (moving to `f68f00bd`)
+- **Waiting for user:** no
 
 ## Checklist
-- [x] Pre-flight: PR #54 merged and verified; branch cut; KI-042 and KI-043 In progress
-- [x] Measure on CI: `scripts/perf-lcp-inputs.mjs` (5 unit tests) prints what each first run's simulated LCP is built from; draft PR #55 (CI only runs on PRs), run 39647266492 at `528ab3f`, all green
-- [x] Cause (CI run 39647266492, shelf 2.55 s median: 2.55, 2.70, 2.55; product page under 2.5 s): the OBSERVED load is fast and the products are in the first paint (FCP 291 ms, LCP 336 ms, +45 ms; DOM 240 elements; the e2e-changed-catalogue hypothesis is out). 14 of 20 requests ended before the observed LCP, among them **all six font faces (119.9 KB)**: Lantern's LCP graph keeps every request that ended before the observed LCP except low-priority images (`LargestContentfulPaint.getOptimisticGraph`, trace_engine), so on CI, where the fonts always win the race over loopback, all 120 KB are replayed on the slow 4G link before LCP: about the 0.6 s between the simulated FCP (about 2.0 s) and LCP. Locally some faces lost the race by chance (KI-043's spread). Only IBM Plex Sans 400 is needed for the largest paint (a product description)
-- [x] Red first (`check-dist` `checkFirstViewFontFaces`, 4 tests; `npm run check:dist` red on `main`'s build, five faces named), then the fix: `src/styles/fonts-deferred.css` (5 faces), `tokens.css` keeps 2, `src/app/loadDeferredFonts.ts` (+5 tests) on `src/app/afterFirstPaint.ts` (shared with tracing), `main.tsx`; e2e `settleFonts` waits for `<html data-fonts>`; check-dist green on the fix's build (deferred CSS a chunk of its own, not in index.html)
-- [x] Docs: performance.md section Fix KI-042 and KI-043, KNOWN_ISSUES (Fix in review), decisions x3, design-system/README.md loading rule
-- [x] `npm ci && npm run verify` exit 0, **1111 tests** (90 files); shelf 3 files 128.4 KB
-- [x] CI (run 40067163272, `9d3a759`): e2e green (visual specs included); perf: shelf **2.25 s**, LCP assertion passes; fonts before the observed LCP 2 (45.2 KB); product page 2.40 s; KI-042/043 Fixed (PR #55); performance.md "On CI" filled in
-- [x] CI's `image` (web KI-044) and `verify` (web KI-045) were red, not caused by this PR: fixed by PR #57 (approved 2026-10-24, merged as `1324441`); `main` merged into this branch (conflicts in KNOWN_ISSUES, decisions and this file, docs only)
-- [x] `npm ci && npm run verify` on the merged tree: exit 0, 1111 tests; audit exit 0. CI on the merged head (run 40126398260, `1c61e23`): `image`, `verify`, `e2e` green; perf: shelf 2.25 s, product page 2.26 s, fonts before LCP 2 on both
-- [x] PR #55 out of draft, description updated with the review report
+- [x] Pre-flight: PR #55 (fix KI-042 + KI-043) merged as `8ca46be` and merge-verified: local `npm ci && npm run verify` on `main` exit 0, **1111 tests** (90 files); CI on `main` green (run of 2026-10-31). Tags `ki-042-fixed`, `ki-043-fixed` (`8ca46be`) are the owner's (403 here)
+- [x] Backend delta `a85202f..f68f00b` (10 PRs: KI-069, 070, 071, Phase 37, KI-074/075, lz4 1.12.0, KI-077, 078, 080, KI-076/079): no controller, DTO, route, OpenAPI, compose, Alloy or application config change; `src/main` only the catalog cache (KI-074/075); the Dockerfile adds `apk upgrade` (KI-077); k8s manifests change (Phase 37 Redis ACL users, KI-076 certificate reload)
+- [ ] Pin moved in `ci.yml`, `backend-images.yml`, README, development-environment.md, decisions; the read-only clone checked out at the new commit
+- [ ] `npm run api:check` against the new backend's live OpenAPI documents: no drift
+- [ ] Backend stack up at the new pin (`bash scripts/backend-stack.sh up`); full `npm run e2e` and `npm run perf` green against it
+- [ ] `npm ci && npm run verify` exit 0; PR open; CI green; STOP for review
 
 ## Next action
-STOP: PR #55 awaits `approved, merge it` (CI green on this docs commit first). After the merge: merge-verify (local verify on `main`, CI on `main` green); the owner tags `ki-042-fixed` and `ki-043-fixed` (403 here).
+Move the pin in the files above, check out `f68f00b` in `../ecomdemo-backend-readonly`, build its images (host Maven: Docker builds have no network here), start the stack, run `api:check`, e2e and perf.
 
 ## ⚠️ Environment notes (this machine)
 - Cloud containers differ per session (not the owner's WSL machine). On 2026-10-21: no Node 24 installed (Node 24.21.0 downloaded from nodejs.org into a scratch folder), no Docker, no `ecomdemo-backend-readonly` clone; the backend repository was checked out separately for the backend team's own task.
