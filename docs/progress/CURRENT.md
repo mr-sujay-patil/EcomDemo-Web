@@ -3,30 +3,22 @@
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
 - **Updated:** 2026-11-04
-- **Task:** Chore: move the backend pin from `a85202f` to backend `main`, now `fd278e7` (backend PR #111, the KI-081 merge; first `f68f00b`, PR #108); asked by the owner 2026-11-04 ("Continue on web app, refer actual ecomdemo repo", then "Move pin to backend main")
-- **Branch:** `chore/pin-backend-f68f00b` (cut from `main` at `8ca46be`, the merge of PR #55)
-- **Step:** PR_OPEN (PR #61): CI green at `fd278e7`; waiting for the owner
-- **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` on `main` (this branch: `fd278e7b9b74cfc5b7e9542197598d9f9686201c`)
-- **Waiting for user:** YES after CI is green: review of PR #61 (`approved, merge it`)
+- **Task:** Fix KI-046 (`e2e/shelf.spec.ts`'s `pages` block stubs the product list but not the product reads, so a hovered stub card's prefetch asks the live backend for a stub id, gets `404`, and the console guard fails the test). Asked by the owner 2026-11-04 ("Continue" after the pin chore). `docs/KNOWN_ISSUES.md` row KI-046
+- **Branch:** `fix/ki-046-shelf-stub-prefetch` (cut from `main` at `94b7c95`, the merge of PR #61)
+- **Step:** PR_OPEN (PR #62): waiting for CI
+- **Backend pinned at:** commit `fd278e7b9b74cfc5b7e9542197598d9f9686201c` (backend PR #111, the KI-081 merge)
+- **Waiting for user:** no
 
 ## Checklist
-- [x] Pre-flight: PR #55 (fix KI-042 + KI-043) merged as `8ca46be` and merge-verified: local `npm ci && npm run verify` on `main` exit 0, **1111 tests** (90 files); CI on `main` green (run of 2026-10-31). Tags `ki-042-fixed`, `ki-043-fixed` (`8ca46be`) are the owner's (403 here)
-- [x] Backend delta `a85202f..f68f00b` (10 PRs: KI-069, 070, 071, Phase 37, KI-074/075, lz4 1.12.0, KI-077, 078, 080, KI-076/079): no controller, DTO, route, OpenAPI, compose, Alloy or application config change; `src/main` only the catalog cache (KI-074/075); the Dockerfile adds `apk upgrade` (KI-077); k8s manifests change (Phase 37 Redis ACL users, KI-076 certificate reload)
-- [x] Pin moved in `ci.yml`, `backend-images.yml`, README, development-environment.md, decisions (`33b4434`); `../ecomdemo-backend-readonly` checked out at `f68f00b`
-- [x] `npm run api:check` against the stack at `f68f00b` (`http://localhost:28080`, all eight services on images built from that commit): "matches all 5 snapshots"
-- [x] Full `npm run e2e` against the stack at `f68f00b`: **1011 passed**, 34 failed, 1 skipped (9.4 min). None is caused by the pin: 32 are `visual.spec.ts` pixel comparisons (1-2 % of pixels, sign-in included, which shows no backend data: this container's Chromium 141, not the build 1248 that Playwright 1.64 pins and CI runs); `catalog.spec.ts:150` misses one `response` event for the photo (both URLs answer 200 from the gateway; fails 2 of 3 alone, same browser cause); `shelf.spec.ts:134` is new **KI-046** (a stubbed shelf's hover prefetch asks the live backend for a stub id, 404; traced). CI's e2e, with the pinned browser, is the deciding run
-- [x] `npm run perf`: **not runnable here** (the web image's `apk upgrade pcre2` needs network in `docker build`); CI runs perf on every PR
-- [x] `npm ci && npm run verify` exit 0, **1111 tests** (90 files); PR #61 open
-- [x] CI on PR #61 (run 41784488793, `6081c31`): `verify`, `image` green; `e2e` ran at `BACKEND_TAG: f68f00bb…` (no repository variable overrides it): **1044 passed**, 1 skipped, **1 failed**: `guest-cart.spec.ts:30`, 3 of 3 attempts, a `500` during the replay. The visual specs, `catalog.spec.ts:150` and KI-046's spec all passed there (the local failures were this container's browser)
-- [x] Cause found and reproduced: KI-041 is the backend's first-cart race (`currentCart()` find-or-create against `uq_cart_user`); `scratchpad` script, 4 of 10 fresh accounts got a `500` from 4 concurrent `GET /api/cart`; KI-041 moved to the backend-gaps table
-- [x] Owner chose "Fix it in the backend" (2026-11-04): backend KI-081, PR #111 (a cart call runs once more when it lost the race; full backend verify 941 tests green). CI on this PR at `4be4720` was green (the race did not hit that run)
-- [x] Backend PR #111 merged as `fd278e7` (owner's `approved, merge it`), merge-verified on the backend side (tip in `main`, tree equal to the tested head)
-- [x] Pin moved to `fd278e7` (ci.yml, backend-images.yml, README, development-environment.md, decisions); delta `f68f00b..fd278e7`: compose drops the app's Redis settings (same names and ports), outbox gauges, the cart retry; no route, DTO or OpenAPI change. KI-041 Fixed in the backend (KI-081); the read-only clone at `fd278e7`
-- [x] CI green on `c808ae4` (run 41827557360): `verify`, `image`, `e2e` (log: `BACKEND_TAG: fd278e7…`; Playwright and perf in the job, all green), `guest-cart.spec.ts:30` included
-- [ ] Owner: `approved, merge it`
+- [x] Pre-flight: chore pin (PR #61) merged as `94b7c95` and merge-verified: local `npm ci && npm run verify` on `main` exit 0, **1111 tests** (90 files); CI on `main` green (`image`, `publish`). A chore has no tag. Before it: backend PR #111 (KI-081, the fix for KI-041) merged as `fd278e7`
+- [x] Red first (`38426bd`): the new test hovers a stub card; on the unfixed block `Expected: 200, Received: 404` (the live backend), console guard red
+- [x] Fix (`a7c8794`..): the block also answers `/api/products/{id}` for the 30 stub ids (others fall back)
+- [x] Against the stack at `fd278e7`: `e2e/shelf.spec.ts` 36 of 36 over 3 repeats; full `npm run e2e` 1013 passed, 33 failed (32 `visual.spec.ts`, this container's browser; 1 `cart.spec.ts:35`, new **KI-047**, 1 of 10 alone); `npm ci && npm run verify` exit 0, 1111 tests
+- [x] Docs: KNOWN_ISSUES (KI-046 Fixed, KI-047 recorded); PR #62
+- [ ] CI green on PR #62; STOP for review
 
 ## Next action
-STOP: PR #61 awaits `approved, merge it` (CI green on this docs commit first). After the merge: merge-verify (local `npm ci && npm run verify` on `main`, CI on `main` green). A chore has no tag.
+Wait for CI on PR #62. Green: STOP for `approved, merge it`. After the merge: merge-verify (local verify on `main`, CI on `main`), then the owner tags `ki-046-fixed`.
 
 ## ⚠️ Environment notes (this machine)
 - Cloud containers differ per session (not the owner's WSL machine). On 2026-10-21: no Node 24 installed (Node 24.21.0 downloaded from nodejs.org into a scratch folder), no Docker, no `ecomdemo-backend-readonly` clone; the backend repository was checked out separately for the backend team's own task.
