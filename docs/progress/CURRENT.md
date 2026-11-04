@@ -5,19 +5,20 @@
 - **Updated:** 2026-11-04
 - **Task:** Fix KI-047 (`e2e/cart.spec.ts:35` reads the server's total from a `page.on('response')` listener whose `response.json()` can meet a body the browser has dropped: the rejection fails the test). Asked by the owner 2026-11-04 ("Continue" after PR #63). `docs/KNOWN_ISSUES.md` row KI-047
 - **Branch:** `fix/ki-047-cart-total-listener` (cut from `main` at `3afbfbc`, the merge of PR #63)
-- **Step:** IN_PROGRESS: pre-flight done
+- **Step:** PR_OPEN (PR #66): waiting for CI
 - **Backend pinned at:** commit `fd278e7b9b74cfc5b7e9542197598d9f9686201c` (backend PR #111)
 - **Waiting for user:** no
 
 ## Checklist
 - [x] Pre-flight: fix KI-046 (PR #62) merged as `fcfcd36`, merge-verified (local verify 1111 tests, CI on `main` green); the owner's tag `ki-046-fixed`. Then the docs chore PR #63 (KI-030, KI-031 rows; conflict resolved by the other session as `52b85c3`, the same tree as this session's) merged as `3afbfbc` on the owner's `approved, merge it`, merge-verified the same way
-- [ ] Red: the race is not deterministic; measured as failures in `--repeat-each` runs of the spec on `main`'s code
-- [ ] Fix: the poll reads the cart's `totalAmount` through the API (`e2e/live-data.ts`, as `cartOf` does), signed in once; no body is read from the page's responses
-- [ ] Green: repeated runs with no failure; full `npm run e2e` once; `npm ci && npm run verify`
-- [ ] Docs: KNOWN_ISSUES (Fixed); PR; CI green; STOP for review
+- [x] Red, measured: `cart.spec.ts:35 --repeat-each=20 --retries=0` on `main`'s code: 1 failed (KI-047's `Protocol error (Network.getResponseBody)`), 19 passed
+- [x] Fix (`b1d81df`): `serverCartTotal` in `e2e/live-data.ts` (signed in once, `GET /api/cart` at each call); the four polls compare the summary with it; the listener is gone
+- [x] Green: the test 20 of 20, the spec 20 of 20 (`--repeat-each=10`); full `npm run e2e` 1014 passed, 32 failed (all `visual.spec.ts`, this container's browser); `npm ci && npm run verify` exit 0, 1111 tests
+- [x] Docs: KNOWN_ISSUES KI-047 Fixed (PR #66); PR #66
+- [ ] CI green on PR #66; STOP for review
 
 ## Next action
-With the stack up at `fd278e7`, run `npx playwright test e2e/cart.spec.ts --repeat-each=10 --retries=0` on `main`'s code and count failures; then write the fix.
+Wait for CI on PR #66. Green: STOP for `approved, merge it` (the owner's scheduled 3:10 am IST "upload, merge and continue" is not that phrase: report and wait). After the merge: merge-verify (local verify on `main`, CI on `main`), then the owner tags `ki-047-fixed`.
 
 ## ⚠️ Environment notes (this machine)
 - Cloud containers differ per session (not the owner's WSL machine). On 2026-10-21: no Node 24 installed (Node 24.21.0 downloaded from nodejs.org into a scratch folder), no Docker, no `ecomdemo-backend-readonly` clone; the backend repository was checked out separately for the backend team's own task.
