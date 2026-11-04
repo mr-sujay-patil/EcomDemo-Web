@@ -5,7 +5,7 @@
 - **Updated:** 2026-11-04
 - **Task:** Fix KI-047 (`e2e/cart.spec.ts:35` keeps the server's total from a `page.on('response')` listener that reads every `/api/cart` body; a body the browser already dropped rejects in the listener and fails the test). The owner: "continue on the next task"
 - **Branch:** `fix/ki-047-cart-total-from-api` (cut from `main` at `3afbfbc`, the merge of PR #63)
-- **Step:** TESTING
+- **Step:** PR_OPEN (PR #65): waiting for CI
 - **Backend pinned at:** commit `fd278e7b9b74cfc5b7e9542197598d9f9686201c` (unchanged)
 - **Waiting for user:** no
 
@@ -14,7 +14,8 @@
 - [x] Reproduce: not deterministic here (needs the browser to drop a body; no Docker daemon in this container, so no stack): said in the PR, CI's e2e decides
 - [x] Fix: `serverTotal(request, username)` logs in once and returns a reader of `GET /api/cart`'s `totalAmount`; the 4 polls use it; no page listener reads bodies
 - [x] `tsc -b` (covers `tsconfig.e2e.json`), eslint and Prettier on the spec: clean; docs (KNOWN_ISSUES, decisions `[KI-047]`)
-- [ ] PR; CI green (e2e decides); STOP
+- [x] PR #65
+- [ ] CI green (e2e decides); STOP for `approved, merge it`
 
 ## Next action
 Open the PR; watch CI; STOP for `approved, merge it`.
