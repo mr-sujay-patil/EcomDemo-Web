@@ -220,6 +220,24 @@ export async function productsToBrowse(request: APIRequestContext, count: number
   return candidates.slice(0, count)
 }
 
+/**
+ * Reads the person's cart `totalAmount` through the API each time it is called, signed in once (web KI-047). The cart spec
+ * used to keep the total from the page's own responses, but a `response.json()` can meet a body the browser has already
+ * dropped, and the rejection failed the test; asking the server is what "the totals are the server's" means anyway.
+ */
+export async function serverCartTotal(request: APIRequestContext, username: string): Promise<() => Promise<number>> {
+  const login = await request.post('/api/auth/login', {
+    data: { username, password } satisfies CustomerApi['schemas']['LoginRequest'],
+  })
+  expect(login.status()).toBe(200)
+  const { accessToken } = (await login.json()) as CustomerApi['schemas']['TokenResponse']
+  return async () => {
+    const response = await request.get('/api/cart', { headers: { Authorization: `Bearer ${accessToken}` } })
+    expect(response.status()).toBe(200)
+    return ((await response.json()) as AppApi['schemas']['CartResponse']).totalAmount
+  }
+}
+
 /** The person's server-side cart through the API, as product id to quantity: what the guest cart's replay must have left there. */
 export async function cartOf(request: APIRequestContext, username: string): Promise<Record<number, number>> {
   const login = await request.post('/api/auth/login', {

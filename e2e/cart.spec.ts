@@ -1,5 +1,6 @@
 import type { APIRequestContext, Page } from '@playwright/test'
 import { expect, test } from './fixtures'
+import { serverCartTotal } from './live-data'
 
 // Real accounts and the real cart API (see auth.spec.ts for why). A full page load signs the person out, so every
 // move below is a click. Money is compared as text with what the server last sent: the app never adds anything up.
@@ -21,24 +22,14 @@ async function signIn(page: Page, username: string) {
   await page.getByRole('button', { name: 'Sign in' }).click()
 }
 
-/** The `totalAmount` of the last cart answer the page received, as the summary must show it. */
-function lastTotal(page: Page) {
-  let total = 0
-  page.on('response', async (response) => {
-    if (!response.url().includes('/api/cart') || !response.ok()) return
-    total = ((await response.json()) as { totalAmount: number }).totalAmount
-  })
-  return () => money.format(total)
-}
-
 test.describe('the cart', () => {
   test('adds two products, changes a quantity, removes and undoes; the totals are the server’s', async ({
     page,
     request,
   }) => {
     const username = await createAccount(request)
-    const serverTotal = lastTotal(page)
-    // Read when polled, not when written: the answer may still be on its way.
+    // The server's own total, read through the API at each poll (web KI-047), as the summary must show it.
+    const serverTotal = await serverCartTotal(request, username)
     await page.goto('/sign-in')
     await signIn(page, username)
     await expect(page.getByRole('button', { name: 'Account: E2E' })).toBeVisible()
@@ -56,13 +47,13 @@ test.describe('the cart', () => {
     await expect(lines).toHaveCount(2)
     await expect(page.getByText('price when added')).toHaveCount(2)
     const summary = page.getByRole('region', { name: 'Order summary' })
-    await expect.poll(async () => (await summary.textContent())?.includes(serverTotal())).toBe(true)
+    await expect.poll(async () => (await summary.textContent())?.includes(money.format(await serverTotal()))).toBe(true)
 
     // A quantity change: the stepper moves, then the totals are the server's new ones.
     await lines.first().getByRole('button', { name: 'Increase' }).click()
     await expect(lines.first().getByRole('status')).toHaveText('2')
     await expect(page.getByRole('banner').getByRole('link', { name: 'Cart, 3 items' })).toBeVisible()
-    await expect.poll(async () => (await summary.textContent())?.includes(serverTotal())).toBe(true)
+    await expect.poll(async () => (await summary.textContent())?.includes(money.format(await serverTotal()))).toBe(true)
 
     // Remove, then undo.
     const firstName = (await lines.first().locator('.ed-cartline-name').textContent()) ?? ''
@@ -72,12 +63,12 @@ test.describe('the cart', () => {
       .click()
     await expect(page.getByText(`${firstName} removed.`)).toBeVisible()
     await expect(lines).toHaveCount(1)
-    await expect.poll(async () => (await summary.textContent())?.includes(serverTotal())).toBe(true)
+    await expect.poll(async () => (await summary.textContent())?.includes(money.format(await serverTotal()))).toBe(true)
 
     await page.getByRole('button', { name: 'Undo' }).click()
     await expect(lines).toHaveCount(2)
     await expect(lines.filter({ hasText: firstName })).toContainText('2')
-    await expect.poll(async () => (await summary.textContent())?.includes(serverTotal())).toBe(true)
+    await expect.poll(async () => (await summary.textContent())?.includes(money.format(await serverTotal()))).toBe(true)
   })
 
   // Phase 24 replaced "a signed-out add goes to sign-in" with the guest cart (e2e/guest-cart.spec.ts has the whole flow).
