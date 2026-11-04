@@ -149,6 +149,21 @@ test.describe('pages', () => {
     await page.getByRole('link', { name: 'Previous page' }).click()
     await expect(page.getByText('Showing 1–24 of 30 products')).toBeVisible()
   })
+
+  test('a stubbed card hovered before it is opened is prefetched from the stub, not the live backend (KI-046)', async ({
+    page,
+  }) => {
+    // The shelf prefetches a product on hover. With only the list stubbed, that read went to the live backend, which has
+    // no product 500 and answered 404: the console guard failed whichever test left the pointer on a card.
+    await page.goto('/')
+    const link = page.getByRole('article').first().getByRole('heading', { level: 2 }).getByRole('link')
+    await expect(link).toHaveText('Stub 01')
+
+    const prefetch = page.waitForResponse((response) => new URL(response.url()).pathname === '/api/products/500')
+    await link.hover()
+
+    expect((await prefetch).status()).toBe(200)
+  })
 })
 
 test.describe('the product page', () => {
