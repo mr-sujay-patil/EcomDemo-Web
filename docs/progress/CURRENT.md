@@ -3,22 +3,22 @@
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
 - **Updated:** 2026-11-04
-- **Task:** Fix KI-046 (`e2e/shelf.spec.ts`'s `pages` block stubs the product list but not the product reads, so a hovered stub card's prefetch asks the live backend for a stub id, gets `404`, and the console guard fails the test). Asked by the owner 2026-11-04 ("Continue" after the pin chore). `docs/KNOWN_ISSUES.md` row KI-046
-- **Branch:** `fix/ki-046-shelf-stub-prefetch` (cut from `main` at `94b7c95`, the merge of PR #61)
-- **Step:** PR_OPEN (PR #62): waiting for CI
-- **Backend pinned at:** commit `fd278e7b9b74cfc5b7e9542197598d9f9686201c` (backend PR #111, the KI-081 merge)
+- **Task:** Fix KI-047 (`e2e/cart.spec.ts:35` reads the server's total from a `page.on('response')` listener whose `response.json()` can meet a body the browser has dropped: the rejection fails the test). Asked by the owner 2026-11-04 ("Continue" after PR #63). `docs/KNOWN_ISSUES.md` row KI-047
+- **Branch:** `fix/ki-047-cart-total-listener` (cut from `main` at `3afbfbc`, the merge of PR #63)
+- **Step:** PR_OPEN (PR #66): waiting for CI
+- **Backend pinned at:** commit `fd278e7b9b74cfc5b7e9542197598d9f9686201c` (backend PR #111)
 - **Waiting for user:** no
 
 ## Checklist
-- [x] Pre-flight: chore pin (PR #61) merged as `94b7c95` and merge-verified: local `npm ci && npm run verify` on `main` exit 0, **1111 tests** (90 files); CI on `main` green (`image`, `publish`). A chore has no tag. Before it: backend PR #111 (KI-081, the fix for KI-041) merged as `fd278e7`
-- [x] Red first (`38426bd`): the new test hovers a stub card; on the unfixed block `Expected: 200, Received: 404` (the live backend), console guard red
-- [x] Fix (`a7c8794`..): the block also answers `/api/products/{id}` for the 30 stub ids (others fall back)
-- [x] Against the stack at `fd278e7`: `e2e/shelf.spec.ts` 36 of 36 over 3 repeats; full `npm run e2e` 1013 passed, 33 failed (32 `visual.spec.ts`, this container's browser; 1 `cart.spec.ts:35`, new **KI-047**, 1 of 10 alone); `npm ci && npm run verify` exit 0, 1111 tests
-- [x] Docs: KNOWN_ISSUES (KI-046 Fixed, KI-047 recorded); PR #62
-- [ ] CI green on PR #62; STOP for review
+- [x] Pre-flight: fix KI-046 (PR #62) merged as `fcfcd36`, merge-verified (local verify 1111 tests, CI on `main` green); the owner's tag `ki-046-fixed`. Then the docs chore PR #63 (KI-030, KI-031 rows; conflict resolved by the other session as `52b85c3`, the same tree as this session's) merged as `3afbfbc` on the owner's `approved, merge it`, merge-verified the same way
+- [x] Red, measured: `cart.spec.ts:35 --repeat-each=20 --retries=0` on `main`'s code: 1 failed (KI-047's `Protocol error (Network.getResponseBody)`), 19 passed
+- [x] Fix (`b1d81df`): `serverCartTotal` in `e2e/live-data.ts` (signed in once, `GET /api/cart` at each call); the four polls compare the summary with it; the listener is gone
+- [x] Green: the test 20 of 20, the spec 20 of 20 (`--repeat-each=10`); full `npm run e2e` 1014 passed, 32 failed (all `visual.spec.ts`, this container's browser); `npm ci && npm run verify` exit 0, 1111 tests
+- [x] Docs: KNOWN_ISSUES KI-047 Fixed (PR #66); PR #66
+- [ ] CI green on PR #66; STOP for review
 
 ## Next action
-Wait for CI on PR #62. Green: STOP for `approved, merge it`. After the merge: merge-verify (local verify on `main`, CI on `main`), then the owner tags `ki-046-fixed`.
+Wait for CI on PR #66. Green: STOP for `approved, merge it` (the owner's scheduled 3:10 am IST "upload, merge and continue" is not that phrase: report and wait). After the merge: merge-verify (local verify on `main`, CI on `main`), then the owner tags `ki-047-fixed`.
 
 ## ⚠️ Environment notes (this machine)
 - Cloud containers differ per session (not the owner's WSL machine). On 2026-10-21: no Node 24 installed (Node 24.21.0 downloaded from nodejs.org into a scratch folder), no Docker, no `ecomdemo-backend-readonly` clone; the backend repository was checked out separately for the backend team's own task.
