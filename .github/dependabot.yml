@@ -18,6 +18,16 @@ updates:
         update-types: [version-update:semver-major]
       - dependency-name: '@eslint/js'
         update-types: [version-update:semver-major]
+      # Held back on purpose (docs/decisions.md, chore 2026-11-04): OpenTelemetry's 3.0 release is split.
+      # instrumentation 0.300 requires @opentelemetry/api >=1.10, but the newest stable sdk-trace-web (2.12)
+      # still requires api <1.10, and its 3.x is a canary only; together they fail `npm ci` (Dependabot PR #60).
+      # The three move together: remove these when a stable sdk-trace-web 3.x accepts api 1.10. Patches still come.
+      - dependency-name: '@opentelemetry/api'
+        update-types: [version-update:semver-major, version-update:semver-minor]
+      - dependency-name: '@opentelemetry/instrumentation'
+        update-types: [version-update:semver-major, version-update:semver-minor]
+      - dependency-name: '@opentelemetry/instrumentation-fetch'
+        update-types: [version-update:semver-major, version-update:semver-minor]
 
   - package-ecosystem: github-actions
     directory: /
