@@ -2,32 +2,38 @@
 
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
-- **Updated:** 2026-10-24
-- **Task:** Fix KI-042 + KI-043 together (one cause: the shelf's LCP on CI, 2.72 s and 2.65 s in PRs #51 and #54, budget 2.5 s); approved by the owner 2026-10-21 ("Fix KI-042+043 together"). `docs/KNOWN_ISSUES.md` rows KI-042, KI-043; `docs/performance.md`
-- **Branch:** `fix/ki-042-043-shelf-lcp` (cut from `main` at `ddd09c3`, the merge of PR #54; merge-verified: local verify 1097 tests, CI on `main` green)
-- **Step:** PR_OPEN (draft PR #55): the fix is proven; `main` (with fix KI-044/045, PR #57, merged as `1324441`) merged in
-- **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` (unchanged)
-- **Waiting for user:** YES: review of PR #55 / `approved, merge it`
+- **Updated:** 2026-11-04
+- **Task:** Chore: move the backend pin from `a85202f` to backend `main`, now `fd278e7` (backend PR #111, the KI-081 merge; first `f68f00b`, PR #108); asked by the owner 2026-11-04 ("Continue on web app, refer actual ecomdemo repo", then "Move pin to backend main")
+- **Branch:** `chore/pin-backend-f68f00b` (cut from `main` at `8ca46be`, the merge of PR #55)
+- **Step:** PR_OPEN (PR #61): CI green at `fd278e7`; waiting for the owner
+- **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` on `main` (this branch: `fd278e7b9b74cfc5b7e9542197598d9f9686201c`)
+- **Waiting for user:** YES after CI is green: review of PR #61 (`approved, merge it`)
 
 ## Checklist
-- [x] Pre-flight: PR #54 merged and verified; branch cut; KI-042 and KI-043 In progress
-- [x] Measure on CI: `scripts/perf-lcp-inputs.mjs` (5 unit tests) prints what each first run's simulated LCP is built from; draft PR #55 (CI only runs on PRs), run 39647266492 at `528ab3f`, all green
-- [x] Cause (CI run 39647266492, shelf 2.55 s median: 2.55, 2.70, 2.55; product page under 2.5 s): the OBSERVED load is fast and the products are in the first paint (FCP 291 ms, LCP 336 ms, +45 ms; DOM 240 elements; the e2e-changed-catalogue hypothesis is out). 14 of 20 requests ended before the observed LCP, among them **all six font faces (119.9 KB)**: Lantern's LCP graph keeps every request that ended before the observed LCP except low-priority images (`LargestContentfulPaint.getOptimisticGraph`, trace_engine), so on CI, where the fonts always win the race over loopback, all 120 KB are replayed on the slow 4G link before LCP: about the 0.6 s between the simulated FCP (about 2.0 s) and LCP. Locally some faces lost the race by chance (KI-043's spread). Only IBM Plex Sans 400 is needed for the largest paint (a product description)
-- [x] Red first (`check-dist` `checkFirstViewFontFaces`, 4 tests; `npm run check:dist` red on `main`'s build, five faces named), then the fix: `src/styles/fonts-deferred.css` (5 faces), `tokens.css` keeps 2, `src/app/loadDeferredFonts.ts` (+5 tests) on `src/app/afterFirstPaint.ts` (shared with tracing), `main.tsx`; e2e `settleFonts` waits for `<html data-fonts>`; check-dist green on the fix's build (deferred CSS a chunk of its own, not in index.html)
-- [x] Docs: performance.md section Fix KI-042 and KI-043, KNOWN_ISSUES (Fix in review), decisions x3, design-system/README.md loading rule
-- [x] `npm ci && npm run verify` exit 0, **1111 tests** (90 files); shelf 3 files 128.4 KB
-- [x] CI (run 40067163272, `9d3a759`): e2e green (visual specs included); perf: shelf **2.25 s**, LCP assertion passes; fonts before the observed LCP 2 (45.2 KB); product page 2.40 s; KI-042/043 Fixed (PR #55); performance.md "On CI" filled in
-- [x] CI's `image` (web KI-044) and `verify` (web KI-045) were red, not caused by this PR: fixed by PR #57 (approved 2026-10-24, merged as `1324441`); `main` merged into this branch (conflicts in KNOWN_ISSUES, decisions and this file, docs only)
-- [x] `npm ci && npm run verify` on the merged tree: exit 0, 1111 tests; audit exit 0. CI on the merged head (run 40126398260, `1c61e23`): `image`, `verify`, `e2e` green; perf: shelf 2.25 s, product page 2.26 s, fonts before LCP 2 on both
-- [x] PR #55 out of draft, description updated with the review report
+- [x] Pre-flight: PR #55 (fix KI-042 + KI-043) merged as `8ca46be` and merge-verified: local `npm ci && npm run verify` on `main` exit 0, **1111 tests** (90 files); CI on `main` green (run of 2026-10-31). Tags `ki-042-fixed`, `ki-043-fixed` (`8ca46be`) are the owner's (403 here)
+- [x] Backend delta `a85202f..f68f00b` (10 PRs: KI-069, 070, 071, Phase 37, KI-074/075, lz4 1.12.0, KI-077, 078, 080, KI-076/079): no controller, DTO, route, OpenAPI, compose, Alloy or application config change; `src/main` only the catalog cache (KI-074/075); the Dockerfile adds `apk upgrade` (KI-077); k8s manifests change (Phase 37 Redis ACL users, KI-076 certificate reload)
+- [x] Pin moved in `ci.yml`, `backend-images.yml`, README, development-environment.md, decisions (`33b4434`); `../ecomdemo-backend-readonly` checked out at `f68f00b`
+- [x] `npm run api:check` against the stack at `f68f00b` (`http://localhost:28080`, all eight services on images built from that commit): "matches all 5 snapshots"
+- [x] Full `npm run e2e` against the stack at `f68f00b`: **1011 passed**, 34 failed, 1 skipped (9.4 min). None is caused by the pin: 32 are `visual.spec.ts` pixel comparisons (1-2 % of pixels, sign-in included, which shows no backend data: this container's Chromium 141, not the build 1248 that Playwright 1.64 pins and CI runs); `catalog.spec.ts:150` misses one `response` event for the photo (both URLs answer 200 from the gateway; fails 2 of 3 alone, same browser cause); `shelf.spec.ts:134` is new **KI-046** (a stubbed shelf's hover prefetch asks the live backend for a stub id, 404; traced). CI's e2e, with the pinned browser, is the deciding run
+- [x] `npm run perf`: **not runnable here** (the web image's `apk upgrade pcre2` needs network in `docker build`); CI runs perf on every PR
+- [x] `npm ci && npm run verify` exit 0, **1111 tests** (90 files); PR #61 open
+- [x] CI on PR #61 (run 41784488793, `6081c31`): `verify`, `image` green; `e2e` ran at `BACKEND_TAG: f68f00bb…` (no repository variable overrides it): **1044 passed**, 1 skipped, **1 failed**: `guest-cart.spec.ts:30`, 3 of 3 attempts, a `500` during the replay. The visual specs, `catalog.spec.ts:150` and KI-046's spec all passed there (the local failures were this container's browser)
+- [x] Cause found and reproduced: KI-041 is the backend's first-cart race (`currentCart()` find-or-create against `uq_cart_user`); `scratchpad` script, 4 of 10 fresh accounts got a `500` from 4 concurrent `GET /api/cart`; KI-041 moved to the backend-gaps table
+- [x] Owner chose "Fix it in the backend" (2026-11-04): backend KI-081, PR #111 (a cart call runs once more when it lost the race; full backend verify 941 tests green). CI on this PR at `4be4720` was green (the race did not hit that run)
+- [x] Backend PR #111 merged as `fd278e7` (owner's `approved, merge it`), merge-verified on the backend side (tip in `main`, tree equal to the tested head)
+- [x] Pin moved to `fd278e7` (ci.yml, backend-images.yml, README, development-environment.md, decisions); delta `f68f00b..fd278e7`: compose drops the app's Redis settings (same names and ports), outbox gauges, the cart retry; no route, DTO or OpenAPI change. KI-041 Fixed in the backend (KI-081); the read-only clone at `fd278e7`
+- [x] CI green on `c808ae4` (run 41827557360): `verify`, `image`, `e2e` (log: `BACKEND_TAG: fd278e7…`; Playwright and perf in the job, all green), `guest-cart.spec.ts:30` included
+- [ ] Owner: `approved, merge it`
 
 ## Next action
-STOP: PR #55 awaits `approved, merge it` (CI green on this docs commit first). After the merge: merge-verify (local verify on `main`, CI on `main` green); the owner tags `ki-042-fixed` and `ki-043-fixed` (403 here).
+STOP: PR #61 awaits `approved, merge it` (CI green on this docs commit first). After the merge: merge-verify (local `npm ci && npm run verify` on `main`, CI on `main` green). A chore has no tag.
 
 ## ⚠️ Environment notes (this machine)
 - Cloud containers differ per session (not the owner's WSL machine). On 2026-10-21: no Node 24 installed (Node 24.21.0 downloaded from nodejs.org into a scratch folder), no Docker, no `ecomdemo-backend-readonly` clone; the backend repository was checked out separately for the backend team's own task.
 - Tag pushes are refused here with 403: tags are given to the owner as commands.
-- Backend images cannot be built here (Docker build containers have no network), so the stack cannot start in this container.
+- Playwright 1.64 wants Chromium build 1248; this container has 1194 (Chromium 141) in `/opt/pw-browsers`. Used 2026-11-04 without `playwright install`: `PLAYWRIGHT_BROWSERS_PATH` set to a scratch folder whose `chromium_headless_shell-1248/chrome-headless-shell-linux64/` and `chromium-1248/chrome-linux64/` link each file of the 1194 folders (plus `chrome-headless-shell` -> `headless_shell`). Visual specs then differ by 1-2 % of pixels: judge them on CI.
+- The web image cannot be built here either (`apk upgrade pcre2` in `Dockerfile` needs network), so `npm run perf` and `e2e:docker` run only on CI.
+- Backend images cannot be built with `docker build` here (its containers have no network for Maven). Workaround used 2026-11-04: `./mvnw -B package -DskipTests` on the host in a scratch copy of the clone, each jar's layers extracted and copied into `eclipse-temurin:21-jre-alpine` under the compose image names (no `apk upgrade`, which needs network), then `NO_REBUILD=1`. Touch the extracted files first: BuildKit keeps a context file whose size and mtime match its last transfer, and reproducible jars share one timestamp (the catalogue image got the payment service's same-length manifest).
 
 ## ⚠️ Carried, not fixed (oldest first)
 - Tag `ki-020-fixed` is not pushed: the owner runs `git tag ki-020-fixed 1f584e6 && git push origin ki-020-fixed`.
