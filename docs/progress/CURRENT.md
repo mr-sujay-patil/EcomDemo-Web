@@ -5,7 +5,7 @@
 - **Updated:** 2026-11-04
 - **Task:** Chore: move the backend pin from `a85202f` to backend `main`, now `fd278e7` (backend PR #111, the KI-081 merge; first `f68f00b`, PR #108); asked by the owner 2026-11-04 ("Continue on web app, refer actual ecomdemo repo", then "Move pin to backend main")
 - **Branch:** `chore/pin-backend-f68f00b` (cut from `main` at `8ca46be`, the merge of PR #55)
-- **Step:** PR_OPEN (PR #61): pin moved to `fd278e7`; waiting for CI
+- **Step:** PR_OPEN (PR #61): CI green at `fd278e7`; waiting for the owner
 - **Backend pinned at:** commit `a85202fefc0e1390f63bda4c93ce85c3b8266f60` on `main` (this branch: `fd278e7b9b74cfc5b7e9542197598d9f9686201c`)
 - **Waiting for user:** YES after CI is green: review of PR #61 (`approved, merge it`)
 
@@ -22,10 +22,11 @@
 - [x] Owner chose "Fix it in the backend" (2026-11-04): backend KI-081, PR #111 (a cart call runs once more when it lost the race; full backend verify 941 tests green). CI on this PR at `4be4720` was green (the race did not hit that run)
 - [x] Backend PR #111 merged as `fd278e7` (owner's `approved, merge it`), merge-verified on the backend side (tip in `main`, tree equal to the tested head)
 - [x] Pin moved to `fd278e7` (ci.yml, backend-images.yml, README, development-environment.md, decisions); delta `f68f00b..fd278e7`: compose drops the app's Redis settings (same names and ports), outbox gauges, the cart retry; no route, DTO or OpenAPI change. KI-041 Fixed in the backend (KI-081); the read-only clone at `fd278e7`
-- [ ] CI green on the new head (e2e runs against `fd278e7`); STOP for review
+- [x] CI green on `c808ae4` (run 41827557360): `verify`, `image`, `e2e` (log: `BACKEND_TAG: fd278e7…`; Playwright and perf in the job, all green), `guest-cart.spec.ts:30` included
+- [ ] Owner: `approved, merge it`
 
 ## Next action
-Wait for CI on PR #61's new head (check the e2e log names `fd278e7`). Green: STOP for `approved, merge it`. Red: fix what is this PR's.
+STOP: PR #61 awaits `approved, merge it` (CI green on this docs commit first). After the merge: merge-verify (local `npm ci && npm run verify` on `main`, CI on `main` green). A chore has no tag.
 
 ## ⚠️ Environment notes (this machine)
 - Cloud containers differ per session (not the owner's WSL machine). On 2026-10-21: no Node 24 installed (Node 24.21.0 downloaded from nodejs.org into a scratch folder), no Docker, no `ecomdemo-backend-readonly` clone; the backend repository was checked out separately for the backend team's own task.
