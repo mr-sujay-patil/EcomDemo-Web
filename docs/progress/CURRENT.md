@@ -2,21 +2,23 @@
 
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
-- **Updated:** 2026-11-04
-- **Task:** Chore: re-check every "Backend gaps this app adapts to" row against the pin `fd278e7` (the triage rule: a Backend row is "re-checked whenever the pinned backend tag moves", and PR #61 moved it without that). The owner asked to keep working to the next PR on my best recommendation (2026-11-04)
-- **Branch:** `chore/recheck-backend-gaps-fd278e7` (cut from `main` at `61f928a`, the merge of PR #66)
-- **Step:** PR_OPEN: waiting for CI
+- **Updated:** 2026-11-05
+- **Task:** Chore: Dependabot PR #64 (20 npm updates) fails `npm ci` with ERESOLVE: OpenTelemetry JS 3.0 needs `api` 1.10 and deprecated `sdk-trace-web`, which allows only `api` < 1.10. Move tracing to `@opentelemetry/sdk-trace` 3.0.0 and take the group's other 19 updates, so this PR replaces #64. The owner asked "Continue on web" (2026-11-05) on my best recommendation
+- **Branch:** `chore/deps-opentelemetry-3` (cut from `main` at `2820383`, the merge of PR #67)
+- **Step:** IN_PROGRESS: change made, verify green; e2e against the stack next
 - **Backend pinned at:** commit `fd278e7b9b74cfc5b7e9542197598d9f9686201c` (backend PR #111)
-- **Waiting for user:** YES after CI is green: review (`approved, merge it`)
+- **Waiting for user:** no
 
 ## Checklist
-- [x] Pre-flight: fix KI-047 (PR #66) merged as `61f928a` on the owner's `approved, merge it`, merge-verified (local verify 1111 tests, CI on `main` green); the owner's tag `ki-047-fixed`
-- [x] Re-checked against the stack at `fd278e7` and the backend source at that commit: KI-001 Fixed (a preflight from the allowed origin gets `200` with `Access-Control-Allow-*`); KI-003 and KI-024 Fixed by web KI-030 (the catalogue pages: `X-Total-Count`, `Link`, `size` above 100 is `400`); KI-004, 005, 006, 007, 008, 010, 011, 015, 016, 019, 021, 022 unchanged, each row says what was checked
-- [x] `docs/KNOWN_ISSUES.md` only (15 rows); Prettier clean
-- [ ] CI green; STOP for review
+- [x] Pre-flight: chore PR #67 (backend-gap re-check) merged as `2820383` on the owner's `approved, merge it`, merge-verified (local verify 1111 tests, CI on `main` green). A chore has no tag
+- [x] Cause (CI log of #64's `verify`): `npm ci` ERESOLVE, `@opentelemetry/sdk-trace-web@2.12.0` peer `api` `>=1.0.0 <1.10.0` against `api` 1.10.0 needed by `core` 3.0.0 (instrumentations 0.300.0); `sdk-trace-web` is deprecated for `@opentelemetry/sdk-trace` (npm, 2026-10-20)
+- [x] Change (`44bbca6`): package.json (#64's 19 other versions; `sdk-trace` 3.0.0 for `sdk-trace-web`; `core` 3.0.0 direct), lockfile by `npm install`; `tracing.ts` sets the global provider, `StackContextManager` and the W3C propagators by hand
+- [x] `npm ci` clean (no ERESOLVE); `tracing.test.ts` + `startTracing.test.ts` 10 of 10; `npm run verify` exit 0, 1111 tests, budgets: vendor 96.9 KB gzipped (limit 100), shelf 129.3 KB in 3 files
+- [ ] e2e against the stack at `fd278e7`: `observability.spec.ts` (a browser trace continues through the gateway into Tempo), then the full `npm run e2e`
+- [ ] Docs: decisions `[Chore deps OpenTelemetry 3]`; PR (perf on CI: the bundle changed); CI green; STOP for review
 
 ## Next action
-Wait for CI on this PR. Green: STOP for `approved, merge it`. After the merge: merge-verify (local verify on `main`, CI on `main`). A chore has no tag.
+With the stack up (`NO_REBUILD=1 bash scripts/backend-stack.sh up`), run `npx playwright test e2e/observability.spec.ts`, then `npm run e2e`; then open the PR.
 
 ## ⚠️ Environment notes (this machine)
 - Cloud containers differ per session (not the owner's WSL machine). On 2026-10-21: no Node 24 installed (Node 24.21.0 downloaded from nodejs.org into a scratch folder), no Docker, no `ecomdemo-backend-readonly` clone; the backend repository was checked out separately for the backend team's own task.
