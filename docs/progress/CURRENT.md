@@ -3,22 +3,20 @@
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
 - **Updated:** 2026-11-04
-- **Task:** Fix KI-047 (`e2e/cart.spec.ts:35` reads the server's total from a `page.on('response')` listener whose `response.json()` can meet a body the browser has dropped: the rejection fails the test). Asked by the owner 2026-11-04 ("Continue" after PR #63). `docs/KNOWN_ISSUES.md` row KI-047
-- **Branch:** `fix/ki-047-cart-total-listener` (cut from `main` at `3afbfbc`, the merge of PR #63)
-- **Step:** PR_OPEN (PR #66): waiting for CI
+- **Task:** Chore: re-check every "Backend gaps this app adapts to" row against the pin `fd278e7` (the triage rule: a Backend row is "re-checked whenever the pinned backend tag moves", and PR #61 moved it without that). The owner asked to keep working to the next PR on my best recommendation (2026-11-04)
+- **Branch:** `chore/recheck-backend-gaps-fd278e7` (cut from `main` at `61f928a`, the merge of PR #66)
+- **Step:** PR_OPEN: waiting for CI
 - **Backend pinned at:** commit `fd278e7b9b74cfc5b7e9542197598d9f9686201c` (backend PR #111)
-- **Waiting for user:** no
+- **Waiting for user:** YES after CI is green: review (`approved, merge it`)
 
 ## Checklist
-- [x] Pre-flight: fix KI-046 (PR #62) merged as `fcfcd36`, merge-verified (local verify 1111 tests, CI on `main` green); the owner's tag `ki-046-fixed`. Then the docs chore PR #63 (KI-030, KI-031 rows; conflict resolved by the other session as `52b85c3`, the same tree as this session's) merged as `3afbfbc` on the owner's `approved, merge it`, merge-verified the same way
-- [x] Red, measured: `cart.spec.ts:35 --repeat-each=20 --retries=0` on `main`'s code: 1 failed (KI-047's `Protocol error (Network.getResponseBody)`), 19 passed
-- [x] Fix (`b1d81df`): `serverCartTotal` in `e2e/live-data.ts` (signed in once, `GET /api/cart` at each call); the four polls compare the summary with it; the listener is gone
-- [x] Green: the test 20 of 20, the spec 20 of 20 (`--repeat-each=10`); full `npm run e2e` 1014 passed, 32 failed (all `visual.spec.ts`, this container's browser); `npm ci && npm run verify` exit 0, 1111 tests
-- [x] Docs: KNOWN_ISSUES KI-047 Fixed (PR #66); PR #66
-- [ ] CI green on PR #66; STOP for review
+- [x] Pre-flight: fix KI-047 (PR #66) merged as `61f928a` on the owner's `approved, merge it`, merge-verified (local verify 1111 tests, CI on `main` green); the owner's tag `ki-047-fixed`
+- [x] Re-checked against the stack at `fd278e7` and the backend source at that commit: KI-001 Fixed (a preflight from the allowed origin gets `200` with `Access-Control-Allow-*`); KI-003 and KI-024 Fixed by web KI-030 (the catalogue pages: `X-Total-Count`, `Link`, `size` above 100 is `400`); KI-004, 005, 006, 007, 008, 010, 011, 015, 016, 019, 021, 022 unchanged, each row says what was checked
+- [x] `docs/KNOWN_ISSUES.md` only (15 rows); Prettier clean
+- [ ] CI green; STOP for review
 
 ## Next action
-Wait for CI on PR #66. Green: STOP for `approved, merge it` (the owner's scheduled 3:10 am IST "upload, merge and continue" is not that phrase: report and wait). After the merge: merge-verify (local verify on `main`, CI on `main`), then the owner tags `ki-047-fixed`.
+Wait for CI on this PR. Green: STOP for `approved, merge it`. After the merge: merge-verify (local verify on `main`, CI on `main`). A chore has no tag.
 
 ## ⚠️ Environment notes (this machine)
 - Cloud containers differ per session (not the owner's WSL machine). On 2026-10-21: no Node 24 installed (Node 24.21.0 downloaded from nodejs.org into a scratch folder), no Docker, no `ecomdemo-backend-readonly` clone; the backend repository was checked out separately for the backend team's own task.
