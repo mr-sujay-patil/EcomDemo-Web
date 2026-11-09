@@ -2,13 +2,8 @@ import { assistantApi } from '@/api/client'
 import type { components } from '@/api/generated/assistant'
 
 export type PendingCartAddition = components['schemas']['PendingCartAddition']
-/**
- * The generated `AssistantReply` with `pendingAction` widened to what the backend really sends: `null` when there is
- * nothing to confirm (integration guide, "Shopping assistant"). The OpenAPI document leaves `null` out (web KI-021).
- */
-export type AssistantReply = Omit<components['schemas']['AssistantReply'], 'pendingAction'> & {
-  pendingAction: PendingCartAddition | null
-}
+/** `pendingAction` is `null` when there is nothing to confirm; the document says so since backend KI-086 (web KI-021). */
+export type AssistantReply = components['schemas']['AssistantReply']
 export type ConfirmedAddition = components['schemas']['ConfirmedAddition']
 
 /** The backend's limit on a message (integration guide). */
