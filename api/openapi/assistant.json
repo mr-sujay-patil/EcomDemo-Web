@@ -16,6 +16,10 @@
             "type": "integer"
           }
         },
+        "required": [
+          "message",
+          "status"
+        ],
         "type": "object"
       },
       "AssistantReply": {
@@ -27,8 +31,14 @@
             "type": "string"
           },
           "pendingAction": {
-            "$ref": "#/components/schemas/PendingCartAddition",
-            "type": "null"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PendingCartAddition"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "sources": {
             "items": {
@@ -43,6 +53,13 @@
             "type": "array"
           }
         },
+        "required": [
+          "answer",
+          "conversationId",
+          "pendingAction",
+          "sources",
+          "toolsUsed"
+        ],
         "type": "object"
       },
       "ChatRequest": {
@@ -86,6 +103,12 @@
             "type": "integer"
           }
         },
+        "required": [
+          "cartTotal",
+          "productId",
+          "productName",
+          "quantity"
+        ],
         "type": "object"
       },
       "PendingCartAddition": {
@@ -110,6 +133,13 @@
             "type": "number"
           }
         },
+        "required": [
+          "id",
+          "productId",
+          "productName",
+          "quantity",
+          "unitPrice"
+        ],
         "type": "object"
       },
       "Source": {
@@ -124,6 +154,11 @@
             "type": "string"
           }
         },
+        "required": [
+          "id",
+          "title",
+          "type"
+        ],
         "type": "object"
       }
     },

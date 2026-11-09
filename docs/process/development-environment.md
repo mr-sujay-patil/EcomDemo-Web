@@ -6,7 +6,7 @@ Goal: the machine is never the reason a result is in doubt. The web app is light
 
 | | |
 |---|---|
-| **Pinned backend** | **commit `fd278e7b9b74cfc5b7e9542197598d9f9686201c`** on the backend's `main` (backend PR #111, the KI-081 merge: a new account's concurrent first cart requests no longer answer 500, web KI-041; the web follows the backend's `main`, asked by the owner 2026-11-04). The backend publishes no `phase-*` tag after `phase-34-complete`, so the pin is a commit. Previous pins: `a85202f` (backend PR #94, the KI-035 merge, for web KI-032, 2026-10-11), `669a9ed` (backend PR #86, the KI-060 merge, for web KI-034, 2026-10-10), `82ef598` (backend PR #81, `ki-049-fixed`, 2026-10-09), `f088fd4` (backend PR #75, 2026-10-08), then `phase-34-complete` (backend PR #59, merge `9173309`, 2026-10-06) |
+| **Pinned backend** | **commit `92f04b17ef988312387a730224a3189cc2511f82`** on the backend's `main` (backend PR #119, the KI-087 merge, after PR #118 for KI-084/085/086: the OpenAPI documents mark every response field required, its null in its type, and a nullable object as `anyOf`, web KI-016 and KI-021; the web follows the backend's `main`). The backend publishes no `phase-*` tag after `phase-34-complete`, so the pin is a commit. Previous pins: `fd278e7` (backend PR #111, the KI-081 merge, for web KI-041, 2026-11-04), `a85202f` (backend PR #94, the KI-035 merge, for web KI-032, 2026-10-11), `669a9ed` (backend PR #86, the KI-060 merge, for web KI-034, 2026-10-10), `82ef598` (backend PR #81, `ki-049-fixed`, 2026-10-09), `f088fd4` (backend PR #75, 2026-10-08), then `phase-34-complete` (backend PR #59, merge `9173309`, 2026-10-06) |
 | Why this one | the backend team asked the web to follow `main` after Phase 34: the catalogue is paged (`page`, `size`, `X-Total-Count`, `Link`), catalogue reads and checkout can answer `503` with `Retry-After`, the dead-letter shape changed (`dltTimestamp`), `/actuator` left port 8080, ports bind to 127.0.0.1. Earlier: `phase-34-complete` added product images (web KI-002): `ProductResponse.imageUrl`, a gateway-relative path or `null`, and the anonymous `GET /api/products/{id}/image`. It keeps everything from `phase-33-complete` (RS256 tokens, login throttling `429` + `Retry-After`) and `ki-041-fixed` (CORS preflights) |
 | Delta since `phase-33-complete` | `docs/backend/phase-34-delta.md` (earlier: `docs/backend/phase-33-delta.md`) |
 
@@ -23,7 +23,7 @@ Everything lives **inside the WSL2 Linux filesystem**, never under `/mnt/c/...` 
 The read-only clone is set up once, in Phase 0:
 
     git clone https://github.com/mr-sujay-patil/ecomdemo ../ecomdemo-backend-readonly
-    git -C ../ecomdemo-backend-readonly checkout fd278e7b9b74cfc5b7e9542197598d9f9686201c
+    git -C ../ecomdemo-backend-readonly checkout 92f04b17ef988312387a730224a3189cc2511f82
     git -C ../ecomdemo-backend-readonly remote set-url --push origin no-push   # a mistaken push fails locally
 
 Reading it is allowed (files, `git log`, `git fetch --tags`, checking out a newer tag when the pin moves). Writing is never allowed: no commits, branches, pushes, PRs, issues or comments on the backend. Never check out a tag in `~/projects/ecomdemo`: that would move the backend team's work.

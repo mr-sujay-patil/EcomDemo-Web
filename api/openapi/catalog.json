@@ -16,6 +16,10 @@
             "type": "integer"
           }
         },
+        "required": [
+          "message",
+          "status"
+        ],
         "type": "object"
       },
       "BackfillStatus": {
@@ -59,6 +63,17 @@
             "type": "integer"
           }
         },
+        "required": [
+          "endedAt",
+          "executionId",
+          "failure",
+          "indexedProducts",
+          "read",
+          "startedAt",
+          "status",
+          "totalProducts",
+          "written"
+        ],
         "type": "object"
       },
       "GeneratedDescriptionResponse": {
@@ -118,6 +133,16 @@
             "type": "array"
           }
         },
+        "required": [
+          "completionTokens",
+          "description",
+          "generatedAt",
+          "model",
+          "productId",
+          "promptTokens",
+          "seoTitle",
+          "tags"
+        ],
         "type": "object"
       },
       "ProductRequest": {
@@ -210,6 +235,15 @@
             "type": "integer"
           }
         },
+        "required": [
+          "category",
+          "description",
+          "id",
+          "imageUrl",
+          "name",
+          "price",
+          "stockQuantity"
+        ],
         "type": "object"
       },
       "ProductSearchHit": {
@@ -224,6 +258,10 @@
             "type": "number"
           }
         },
+        "required": [
+          "product",
+          "similarity"
+        ],
         "type": "object"
       },
       "ProductSearchResponse": {
@@ -238,6 +276,10 @@
             "type": "array"
           }
         },
+        "required": [
+          "query",
+          "results"
+        ],
         "type": "object"
       },
       "ProductSnapshot": {
@@ -263,6 +305,14 @@
             "type": "integer"
           }
         },
+        "required": [
+          "category",
+          "description",
+          "id",
+          "name",
+          "price",
+          "stockQuantity"
+        ],
         "type": "object"
       },
       "ProductUpsert": {

@@ -6,7 +6,7 @@
 
 | File | What it does |
 |---|---|
-| `assistant.ts` | the two calls: `sendChat` (`POST /api/assistant/chat`) and `confirmAction` (`POST /api/assistant/actions/{id}/confirm`), and the reply type (`pendingAction` widened to `null`, web KI-021) |
+| `assistant.ts` | the two calls: `sendChat` (`POST /api/assistant/chat`) and `confirmAction` (`POST /api/assistant/actions/{id}/confirm`), and the reply type (the generated `AssistantReply`; `pendingAction` is the addition or `null`, documented so since backend KI-086, web KI-021) |
 | `useConversation.ts` | one conversation: the turns, the `conversationId` the server returned, the 503 flag, the confirm and dismiss of a proposal |
 | `AssistantSheet.tsx`, `assistant.css` | the native `<dialog>`, the thread, the message box; `components/AssistantMessage` draws each message |
 
