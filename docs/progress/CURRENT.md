@@ -5,19 +5,20 @@
 - **Updated:** 2026-11-09
 - **Task:** Chore: pin backend `main` `92f04b1` (backend PR #119, after #118: the OpenAPI documents mark every response field required, a nullable object as `anyOf`, and fix `unitPrice`'s text: backend KI-084, 085, 086, 087), regenerate the types, and drop the two workarounds they make unnecessary (`assumeResponsePropertiesPresent`, web KI-016; the `PendingCartAddition | null` widening, web KI-021). The owner: "do the OpenAPI fixes" (2026-11-09)
 - **Branch:** `chore/pin-backend-92f04b1` (cut from `main` at `5de3c62`, the merge of PR #59)
-- **Step:** IN_PROGRESS: pin moved; backend images at `92f04b1` building (host jars; this container was reset)
+- **Step:** PR_OPEN: waiting for CI
 - **Backend pinned at:** commit `fd278e7b9b74cfc5b7e9542197598d9f9686201c` on `main` (this branch: `92f04b17ef988312387a730224a3189cc2511f82`)
-- **Waiting for user:** no
+- **Waiting for user:** YES after CI is green: review (`approved, merge it`)
 
 ## Checklist
 - [x] Pre-flight: PRs #68 (OpenTelemetry 3) and #59 (docker/login-action) merged and merge-verified (local verify 1111 tests, CI on `main` green); Dependabot closed #64. Backend PRs #118 and #119 merged (`2ac9cdf`, `92f04b1`) and merge-verified
 - [x] Pin moved (ci.yml, backend-images.yml, README, development-environment.md); `../ecomdemo-backend-readonly` re-cloned at `92f04b1` with a fresh local `.env` (the container was reset; the five values generated as `.env.example` says, never printed)
-- [ ] Stack up at `92f04b1`; `npm run api:snapshot`; drop `assumeResponsePropertiesPresent` (scripts/openapi.ts, api.ts, its tests) and the `AssistantReply` widening; `npm run api:generate`; fix what the exact types show
-- [ ] KNOWN_ISSUES: web KI-016, KI-019, KI-021 Fixed by the pin; decisions
-- [ ] `npm run verify`; `npm run e2e` against the stack; PR; CI green; STOP for review
+- [x] Stack up at `92f04b1`; snapshots and types regenerated (`cbd1cdf`); the workarounds removed (`819e7cf`); the types differ only where more exact (six fields `| null`, `pendingAction | null`); `tsc` clean; `api:check` matches all 5
+- [x] KNOWN_ISSUES: web KI-016, KI-019, KI-021 Fixed in the backend, pinned; decisions `[Chore pin 92f04b1]`; api-layer.md and modules/assistant.md
+- [x] `npm run verify` exit 0, **1108 tests** (the 3 removed tested the deleted `assumeResponsePropertiesPresent`); `npm run e2e` against `92f04b1`: 1014 passed, 32 failed (all `visual.spec.ts`, this container's Chromium 153 build 1243, as on `main`)
+- [ ] CI green (perf there); STOP for review
 
 ## Next action
-When the images at `92f04b1` are built (`scratchpad/run/build-images.sh`), `NO_REBUILD=1 bash scripts/backend-stack.sh up`, then `npm run api:snapshot` and the checklist above.
+Wait for CI on the PR. Green: STOP for `approved, merge it`. After the merge: merge-verify (local verify on `main`, CI on `main`). A chore has no tag.
 
 ## ⚠️ Environment notes (this machine)
 - Cloud containers differ per session (not the owner's WSL machine). On 2026-10-21: no Node 24 installed (Node 24.21.0 downloaded from nodejs.org into a scratch folder), no Docker, no `ecomdemo-backend-readonly` clone; the backend repository was checked out separately for the backend team's own task.
