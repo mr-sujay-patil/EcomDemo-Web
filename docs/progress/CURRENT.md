@@ -2,24 +2,22 @@
 
 > The single source of truth for **in-phase** (or in-fix) progress. Keep it under ~60 lines. Update and commit it at every step change and before every stop.
 
-- **Updated:** 2026-11-05
-- **Task:** Chore: Dependabot PR #64 (20 npm updates) fails `npm ci` with ERESOLVE: OpenTelemetry JS 3.0 needs `api` 1.10 and deprecated `sdk-trace-web`, which allows only `api` < 1.10. Move tracing to `@opentelemetry/sdk-trace` 3.0.0 and take the group's other 19 updates, so this PR replaces #64. The owner asked "Continue on web" (2026-11-05) on my best recommendation
-- **Branch:** `chore/deps-opentelemetry-3` (cut from `main` at `2820383`, the merge of PR #67)
-- **Step:** PR_OPEN: waiting for CI (perf decides the bundle)
-- **Backend pinned at:** commit `fd278e7b9b74cfc5b7e9542197598d9f9686201c` (backend PR #111)
-- **Waiting for user:** YES after CI is green: review (`approved, merge it`)
+- **Updated:** 2026-11-09
+- **Task:** Chore: pin backend `main` `92f04b1` (backend PR #119, after #118: the OpenAPI documents mark every response field required, a nullable object as `anyOf`, and fix `unitPrice`'s text: backend KI-084, 085, 086, 087), regenerate the types, and drop the two workarounds they make unnecessary (`assumeResponsePropertiesPresent`, web KI-016; the `PendingCartAddition | null` widening, web KI-021). The owner: "do the OpenAPI fixes" (2026-11-09)
+- **Branch:** `chore/pin-backend-92f04b1` (cut from `main` at `5de3c62`, the merge of PR #59)
+- **Step:** IN_PROGRESS: pin moved; backend images at `92f04b1` building (host jars; this container was reset)
+- **Backend pinned at:** commit `fd278e7b9b74cfc5b7e9542197598d9f9686201c` on `main` (this branch: `92f04b17ef988312387a730224a3189cc2511f82`)
+- **Waiting for user:** no
 
 ## Checklist
-- [x] Pre-flight: chore PR #67 (backend-gap re-check) merged as `2820383` on the owner's `approved, merge it`, merge-verified (local verify 1111 tests, CI on `main` green). A chore has no tag
-- [x] Cause (CI log of #64's `verify`): `npm ci` ERESOLVE, `@opentelemetry/sdk-trace-web@2.12.0` peer `api` `>=1.0.0 <1.10.0` against `api` 1.10.0 needed by `core` 3.0.0 (instrumentations 0.300.0); `sdk-trace-web` is deprecated for `@opentelemetry/sdk-trace` (npm, 2026-10-20)
-- [x] Change (`44bbca6`): package.json (#64's 19 other versions; `sdk-trace` 3.0.0 for `sdk-trace-web`; `core` 3.0.0 direct), lockfile by `npm install`; `tracing.ts` sets the global provider, `StackContextManager` and the W3C propagators by hand
-- [x] `npm ci` clean (no ERESOLVE); `tracing.test.ts` + `startTracing.test.ts` 10 of 10; `npm run verify` exit 0, 1111 tests, budgets: vendor 96.9 KB gzipped (limit 100), shelf 129.3 KB in 3 files
-- [x] e2e against the stack at `fd278e7`: `observability.spec.ts` 4 passed (1 skipped, as on `main`); full `npm run e2e` 1014 passed, 32 failed (all `visual.spec.ts`, this container's browser, the same as on `main`)
-- [x] Docs: decisions `[Chore deps OpenTelemetry 3]`; PR open
-- [ ] CI green (perf runs there); STOP for review; on merge Dependabot closes #64
+- [x] Pre-flight: PRs #68 (OpenTelemetry 3) and #59 (docker/login-action) merged and merge-verified (local verify 1111 tests, CI on `main` green); Dependabot closed #64. Backend PRs #118 and #119 merged (`2ac9cdf`, `92f04b1`) and merge-verified
+- [x] Pin moved (ci.yml, backend-images.yml, README, development-environment.md); `../ecomdemo-backend-readonly` re-cloned at `92f04b1` with a fresh local `.env` (the container was reset; the five values generated as `.env.example` says, never printed)
+- [ ] Stack up at `92f04b1`; `npm run api:snapshot`; drop `assumeResponsePropertiesPresent` (scripts/openapi.ts, api.ts, its tests) and the `AssistantReply` widening; `npm run api:generate`; fix what the exact types show
+- [ ] KNOWN_ISSUES: web KI-016, KI-019, KI-021 Fixed by the pin; decisions
+- [ ] `npm run verify`; `npm run e2e` against the stack; PR; CI green; STOP for review
 
 ## Next action
-Wait for CI on the PR (perf: the shelf's LCP and the JavaScript budget). Green: STOP for `approved, merge it`. After the merge: merge-verify; check Dependabot closed #64. A chore has no tag.
+When the images at `92f04b1` are built (`scratchpad/run/build-images.sh`), `NO_REBUILD=1 bash scripts/backend-stack.sh up`, then `npm run api:snapshot` and the checklist above.
 
 ## ⚠️ Environment notes (this machine)
 - Cloud containers differ per session (not the owner's WSL machine). On 2026-10-21: no Node 24 installed (Node 24.21.0 downloaded from nodejs.org into a scratch folder), no Docker, no `ecomdemo-backend-readonly` clone; the backend repository was checked out separately for the backend team's own task.
