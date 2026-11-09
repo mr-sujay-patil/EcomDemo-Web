@@ -1,12 +1,6 @@
 import { readFileSync } from 'node:fs'
 import { describe, expect, it } from 'vitest'
-import {
-  describeDifference,
-  findDrift,
-  formatDocument,
-  services,
-  sortKeys,
-} from './openapi.ts'
+import { describeDifference, findDrift, formatDocument, services, sortKeys } from './openapi.ts'
 
 describe('formatDocument', () => {
   it('sorts keys at every depth, keeps array order, and ends with a newline', () => {

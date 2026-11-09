@@ -23,6 +23,10 @@
             "type": "integer"
           }
         },
+        "required": [
+          "alreadyClosed",
+          "released"
+        ],
         "type": "object"
       },
       "StockLevelRequest": {
@@ -49,6 +53,10 @@
             "type": "integer"
           }
         },
+        "required": [
+          "productId",
+          "quantity"
+        ],
         "type": "object"
       }
     },

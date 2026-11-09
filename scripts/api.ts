@@ -5,13 +5,7 @@
 // live backend with the snapshots, so a backend change cannot slip in unseen.
 import openapiTS, { astToString } from 'openapi-typescript'
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
-import {
-  findDrift,
-  formatDocument,
-  services,
-  type Drift,
-  type Service,
-} from './openapi.ts'
+import { findDrift, formatDocument, services, type Drift, type Service } from './openapi.ts'
 
 const gateway = process.env.API_TARGET ?? 'http://localhost:8080'
 const snapshotPath = (service: Service) => `api/openapi/${service}.json`

@@ -28,7 +28,7 @@ The documents are the contract between two repositories. Generating types from t
 
 A type is a promise the compiler cannot verify against a server. Two places where this app narrows the gap:
 
-- **Response properties are present.** The backend marks no response property as required, so a plain generation makes every field optional. `scripts/openapi.ts` (`assumeResponsePropertiesPresent`) generates from a copy of each snapshot where every response schema lists all its properties as required (request schemas keep the backend's own `required`). Backend KI: web KI-016. `e2e/api-contract.spec.ts` checks the live products really carry every property.
+- **Response properties are present.** Since backend KI-084 and KI-087 (pinned from `92f04b1`) every response schema lists all its properties as `required`, a field that can be null typed `x | null` and a nullable object as `anyOf`, so the types are generated from the snapshots as they are (before that, `assumeResponsePropertiesPresent` made the same assumption on a copy: web KI-016). `e2e/api-contract.spec.ts` checks the live products really carry every property.
 - **The compiler is the drift detector.** The MSW fixtures in `src/test/msw/handlers.ts` are typed from the generated types, so a renamed or removed field fails `npm run verify` at `tsc` (shown in the Phase 7 test report).
 
 ## The client (`src/api/client.ts`)

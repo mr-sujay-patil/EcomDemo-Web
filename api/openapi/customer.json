@@ -16,6 +16,10 @@
             "type": "integer"
           }
         },
+        "required": [
+          "message",
+          "status"
+        ],
         "type": "object"
       },
       "CustomerResponse": {
@@ -53,6 +57,13 @@
             "type": "string"
           }
         },
+        "required": [
+          "createdAt",
+          "fullName",
+          "id",
+          "role",
+          "username"
+        ],
         "type": "object"
       },
       "LoginRequest": {
@@ -138,6 +149,12 @@
             "type": "string"
           }
         },
+        "required": [
+          "accessToken",
+          "expiresAt",
+          "expiresIn",
+          "tokenType"
+        ],
         "type": "object"
       },
       "UpdateProfileRequest": {

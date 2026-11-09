@@ -39,6 +39,10 @@
             "type": "integer"
           }
         },
+        "required": [
+          "message",
+          "status"
+        ],
         "type": "object"
       },
       "CartItemResponse": {
@@ -65,11 +69,18 @@
             "type": "integer"
           },
           "unitPrice": {
-            "description": "The catalogue price right now, not a snapshot. It is fixed only at checkout.",
+            "description": "The price when the product was added to the cart: the line keeps it, so a later catalogue change does not reach this cart. Checkout charges it.",
             "example": 8999,
             "type": "number"
           }
         },
+        "required": [
+          "lineTotal",
+          "productId",
+          "productName",
+          "quantity",
+          "unitPrice"
+        ],
         "type": "object"
       },
       "CartResponse": {
@@ -94,6 +105,11 @@
             "type": "number"
           }
         },
+        "required": [
+          "id",
+          "items",
+          "totalAmount"
+        ],
         "type": "object"
       },
       "DeadLetterView": {
@@ -148,19 +164,39 @@
             "type": "string"
           }
         },
+        "required": [
+          "exceptionClass",
+          "exceptionMessage",
+          "key",
+          "offset",
+          "originalTopic",
+          "partition",
+          "payload",
+          "replayed",
+          "timestamp",
+          "topic"
+        ],
         "type": "object"
       },
       "JobExecutionResponse": {
         "properties": {
           "endTime": {
+            "description": "When it finished; null while it is running.",
             "format": "date-time",
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "exitCode": {
             "type": "string"
           },
           "failureMessage": {
-            "type": "string"
+            "description": "The first failure, with its causes; null unless the attempt failed.",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "id": {
             "format": "int64",
@@ -182,8 +218,12 @@
             "type": "integer"
           },
           "startTime": {
+            "description": "When this attempt began; null if it never started.",
             "format": "date-time",
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "status": {
             "type": "string"
@@ -199,6 +239,20 @@
             "type": "integer"
           }
         },
+        "required": [
+          "endTime",
+          "exitCode",
+          "failureMessage",
+          "id",
+          "instanceId",
+          "jobName",
+          "readCount",
+          "skipCount",
+          "startTime",
+          "status",
+          "steps",
+          "writeCount"
+        ],
         "type": "object"
       },
       "OrderItemResponse": {
@@ -231,6 +285,13 @@
             "type": "number"
           }
         },
+        "required": [
+          "lineTotal",
+          "productId",
+          "productName",
+          "quantity",
+          "unitPrice"
+        ],
         "type": "object"
       },
       "OrderResponse": {
@@ -274,7 +335,10 @@
           "statusReason": {
             "description": "Why the order was cancelled; null unless CANCELLED.",
             "example": "Payment declined: 12000.00 exceeds the limit of 10000.00",
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "totalAmount": {
             "description": "The cart total at checkout, stored with the order.",
@@ -287,6 +351,16 @@
             "type": "string"
           }
         },
+        "required": [
+          "id",
+          "items",
+          "placedAt",
+          "status",
+          "statusChangedAt",
+          "statusReason",
+          "totalAmount",
+          "username"
+        ],
         "type": "object"
       },
       "OrderStatusResponse": {
@@ -307,7 +381,10 @@
           "reason": {
             "description": "Why it was cancelled; null unless CANCELLED.",
             "example": "Insufficient stock for 'Mouse': requested 3, available 2",
-            "type": "string"
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "status": {
             "description": "PENDING, CONFIRMED or CANCELLED.",
@@ -320,12 +397,22 @@
             "type": "string"
           }
         },
+        "required": [
+          "changedAt",
+          "orderId",
+          "reason",
+          "status"
+        ],
         "type": "object"
       },
       "ProductImportResponse": {
         "properties": {
           "errorFile": {
-            "type": "string"
+            "description": "The rejected rows; null if there were none.",
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "execution": {
             "$ref": "#/components/schemas/JobExecutionResponse"
@@ -334,6 +421,11 @@
             "type": "string"
           }
         },
+        "required": [
+          "errorFile",
+          "execution",
+          "inputFile"
+        ],
         "type": "object"
       },
       "ReplayView": {
@@ -382,6 +474,16 @@
             "type": "string"
           }
         },
+        "required": [
+          "dltOffset",
+          "dltPartition",
+          "dltTimestamp",
+          "dltTopic",
+          "key",
+          "originalTopic",
+          "replayedAt",
+          "replayedBy"
+        ],
         "type": "object"
       },
       "StepExecutionResponse": {
@@ -413,6 +515,15 @@
             "type": "integer"
           }
         },
+        "required": [
+          "commitCount",
+          "name",
+          "readCount",
+          "rollbackCount",
+          "skipCount",
+          "status",
+          "writeCount"
+        ],
         "type": "object"
       },
       "UpdateCartItemRequest": {
